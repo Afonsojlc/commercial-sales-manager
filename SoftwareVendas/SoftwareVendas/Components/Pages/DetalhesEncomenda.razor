@@ -1,0 +1,275 @@
+﻿@page "/encomendas/{IdEncomenda}"
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+@using System.Data
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<div class="p-8 h-full overflow-auto print:p-0 print:bg-white">
+    <!-- Header Controls (Hidden on Print) -->
+    <div class="flex justify-between items-center mb-6 print:hidden">
+        <div class="flex items-center space-x-4">
+            <button @onclick="Voltar" class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm border border-gray-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </button>
+            <h1 class="text-3xl font-bold text-gray-800">Encomenda #@IdEncomenda</h1>
+        </div>
+        <div class="flex space-x-3">
+            @if (estadoSelecionado != estadoOriginal)
+            {
+                <button @onclick="GuardarEstado" class="bg-green-500 text-white px-4 py-2 rounded shadow hover:bg-green-600 transition font-semibold">
+                    Guardar Estado
+                </button>
+            }
+            <button @onclick="Imprimir" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 transition flex items-center font-semibold">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Exportar PDF
+            </button>
+        </div>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="flex justify-center items-center h-64 text-gray-400">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            A carregar dados...
+        </div>
+    }
+    else
+    {
+        <!-- Fatura / Document Layout -->
+        <div id="printArea" class="bg-white p-10 rounded-lg shadow-sm border border-gray-100 max-w-5xl mx-auto print:shadow-none print:border-none print:p-0">
+            
+            <!-- Header (Printable) -->
+            <div class="flex justify-between items-start border-b-2 border-gray-800 pb-8 mb-8">
+                <div>
+                    <h2 class="text-4xl font-black text-[#2B3347] tracking-tight">NOTA DE ENCOMENDA</h2>
+                    <p class="text-gray-500 mt-2 font-medium">Nº @IdEncomenda &bull; @dataEncomenda.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <div class="text-right">
+                    <h3 class="text-xl font-bold text-gray-800">AJLC Soluctions</h3>
+                    <p class="text-sm text-gray-500">Comercial: @Sessao.Nome</p>
+                </div>
+            </div>
+
+            <!-- Entidades -->
+            <div class="flex justify-between mb-10">
+                <!-- Cliente -->
+                <div class="w-1/2">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Faturado a</p>
+                    <h3 class="text-lg font-bold text-gray-800">@clienteNome</h3>
+                    <p class="text-sm text-gray-600 mt-1"><strong>NIF:</strong> @clienteNIF</p>
+                    @if(!string.IsNullOrEmpty(clienteEmail)) { <p class="text-sm text-gray-600"><strong>Email:</strong> @clienteEmail</p> }
+                    @if(!string.IsNullOrEmpty(clienteTelefone)) { <p class="text-sm text-gray-600"><strong>Telefone:</strong> @clienteTelefone</p> }
+                </div>
+
+                <!-- Estado -->
+                <div class="w-1/3 text-right print:hidden">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Estado</p>
+                    <select @bind="estadoSelecionado" class="border border-gray-300 rounded px-3 py-2 w-full font-bold focus:ring-blue-500 focus:border-blue-500">
+                        <option value="PENDENTE">PENDENTE</option>
+                        <option value="PAGA">PAGA</option>
+                        <option value="FECHADA">FECHADA</option>
+                        <option value="DESPACHADO">DESPACHADO</option>
+                        <option value="A ENTREGAR">A ENTREGAR</option>
+                        <option value="CANCELADA">CANCELADA</option>
+                    </select>
+                </div>
+                <!-- Printable State -->
+                <div class="w-1/3 text-right hidden print:block">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Estado</p>
+                    <span class="text-lg font-bold text-gray-800">@estadoOriginal</span>
+                </div>
+            </div>
+
+            <!-- Tabela de Produtos -->
+            <table class="w-full text-left border-collapse mb-8">
+                <thead>
+                    <tr class="border-b-2 border-gray-300 text-gray-700">
+                        <th class="py-3 font-semibold text-sm">Código</th>
+                        <th class="py-3 font-semibold text-sm">Descrição do Artigo</th>
+                        <th class="py-3 font-semibold text-sm text-right">Qtd</th>
+                        <th class="py-3 font-semibold text-sm text-right">Preço Unit.</th>
+                        <th class="py-3 font-semibold text-sm text-right">IVA</th>
+                        <th class="py-3 font-semibold text-sm text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600">
+                    @foreach (var l in linhas)
+                    {
+                        <tr class="border-b border-gray-100">
+                            <td class="py-4 text-sm font-medium text-gray-800">@l.Codigo</td>
+                            <td class="py-4 text-sm">@l.Descricao</td>
+                            <td class="py-4 text-sm text-right font-medium">@l.Qtd</td>
+                            <td class="py-4 text-sm text-right">€ @l.Preco.ToString("N2")</td>
+                            <td class="py-4 text-sm text-right">@l.Iva%</td>
+                            <td class="py-4 text-sm text-right font-bold text-gray-800">€ @l.Subtotal.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Resumo e Totais -->
+            <div class="flex justify-end">
+                <div class="w-1/2 md:w-1/3 space-y-3">
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Subtotal (c/ IVA):</span>
+                        <span class="font-medium">€ @valorTotal.ToString("N2")</span>
+                    </div>
+                    @if (descontoGlobal > 0)
+                    {
+                        <div class="flex justify-between text-sm text-red-500">
+                            <span>Desconto Global:</span>
+                            <span class="font-medium">- € @descontoGlobal.ToString("N2")</span>
+                        </div>
+                    }
+                    <div class="flex justify-between text-xl font-black text-[#2B3347] border-t-2 border-gray-800 pt-3 mt-3">
+                        <span>Total Final:</span>
+                        <span>€ @((valorTotal - descontoGlobal).ToString("N2"))</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer (Printable) -->
+            <div class="mt-20 pt-8 border-t border-gray-200 text-center text-xs text-gray-400 hidden print:block">
+                Documento gerado automaticamente pelo AJLC CRM. Processado por computador.
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string IdEncomenda { get; set; } = "";
+    
+    private bool carregando = true;
+
+    // Encomenda Data
+    private DateTime dataEncomenda;
+    private decimal valorTotal;
+    private decimal descontoGlobal;
+    private string estadoOriginal = "";
+    private string estadoSelecionado = "";
+    
+    // Cliente Data
+    private string clienteNome = "";
+    private string clienteNIF = "";
+    private string clienteEmail = "";
+    private string clienteTelefone = "";
+
+    // Linhas
+    private List<LinhaView> linhas = new List<LinhaView>();
+
+    protected override void OnInitialized()
+    {
+        CarregarDados();
+    }
+
+    private void CarregarDados()
+    {
+        carregando = true;
+        linhas.Clear();
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                // 1. Dados Cabeçalho
+                string queryE = @"
+                    SELECT 
+                        E.Data_Encomenda, E.Valor_Total, E.Estado, E.Desconto_Global,
+                        C.Nome_Cliente, C.NIF, C.Email, C.Telefone
+                    FROM Encomenda E
+                    INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    WHERE E.Numero_Encomenda = @id";
+                
+                using (SqlCommand cmd = new SqlCommand(queryE, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        if (rd.Read())
+                        {
+                            dataEncomenda = Convert.ToDateTime(rd["Data_Encomenda"]);
+                            valorTotal = Convert.ToDecimal(rd["Valor_Total"]);
+                            estadoOriginal = rd["Estado"].ToString()!;
+                            estadoSelecionado = estadoOriginal;
+                            descontoGlobal = Convert.ToDecimal(rd["Desconto_Global"]);
+                            
+                            clienteNome = rd["Nome_Cliente"].ToString()!;
+                            clienteNIF = rd["NIF"].ToString()!;
+                            clienteEmail = rd["Email"].ToString()!;
+                            clienteTelefone = rd["Telefone"].ToString()!;
+                        }
+                    }
+                }
+
+                // 2. Linhas
+                string queryL = @"
+                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Desconto, Imposto
+                    FROM Linha_Encomenda WHERE NE = @id";
+                
+                using (SqlCommand cmd = new SqlCommand(queryL, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        while (rd.Read())
+                        {
+                            linhas.Add(new LinhaView
+                            {
+                                Codigo = rd["Codigo_Material"].ToString()!,
+                                Descricao = rd["Descricao"].ToString()!,
+                                Qtd = Convert.ToInt32(rd["Quantidade"]),
+                                Preco = Convert.ToDecimal(rd["Preco"]),
+                                Iva = Convert.ToDecimal(rd["Imposto"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+        carregando = false;
+    }
+
+    private void GuardarEstado()
+    {
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "UPDATE Encomenda SET Estado = @estado WHERE Numero_Encomenda = @id";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@estado", estadoSelecionado);
+                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
+                    cmd.ExecuteNonQuery();
+                }
+                estadoOriginal = estadoSelecionado;
+            }
+            catch { }
+        }
+    }
+
+    private void Voltar()
+    {
+        NavManager.NavigateTo("/encomendas");
+    }
+
+    private async Task Imprimir()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    public class LinhaView
+    {
+        public string Codigo { get; set; } = "";
+        public string Descricao { get; set; } = "";
+        public int Qtd { get; set; }
+        public decimal Preco { get; set; }
+        public decimal Iva { get; set; }
+        public decimal Subtotal => Qtd * Preco * (1 + Iva/100m);
+    }
+}

@@ -2,134 +2,155 @@
 @using System.Data
 @using Microsoft.Data.SqlClient
 @using SoftwareVendas
+@inject NavigationManager NavManager
 
-<div class="p-8 flex flex-col h-full">
+<div class="p-8 h-full flex flex-col">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Gestão de Encomendas</h1>
-    </div>
-
-    <!-- Filtros -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center space-x-4 mb-6 shrink-0">
-        <input @bind="termoPesquisa" type="text" placeholder="Pesquisar por NIF, Nome do Cliente ou Nº da Encomenda..." class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
-        
-        <select @bind="estadoFiltro" class="border border-gray-300 rounded px-3 py-2 w-48 focus:ring-blue-500 focus:border-blue-500">
-            <option value="Todos">Todos os Estados</option>
-            <option value="PENDENTE">Pendente</option>
-            <option value="PAGA">Paga</option>
-            <option value="FECHADA">Fechada</option>
-        </select>
-        
-        <button @onclick="Pesquisar" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">
-            Pesquisar
+        <h1 class="text-3xl font-bold text-gray-800">Encomendas</h1>
+        <button @onclick="NovaVenda" class="bg-[#3F6CD8] text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition flex items-center font-semibold">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Nova Encomenda
         </button>
     </div>
 
-    <div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-        <div class="bg-[#2B3347] text-white px-4 py-3 font-semibold">Listagem de Encomendas</div>
-        <div class="flex-1 overflow-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 sticky top-0">
-                    <tr>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600">Nº Venda</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600">Cliente</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600">NIF</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600">Data</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600">Estado</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600 text-right">Total</th>
-                        <th class="px-4 py-3 border-b font-medium text-gray-600 text-center">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (dtEncomendas != null)
-                    {
-                        @foreach (DataRow row in dtEncomendas.Rows)
-                        {
-                            string estado = row["Estado"].ToString() ?? "";
-                            string corEstado = "bg-gray-100 text-gray-800";
-                            if (estado == "PENDENTE") corEstado = "bg-yellow-100 text-yellow-800";
-                            if (estado == "PAGA") corEstado = "bg-green-100 text-green-800";
-                            if (estado == "FECHADA") corEstado = "bg-blue-100 text-blue-800";
-
-                            <tr class="border-b hover:bg-blue-50 transition">
-                                <td class="px-4 py-4 text-sm font-bold text-gray-700">#@row["Nº Venda"]</td>
-                                <td class="px-4 py-4 text-sm">@row["Nome Cliente"]</td>
-                                <td class="px-4 py-4 text-sm text-gray-500">@row["NIF"]</td>
-                                <td class="px-4 py-4 text-sm">@Convert.ToDateTime(row["Data"]).ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="px-4 py-4 text-sm">
-                                    <span class="px-2 py-1 rounded text-xs font-bold @corEstado">@estado</span>
-                                </td>
-                                <td class="px-4 py-4 text-sm font-bold text-right text-[#3F6CD8]">
-                                    € @Convert.ToDecimal(row["Total (€)"]).ToString("N2")
-                                </td>
-                                <td class="px-4 py-4 text-sm text-center">
-                                    <button class="text-blue-500 hover:text-blue-700 font-semibold">Ver Detalhes</button>
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
+    <!-- Filtros -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6 flex space-x-4 shrink-0">
+        <div class="flex-1 relative">
+            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" @bind="filtro" @bind:event="oninput" @onkeyup="Pesquisar" placeholder="Nº Venda, Cliente, Vendedor, Estado..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
         </div>
+        <div>
+            <input type="date" @bind="dataInicio" class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-600" />
+        </div>
+        <div>
+            <input type="date" @bind="dataFim" class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-600" />
+        </div>
+        <button @onclick="Pesquisar" class="bg-gray-100 text-gray-600 border border-gray-300 px-4 py-2 rounded hover:bg-gray-200 transition font-semibold">
+            Filtrar
+        </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-gray-50 sticky top-0">
+                <tr>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Nº Venda</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Data Venda</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Cliente</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b text-right">Total Venda</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Estado</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (dtEncomendas != null)
+                {
+                    @foreach (System.Data.DataRowView row in dtEncomendas.DefaultView)
+                    {
+                        var idVenda = row["Nº Venda"].ToString();
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition group">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">@row["Nº Venda"]</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">@Convert.ToDateTime(row["Data Venda"]).ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4 text-sm text-gray-800">@row["Cliente"]</td>
+                            <td class="px-6 py-4 text-sm text-right font-bold text-gray-800">€ @Convert.ToDecimal(row["Total Venda"]).ToString("N2")</td>
+                            <td class="px-6 py-4 text-sm">
+                                @if(row["Estado"].ToString() == "FECHADA")
+                                {
+                                    <span class="bg-green-100 text-green-800 py-1 px-3 rounded-full text-xs font-semibold">FECHADA</span>
+                                }
+                                else if(row["Estado"].ToString() == "PENDENTE")
+                                {
+                                    <span class="bg-yellow-100 text-yellow-800 py-1 px-3 rounded-full text-xs font-semibold">PENDENTE</span>
+                                }
+                                else if(row["Estado"].ToString() == "CANCELADA")
+                                {
+                                    <span class="bg-red-100 text-red-800 py-1 px-3 rounded-full text-xs font-semibold">CANCELADA</span>
+                                }
+                                else
+                                {
+                                    <span class="bg-gray-100 text-gray-800 py-1 px-3 rounded-full text-xs font-semibold">@row["Estado"]</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-sm text-center opacity-0 group-hover:opacity-100 transition">
+                                <button @onclick="() => VerDetalhes(idVenda!)" class="text-blue-500 hover:text-blue-700 font-semibold flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    Detalhes
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
 @code {
-    private string termoPesquisa = "";
-    private string estadoFiltro = "Todos";
+    private string filtro = "";
+    private DateTime dataInicio = DateTime.Now.AddMonths(-1);
+    private DateTime dataFim = DateTime.Now.AddDays(1);
     private DataTable? dtEncomendas;
 
     protected override void OnInitialized()
     {
-        Pesquisar();
+        CarregarDados();
     }
 
-    private void Pesquisar()
+    private void CarregarDados()
     {
+        dtEncomendas = new DataTable();
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
             {
                 con.Open();
-                string query = @"SELECT 
-                                E.Numero_Encomenda as 'Nº Venda', 
-                                C.Nome_Cliente as 'Nome Cliente', 
-                                C.NIF as 'NIF',
-                                E.Data_Encomenda as 'Data', 
-                                E.Valor_Total as 'Total (€)', 
-                                E.Estado as 'Estado'
-                                FROM Encomenda E
-                                INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                                WHERE 1=1 ";
-
-                if (!string.IsNullOrWhiteSpace(termoPesquisa))
-                {
-                    query += " AND (C.NIF LIKE @t OR C.Nome_Cliente LIKE @t OR CAST(E.Numero_Encomenda as varchar) LIKE @t) " ;
-                }
-                
-                if (estadoFiltro != "Todos")
-                {
-                    query += " AND E.Estado = @est " ;
-                }
-
-                query += " ORDER BY E.Data_Encomenda DESC";
+                string query = @"
+                    SELECT 
+                        E.Numero_Encomenda as 'Nº Venda',
+                        E.Data_Encomenda as 'Data Venda',
+                        C.Nome_Cliente as 'Cliente',
+                        V.Nome_Utilizador as 'Vendedor',
+                        E.Valor_Total as 'Total Venda',
+                        E.Estado as 'Estado'
+                    FROM Encomenda E
+                    INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    INNER JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
+                    WHERE E.Data_Encomenda BETWEEN @dataI AND @dataF
+                      AND (@filtro = '' OR 
+                           C.Nome_Cliente LIKE @filtroBusca OR 
+                           E.Numero_Encomenda LIKE @filtroBusca OR 
+                           V.Nome_Utilizador LIKE @filtroBusca OR 
+                           E.Estado LIKE @filtroBusca)
+                    ORDER BY E.Numero_Encomenda DESC";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    if (!string.IsNullOrWhiteSpace(termoPesquisa))
-                    {
-                        cmd.Parameters.AddWithValue("@t", "%" + termoPesquisa + "%");
-                    }
-                    if (estadoFiltro != "Todos")
-                    {
-                        cmd.Parameters.AddWithValue("@est", estadoFiltro);
-                    }
+                    cmd.Parameters.AddWithValue("@dataI", dataInicio);
+                    cmd.Parameters.AddWithValue("@dataF", dataFim);
+                    cmd.Parameters.AddWithValue("@filtro", filtro);
+                    cmd.Parameters.AddWithValue("@filtroBusca", "%" + filtro + "%");
                     
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
-                    dtEncomendas = new DataTable();
                     da.Fill(dtEncomendas);
                 }
             }
             catch { }
         }
+    }
+
+    private void Pesquisar()
+    {
+        CarregarDados();
+    }
+
+    private void NovaVenda()
+    {
+        NavManager.NavigateTo("/novavenda");
+    }
+
+    private void VerDetalhes(string id)
+    {
+        NavManager.NavigateTo($"/encomendas/{id}");
     }
 }

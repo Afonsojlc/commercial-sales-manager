@@ -1,8 +1,11 @@
 ﻿@page "/dashboard"
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+@using System.Data
 
 <div class="p-8">
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Dashboard: Ganhos</h1>
         <button class="bg-[#3F6CD8] text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
             Novo Relatório
         </button>
@@ -12,8 +15,8 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-semibold uppercase">Vendas Hoje</p>
-                <h3 class="text-2xl font-bold text-gray-800 mt-1">€ 1,240.50</h3>
+                <p class="text-gray-500 text-sm font-semibold uppercase">Total de Vendas (Mês)</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">€ @totalVendasMes.ToString("N2")</h3>
             </div>
             <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -22,8 +25,8 @@
         
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-semibold uppercase">Encomendas Ativas</p>
-                <h3 class="text-2xl font-bold text-gray-800 mt-1">34</h3>
+                <p class="text-gray-500 text-sm font-semibold uppercase">Minha Comissão (Mês)</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">€ @totalComissao.ToString("N2")</h3>
             </div>
             <div class="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center text-yellow-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -33,7 +36,7 @@
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
                 <p class="text-gray-500 text-sm font-semibold uppercase">Novos Clientes</p>
-                <h3 class="text-2xl font-bold text-gray-800 mt-1">12</h3>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">@totalClientes</h3>
             </div>
             <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -42,8 +45,8 @@
 
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-semibold uppercase">Taxa de Conversão</p>
-                <h3 class="text-2xl font-bold text-gray-800 mt-1">46%</h3>
+                <p class="text-gray-500 text-sm font-semibold uppercase">Total Encomendas (Mês)</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">@totalEncomendasMes</h3>
             </div>
             <div class="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
@@ -55,7 +58,66 @@
     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-96 flex items-center justify-center">
         <div class="text-center">
             <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-            <p class="text-gray-500">Área reservada para o Gráfico de Pipeline (Funil de Vendas)</p>
+            <p class="text-gray-500">Área reservada para o Gráfico de Vendas (Flowlu Design)</p>
         </div>
     </div>
 </div>
+
+@code {
+    private decimal totalVendasMes = 0;
+    private decimal totalComissao = 0;
+    private int totalClientes = 0;
+    private int totalEncomendasMes = 0;
+
+    protected override void OnInitialized()
+    {
+        CarregarDashboard();
+    }
+
+    private void CarregarDashboard()
+    {
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                
+                // Vendas e Comissões do Mês
+                string queryVendas = @"
+                    SELECT SUM(E.Valor_Total) as Total_Vendas, COUNT(E.Numero_Encomenda) as Num_Vendas
+                    FROM Encomenda E
+                    WHERE MONTH(E.Data_Encomenda) = MONTH(GETDATE()) 
+                      AND YEAR(E.Data_Encomenda) = YEAR(GETDATE())
+                      AND (E.ID_Vendedor = @id OR @id = 1)"; // Admin vê tudo, Vendedor vê os seus.
+
+                using (SqlCommand cmd = new SqlCommand(queryVendas, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        if (rd.Read())
+                        {
+                            totalVendasMes = rd["Total_Vendas"] != DBNull.Value ? Convert.ToDecimal(rd["Total_Vendas"]) : 0;
+                            totalEncomendasMes = rd["Num_Vendas"] != DBNull.Value ? Convert.ToInt32(rd["Num_Vendas"]) : 0;
+                            
+                            // Calcula comissão
+                            totalComissao = totalVendasMes * (Sessao.PercentagemComissao / 100m);
+                        }
+                    }
+                }
+
+                // Total de Clientes
+                string queryClientes = "SELECT COUNT(*) FROM Clientes";
+                using (SqlCommand cmd = new SqlCommand(queryClientes, con))
+                {
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        totalClientes = Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+}

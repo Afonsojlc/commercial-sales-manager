@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Windows.Forms;
 
@@ -6,8 +6,6 @@ namespace SoftwareVendas
 {
     public partial class FormNovoProduto : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
-
         public FormNovoProduto()
         {
             InitializeComponent();
@@ -15,7 +13,7 @@ namespace SoftwareVendas
             CarregarCategorias();
         }
 
-        #region Configuração Inicial
+        #region Initialization and Setup
 
         private void ConfigurarInterface()
         {
@@ -24,7 +22,7 @@ namespace SoftwareVendas
             this.MaximizeBox = false;
             this.Text = "Adicionar Novo Produto";
 
-            // Restrições de segurança de dados para inputs numéricos
+            // Enforce input bounds for numeric fields
             numPreco.Maximum = 999999;
             numStock.Maximum = 999999;
             numIVA.Maximum = 100;
@@ -34,7 +32,7 @@ namespace SoftwareVendas
         {
             AutoCompleteStringCollection listaCategorias = new AutoCompleteStringCollection();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -68,13 +66,13 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Operações de Base de Dados (Gravar)
+        #region Database Operations (Save)
 
         private void btnGravar_Click(object? sender, EventArgs e)
         {
             if (!ValidarCamposObrigatorios()) return;
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -135,7 +133,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Validações e Eventos UI
+        #region UI Validations and Events
 
         private bool ValidarCamposObrigatorios()
         {

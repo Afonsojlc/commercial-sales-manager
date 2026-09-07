@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -11,7 +11,7 @@ namespace SoftwareVendas
             InitializeComponent();
             ConfigurarVisual();
 
-            // Prevenção de subscrição dupla do evento
+            // Prevent duplicate event subscriptions
             if (btnProdutos != null)
             {
                 btnProdutos.Click -= btnProdutos_Click;
@@ -28,6 +28,18 @@ namespace SoftwareVendas
             {
                 btnEncomendas.Click -= btnEncomendas_Click;
                 btnEncomendas.Click += btnEncomendas_Click;
+            }
+
+            if (btnGanhos != null)
+            {
+                btnGanhos.Click -= btnGanhos_Click;
+                btnGanhos.Click += btnGanhos_Click;
+            }
+
+            if (btnDefinicoes != null)
+            {
+                btnDefinicoes.Click -= btnDefinicoes_Click;
+                btnDefinicoes.Click += btnDefinicoes_Click;
             }
         }
 
@@ -227,6 +239,22 @@ namespace SoftwareVendas
             using (FormEncomendas formEnc = new FormEncomendas())
             {
                 formEnc.ShowDialog();
+            }
+        }
+
+        private void btnGanhos_Click(object? sender, EventArgs e)
+        {
+            using (FormGanhos formGanhos = new FormGanhos())
+            {
+                formGanhos.ShowDialog();
+            }
+        }
+
+        private void btnDefinicoes_Click(object? sender, EventArgs e)
+        {
+            using (FormDefinicoes formDef = new FormDefinicoes())
+            {
+                formDef.ShowDialog();
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,8 +8,6 @@ namespace SoftwareVendas
 {
     public partial class FormProdutos : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
-
         public ProdutoDTO? ProdutoSelecionado { get; private set; }
 
         public FormProdutos()
@@ -18,7 +16,7 @@ namespace SoftwareVendas
             ConfigurarLista();
         }
 
-        #region Inicialização e Configuração
+        #region Initialization and Setup
 
         private void ConfigurarLista()
         {
@@ -31,7 +29,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Lógica de Pesquisa
+        #region Search Logic
 
         private void txtPesquisa_TextChanged(object? sender, EventArgs e)
         {
@@ -51,7 +49,7 @@ namespace SoftwareVendas
         {
             var listaProdutos = new List<ProdutoDTO>();
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -106,7 +104,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Eventos de Seleção
+        #region Selection Events
 
         private void lstSugestoes_SelectedIndexChanged(object? sender, EventArgs e)
         {
@@ -174,7 +172,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Operações CRUD (Adicionar, Atualizar, Eliminar)
+        #region CRUD Operations (Add, Update, Delete)
 
         private void btnAdicionarProduto_Click(object? sender, EventArgs e)
         {
@@ -211,13 +209,13 @@ namespace SoftwareVendas
 
             if (resposta == DialogResult.Yes)
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = DatabaseConfig.ObterConexao())
                 {
                     try
                     {
                         con.Open();
 
-                        // Verificação de Integridade Referencial
+                        // Check referential integrity before deletion
                         string queryVerificacao = "SELECT COUNT(*) FROM Linha_Encomenda WHERE Codigo_Material = @cod";
                         using (SqlCommand cmdVerifica = new SqlCommand(queryVerificacao, con))
                         {
@@ -276,7 +274,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Controlo de Modos (Vendas / Gestão)
+        #region Mode Control (Sales / Management)
 
         public void PrepararModoVendas()
         {

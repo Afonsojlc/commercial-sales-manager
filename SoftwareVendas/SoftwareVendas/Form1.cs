@@ -8,7 +8,7 @@ namespace SoftwareVendas
     public partial class Form1 : Form
     {
         private ContextMenuStrip? menuGrelha;
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
+
         private bool modoModificacao = false;
         private int idEncomendaEditar = 0;
 
@@ -18,7 +18,7 @@ namespace SoftwareVendas
             ConfigurarDesign();
         }
 
-        #region Inicialização e Load
+        #region Inicializaï¿½ï¿½o e Load
 
         private void Form1_Load(object? sender, EventArgs e)
         {
@@ -35,17 +35,17 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Adição de Produtos à Tabela
+        #region Adiï¿½ï¿½o de Produtos ï¿½ Tabela
 
         private void button1_Click(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtCodigoProduto.Text))
             {
-                MessageBox.Show("Por favor, introduza o código do produto.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Por favor, introduza o cï¿½digo do produto.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -83,14 +83,14 @@ namespace SoftwareVendas
                             }
                             else
                             {
-                                MessageBox.Show("Produto não encontrado na base de dados.", "Não encontrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show("Produto nï¿½o encontrado na base de dados.", "Nï¿½o encontrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ocorreu um erro de comunicação com a base de dados.\nDetalhes: {ex.Message}", "Erro de Conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Ocorreu um erro de comunicaï¿½ï¿½o com a base de dados.\nDetalhes: {ex.Message}", "Erro de Conexï¿½o", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -114,7 +114,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Cálculos e Totais
+        #region Cï¿½lculos e Totais
 
         private decimal CalcularDescontoComposto(decimal precoOriginal, string textoDesconto)
         {
@@ -143,7 +143,7 @@ namespace SoftwareVendas
             {
                 if (linha.Cells["colTotal"]?.Value != null)
                 {
-                    string valorTexto = linha.Cells["colTotal"].Value.ToString()?.Replace("€", "").Trim() ?? "0";
+                    string valorTexto = linha.Cells["colTotal"].Value.ToString()?.Replace("ï¿½", "").Trim() ?? "0";
                     if (decimal.TryParse(valorTexto, System.Globalization.NumberStyles.Currency, null, out decimal valorLinha))
                     {
                         totalIliquido += valorLinha;
@@ -154,7 +154,7 @@ namespace SoftwareVendas
             decimal.TryParse(txtDescontoFinal.Text, out decimal descFinal);
 
             totalIliquido -= (totalIliquido * (descFinal / 100));
-            decimal totalIVA = totalIliquido * 0.23m; // Assumindo taxa fixa de 23% para simplificação global
+            decimal totalIVA = totalIliquido * 0.23m; // Assumindo taxa fixa de 23% para simplificaï¿½ï¿½o global
             decimal totalPagar = totalIliquido + totalIVA;
 
             lblTotalIliquido.Text = totalIliquido.ToString("C2");
@@ -170,7 +170,7 @@ namespace SoftwareVendas
                 if (row.Cells[1].Value != null)
                     int.TryParse(row.Cells[1].Value.ToString(), out qtd);
 
-                string textoPreco = row.Cells[3].Value?.ToString()?.Replace("€", "").Trim() ?? "0";
+                string textoPreco = row.Cells[3].Value?.ToString()?.Replace("ï¿½", "").Trim() ?? "0";
                 decimal.TryParse(textoPreco, System.Globalization.NumberStyles.Currency, null, out decimal precoUnit);
 
                 string textoDesc = row.Cells[4].Value?.ToString() ?? string.Empty;
@@ -182,50 +182,50 @@ namespace SoftwareVendas
             }
             catch
             {
-                row.Cells[5].Value = "0,00 €";
+                row.Cells[5].Value = "0,00 ï¿½";
             }
         }
 
         #endregion
 
-        #region Finalizar Venda (Transação SQL)
+        #region Finalizar Venda (Transaï¿½ï¿½o SQL)
 
         private void btnFinalizar_Click(object? sender, EventArgs e)
         {
             if (dgvItens.Rows.Count == 0)
             {
-                MessageBox.Show("Não existem artigos na lista para finalizar a venda.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Nï¿½o existem artigos na lista para finalizar a venda.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(txtNIF.Text))
             {
-                MessageBox.Show("É necessário identificar o cliente através do NIF.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("ï¿½ necessï¿½rio identificar o cliente atravï¿½s do NIF.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Cálculos preliminares
-            string textoTotal = lblTotalPagar.Text?.Replace("€", "").Trim() ?? "0";
+            // Cï¿½lculos preliminares
+            string textoTotal = lblTotalPagar.Text?.Replace("ï¿½", "").Trim() ?? "0";
             decimal.TryParse(textoTotal, System.Globalization.NumberStyles.Currency, null, out decimal valorTotalVenda);
             decimal.TryParse(txtDescontoFinal.Text, out decimal descontoGlobal);
 
-            // --- VERIFICAÇÃO PROFISSIONAL ANTES DE ABRIR A BASE DE DADOS ---
+            // --- VERIFICAï¿½ï¿½O PROFISSIONAL ANTES DE ABRIR A BASE DE DADOS ---
             if (modoModificacao)
             {
                 DialogResult respostaConfirmacao = MessageBox.Show(
-                    $"Está prestes a modificar a Encomenda Nº {idEncomendaEditar}.\n\nO novo valor total será de {valorTotalVenda.ToString("C2")}.\nO inventário (stock) será reajustado automaticamente.\n\nConfirma estas alterações?",
-                    "Confirmar Alteração",
+                    $"Estï¿½ prestes a modificar a Encomenda Nï¿½ {idEncomendaEditar}.\n\nO novo valor total serï¿½ de {valorTotalVenda.ToString("C2")}.\nO inventï¿½rio (stock) serï¿½ reajustado automaticamente.\n\nConfirma estas alteraï¿½ï¿½es?",
+                    "Confirmar Alteraï¿½ï¿½o",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning,
-                    MessageBoxDefaultButton.Button2); // Foca no 'Não' por segurança para evitar cliques acidentais
+                    MessageBoxDefaultButton.Button2); // Foca no 'Nï¿½o' por seguranï¿½a para evitar cliques acidentais
 
                 if (respostaConfirmacao == DialogResult.No)
                 {
-                    return; // Cancela silenciosamente e o utilizador pode continuar a editar a grelha
+                    return; // Cancel silently and allow the user to keep editing
                 }
             }
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 con.Open();
                 SqlTransaction transacao = con.BeginTransaction();
@@ -248,7 +248,7 @@ namespace SoftwareVendas
                         else
                         {
                             transacao.Rollback();
-                            MessageBox.Show("Cliente não encontrado na base de dados. Por favor, verifique o NIF inserido.", "Erro de Validação", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Cliente nï¿½o encontrado na base de dados. Por favor, verifique o NIF inserido.", "Erro de Validaï¿½ï¿½o", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
                     }
@@ -318,12 +318,12 @@ namespace SoftwareVendas
                         int.TryParse(row.Cells[1].Value?.ToString(), out int qtd);
                         string descricao = row.Cells[2].Value?.ToString() ?? string.Empty;
 
-                        string precoTexto = row.Cells[3].Value?.ToString()?.Replace("€", "").Trim() ?? "0";
+                        string precoTexto = row.Cells[3].Value?.ToString()?.Replace("ï¿½", "").Trim() ?? "0";
                         decimal.TryParse(precoTexto, System.Globalization.NumberStyles.Currency, null, out decimal precoUnit);
 
                         string textoDesconto = row.Cells[4].Value?.ToString() ?? string.Empty;
 
-                        // Obter Taxa de IVA específica do produto
+                        // Obter Taxa de IVA especï¿½fica do produto
                         decimal taxaIvaLinha = 23.0m;
                         string queryIVA = "SELECT Taxa_IVA FROM Material WHERE Codigo = @cod";
                         using (SqlCommand cmdIVA = new SqlCommand(queryIVA, con, transacao))
@@ -354,7 +354,7 @@ namespace SoftwareVendas
                             cmdLinha.ExecuteNonQuery();
                         }
 
-                        // Atualizar Inventário
+                        // Atualizar Inventï¿½rio
                         string queryStock = "UPDATE Material SET Stock = Stock - @qtdAbater WHERE Codigo = @codArtigo";
                         using (SqlCommand cmdStock = new SqlCommand(queryStock, con, transacao))
                         {
@@ -366,26 +366,26 @@ namespace SoftwareVendas
                         numeroLinha++;
                     }
 
-                    // Commit da Transação
+                    // Commit da Transaï¿½ï¿½o
                     transacao.Commit();
 
                     // --- MENSAGENS FINAIS ADAPTADAS AO MODO ---
                     if (modoModificacao)
                     {
-                        MessageBox.Show($"As alterações na encomenda Nº {numEncomenda} foram guardadas e o inventário foi atualizado com sucesso.", "Alteração Concluída", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.DialogResult = DialogResult.OK; // Dá sinal verde à janela anterior
-                        this.Close(); // Fecha a janela de edição
+                        MessageBox.Show($"As alteraï¿½ï¿½es na encomenda Nï¿½ {numEncomenda} foram guardadas e o inventï¿½rio foi atualizado com sucesso.", "Alteraï¿½ï¿½o Concluï¿½da", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.OK; // Dï¿½ sinal verde ï¿½ janela anterior
+                        this.Close(); // Fecha a janela de ediï¿½ï¿½o
                     }
                     else
                     {
-                        MessageBox.Show($"Venda n.º {numEncomenda} registada e inventário atualizado com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"Venda n.ï¿½ {numEncomenda} registada e inventï¿½rio atualizado com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LimparVenda();
                     }
                 }
                 catch (Exception ex)
                 {
                     transacao.Rollback();
-                    MessageBox.Show($"Não foi possível concluir a transação.\nTodas as alterações foram revertidas.\nDetalhe: {ex.Message}", "Erro Crítico", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Nï¿½o foi possï¿½vel concluir a transaï¿½ï¿½o.\nTodas as alteraï¿½ï¿½es foram revertidas.\nDetalhe: {ex.Message}", "Erro Crï¿½tico", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -397,22 +397,22 @@ namespace SoftwareVendas
             txtNomeCliente.Clear();
             txtDescontoFinal.Clear();
 
-            lblTotalIliquido.Text = "0,00 €";
-            lblTotalIVA.Text = "0,00 €";
-            lblTotalPagar.Text = "0,00 €";
+            lblTotalIliquido.Text = "0,00 ï¿½";
+            lblTotalIVA.Text = "0,00 ï¿½";
+            lblTotalPagar.Text = "0,00 ï¿½";
 
             txtNIF.Focus();
         }
 
         #endregion
 
-        #region Autocomplete e Gestão de Clientes
+        #region Autocomplete e Gestï¿½o de Clientes
 
         private void CarregarAutoCompletar()
         {
             AutoCompleteStringCollection listaCodigos = new AutoCompleteStringCollection();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -431,7 +431,7 @@ namespace SoftwareVendas
                         }
                     }
                 }
-                catch { /* Continua a execução sem autocompletar em caso de falha de ligação não crítica */ }
+                catch { /* Continua a execuï¿½ï¿½o sem autocompletar em caso de falha de ligaï¿½ï¿½o nï¿½o crï¿½tica */ }
             }
 
             txtCodigoProduto.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
@@ -444,7 +444,7 @@ namespace SoftwareVendas
             AutoCompleteStringCollection listaNIFs = new AutoCompleteStringCollection();
             AutoCompleteStringCollection listaNomes = new AutoCompleteStringCollection();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -505,7 +505,7 @@ namespace SoftwareVendas
 
         private void BuscarCliente(string termoPesquisa, bool ehNIF)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -535,7 +535,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Eventos da Grelha (DataGridView) e Menu de Contexto
+        #region Grid Events and Context Menu
 
         private void dgvItens_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
         {
@@ -543,14 +543,14 @@ namespace SoftwareVendas
 
             DataGridViewRow row = dgvItens.Rows[e.RowIndex];
 
-            // Atualização de Produto mediante alteração manual de Código
+            // Atualizaï¿½ï¿½o de Produto mediante alteraï¿½ï¿½o manual de Cï¿½digo
             if (e.ColumnIndex == 0)
             {
                 string novoCodigo = row.Cells[0].Value?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(novoCodigo)) return;
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = DatabaseConfig.ObterConexao())
                 {
                     try
                     {
@@ -575,7 +575,7 @@ namespace SoftwareVendas
                                 }
                                 else
                                 {
-                                    MessageBox.Show("O código inserido não existe no inventário.", "Código Inválido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    MessageBox.Show("O cï¿½digo inserido nï¿½o existe no inventï¿½rio.", "Cï¿½digo Invï¿½lido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                     row.Cells[0].Value = string.Empty;
                                     return;
                                 }
@@ -584,12 +584,12 @@ namespace SoftwareVendas
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Ocorreu um erro ao validar o código da grelha: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Ocorreu um erro ao validar o cï¿½digo da grelha: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
 
-            // Recalcular totais perante alterações na linha
+            // Recalcular totais perante alteraï¿½ï¿½es na linha
             if (e.ColumnIndex == 0 || e.ColumnIndex == 1 || e.ColumnIndex == 4)
             {
                 RecalcularLinha(row);
@@ -601,11 +601,11 @@ namespace SoftwareVendas
         {
             if (e.KeyCode == Keys.Delete && dgvItens.SelectedRows.Count > 0)
             {
-                DialogResult resposta = MessageBox.Show("Confirma a remoção dos artigos selecionados?", "Remover Artigo", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                DialogResult resposta = MessageBox.Show("Confirma a remoï¿½ï¿½o dos artigos selecionados?", "Remover Artigo", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (resposta == DialogResult.Yes)
                 {
-                    // Evitar modificação da coleção durante a iteração
+                    // Evitar modificaï¿½ï¿½o da coleï¿½ï¿½o durante a iteraï¿½ï¿½o
                     for (int i = dgvItens.SelectedRows.Count - 1; i >= 0; i--)
                     {
                         DataGridViewRow row = dgvItens.SelectedRows[i];
@@ -629,7 +629,7 @@ namespace SoftwareVendas
             }
             else
             {
-                MessageBox.Show("Selecione uma linha válida para remover.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Selecione uma linha vï¿½lida para remover.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -653,7 +653,7 @@ namespace SoftwareVendas
             }
         }
 
-        // --- INTEGRAÇÃO COM FORMULÁRIO DE PRODUTOS ---
+        // --- INTEGRAï¿½ï¿½O COM FORMULï¿½RIO DE PRODUTOS ---
         private void ConfigurarMenuContexto()
         {
             menuGrelha = new ContextMenuStrip();
@@ -780,14 +780,14 @@ namespace SoftwareVendas
         {
             this.modoModificacao = true;
             this.idEncomendaEditar = idEncomenda;
-            this.Text = "Modificar Encomenda Nº " + idEncomenda;
+            this.Text = "Modificar Encomenda Nï¿½ " + idEncomenda;
 
-            // Procura o botão de finalizar e muda o texto e cor
+            // Procura o botï¿½o de finalizar e muda o texto e cor
             Control[] btnControls = this.Controls.Find("btnFinalizar", true);
             if (btnControls.Length > 0 && btnControls[0] is Button btnFinalizar)
             {
                 btnFinalizar.Text = "ALTERAR";
-                btnFinalizar.BackColor = Color.FromArgb(243, 156, 18); // Laranja para alertar que é edição
+                btnFinalizar.BackColor = Color.FromArgb(243, 156, 18); // Laranja para alertar que ï¿½ ediï¿½ï¿½o
             }
 
             // Carregar os dados da encomenda para a grelha
@@ -796,7 +796,7 @@ namespace SoftwareVendas
 
         private void CarregarDadosParaEdicao(int id)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -826,11 +826,11 @@ namespace SoftwareVendas
                         {
                             while (rd2.Read())
                             {
-                                string cod = rd2["Codigo_Material"].ToString();
+                                string cod = rd2["Codigo_Material"]?.ToString() ?? string.Empty;
                                 int qtd = Convert.ToInt32(rd2["Quantidade"]);
-                                string desc = rd2["Descricao"].ToString();
+                                string desc = rd2["Descricao"]?.ToString() ?? string.Empty;
                                 decimal preco = Convert.ToDecimal(rd2["Preco"]);
-                                string descTxt = rd2["Desconto_Texto"].ToString();
+                                string descTxt = rd2["Desconto_Texto"]?.ToString() ?? string.Empty;
 
                                 decimal precoComDesconto = CalcularDescontoComposto(preco, descTxt);
                                 decimal total = precoComDesconto * qtd;
@@ -843,12 +843,12 @@ namespace SoftwareVendas
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Erro ao carregar dados para edição: " + ex.Message);
+                    MessageBox.Show("Erro ao carregar dados para ediï¿½ï¿½o: " + ex.Message);
                 }
             }
         }
 
-        // Handles não utilizados deixados vazios por dependência do designer
+        // Handles nï¿½o utilizados deixados vazios por dependï¿½ncia do designer
         private void groupBox2_Enter(object? sender, EventArgs e) { }
         private void dgvItens_CellContentClick(object? sender, DataGridViewCellEventArgs e) { }
         private void btnRemoverLinha_Click_1(object? sender, EventArgs e) { }

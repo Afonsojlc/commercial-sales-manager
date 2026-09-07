@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
 using System.Drawing;
@@ -8,7 +8,6 @@ namespace SoftwareVendas
 {
     public partial class FormClientes : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
         private bool isProgrammaticChange = false;
 
         public FormClientes()
@@ -32,7 +31,7 @@ namespace SoftwareVendas
             CarregarTodosClientes();
         }
 
-        #region Configuração e Responsividade (Auto-Resize)
+        #region Interface Configuration and Auto-Resize
 
         private void ConfigurarInterface()
         {
@@ -147,7 +146,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Pesquisa e Sugestões (Autocomplete)
+        #region Search and Autocomplete Suggestions
 
         private void CarregarFiltros()
         {
@@ -192,7 +191,7 @@ namespace SoftwareVendas
 
             AutoCompleteStringCollection lista = new AutoCompleteStringCollection();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -227,7 +226,7 @@ namespace SoftwareVendas
 
         private void PesquisarClientes(string termo, string filtro)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -282,7 +281,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Histórico de Compras
+        #region Purchase History
 
         private void dgvClientes_SelectionChanged(object? sender, EventArgs e)
         {
@@ -301,7 +300,7 @@ namespace SoftwareVendas
 
         private void CarregarHistorico(string idCliente)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -327,7 +326,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Proteção do Designer (Métodos Vazios)
+        #region Designer Event Stubs
         private void txtPesquisa_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter) { btnPesquisar.PerformClick(); e.SuppressKeyPress = true; }

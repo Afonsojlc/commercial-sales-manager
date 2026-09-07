@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Drawing;
 using System.IO;
@@ -8,7 +8,6 @@ namespace SoftwareVendas
 {
     public partial class FormLogin : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
         private bool modoPin = true;
 
         public FormLogin()
@@ -96,7 +95,7 @@ namespace SoftwareVendas
             AlinharPaineis();
         }
 
-        // Alterna para o modo de autenticação via Email
+        // Switch to Email authentication mode
         private void label2_Click(object? sender, EventArgs e)
         {
             modoPin = false;
@@ -105,7 +104,7 @@ namespace SoftwareVendas
             txtEmail.Focus();
         }
 
-        // Alterna para o modo de autenticação via PIN
+        // Switch to fast PIN authentication mode
         private void label3_Click(object? sender, EventArgs e)
         {
             modoPin = true;
@@ -132,10 +131,10 @@ namespace SoftwareVendas
             ExecutarLogin(query, txtEmail.Text, txtSenha.Text);
         }
 
-        // Executa a autenticação do utilizador na base de dados de forma centralizada e segura.
+        // Centralized user authentication against SQL Server
         private void ExecutarLogin(string query, string p1, string? p2)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -204,7 +203,7 @@ namespace SoftwareVendas
             {
                 e.SuppressKeyPress = true;
 
-                if (pnlModoPin.Visible)
+                if (modoPin)
                     btnEntrar_Click_1(sender, e);
                 else
                     button1_Click(sender, e);

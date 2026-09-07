@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Windows.Forms;
 
@@ -6,7 +6,6 @@ namespace SoftwareVendas
 {
     public partial class FormAtualizarStock : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
         private readonly string codigoProdutoParaAtualizar;
 
         public FormAtualizarStock(ProdutoDTO produto)
@@ -17,7 +16,7 @@ namespace SoftwareVendas
             ConfigurarInterface(produto);
         }
 
-        #region Configuração da Interface
+        #region Interface Configuration
 
         private void ConfigurarInterface(ProdutoDTO produto)
         {
@@ -38,13 +37,13 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Operações de Base de Dados
+        #region Database Operations
 
         private void btnGravar_Click(object? sender, EventArgs e)
         {
             int novoStock = (int)numNovoStock.Value;
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -73,7 +72,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region Eventos UI
+        #region UI Events
 
         private void btnCancelar_Click(object? sender, EventArgs e)
         {

@@ -28,7 +28,7 @@
                     <div class="flex-1">
                         <label class="block text-sm text-gray-600 mb-1">Pesquisar Cliente (Nome ou NIF)</label>
                         <div class="flex">
-                            <input type="text" @bind="pesquisaCliente" @onkeyup="PesquisarCliente" placeholder="NIF ou Nome..." class="flex-1 border border-gray-300 rounded-l px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                            <input type="text" @bind="pesquisaCliente" @bind:event="oninput" @onkeyup="PesquisarCliente" placeholder="NIF ou Nome..." class="flex-1 border border-gray-300 rounded-l px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
                             <button @onclick="PesquisarClienteBtn" class="bg-gray-100 border border-l-0 border-gray-300 px-4 rounded-r text-gray-600 hover:bg-gray-200">
                                 Procurar
                             </button>
@@ -81,6 +81,10 @@
                         <label class="block text-xs text-gray-600 mb-1">Preço (€)</label>
                         <input type="number" @bind="novoArtigoPreco" readonly class="w-full border border-gray-300 rounded px-2 py-1 bg-gray-50 text-gray-500" />
                     </div>
+                                        <div class="col-span-1">
+                        <label class="block text-xs text-gray-600 mb-1">Desc.(%)</label>
+                        <input type="text" @bind="novoArtigoDesconto" placeholder="Ex: 10+5" class="w-full border border-gray-300 rounded px-2 py-1" />
+                    </div>
                     <div class="col-span-1">
                         <label class="block text-xs text-gray-600 mb-1">Qtd</label>
                         <input type="number" min="1" @bind="novoArtigoQtd" class="w-full border border-gray-300 rounded px-2 py-1" />
@@ -103,6 +107,7 @@
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm">Artigo</th>
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm text-right">Qtd</th>
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm text-right">Preço Unit.</th>
+                            <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm text-center">Desc. (%)</th>
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm text-right">IVA</th>
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm text-right">Total</th>
                             <th class="px-3 py-2 border-b font-medium text-gray-600 text-sm"></th>
@@ -124,6 +129,7 @@
                                     <td class="px-3 py-2 text-sm">@linha.Descricao</td>
                                     <td class="px-3 py-2 text-sm text-right">@linha.Quantidade</td>
                                     <td class="px-3 py-2 text-sm text-right">€ @linha.PrecoUnitario.ToString("N2")</td>
+                                    <td class="px-3 py-2 text-sm text-center">@linha.DescontoTexto</td>
                                     <td class="px-3 py-2 text-sm text-right">@linha.TaxaIva%</td>
                                     <td class="px-3 py-2 text-sm text-right font-semibold">€ @linha.TotalLinha.ToString("N2")</td>
                                     <td class="px-3 py-2 text-sm text-center">
@@ -189,13 +195,31 @@
     // Totais
     private decimal descontoGlobal = 0;
     
-    private decimal subtotal => linhas.Sum(l => l.PrecoUnitario * l.Quantidade);
-    private decimal totalIva => linhas.Sum(l => (l.PrecoUnitario * (l.TaxaIva / 100m)) * l.Quantidade);
+    private decimal subtotal => linhas.Sum(l => l.PrecoFinalCalculado * l.Quantidade);
+    private decimal totalIva => linhas.Sum(l => (l.PrecoFinalCalculado * (l.TaxaIva / 100m)) * l.Quantidade);
     private decimal totalFinal => (subtotal + totalIva) - descontoGlobal;
+
+        private string novoArtigoDesconto = "";
+
+    private decimal CalcularDescontoComposto(decimal precoOriginal, string textoDesconto)
+    {
+        if (string.IsNullOrWhiteSpace(textoDesconto)) return precoOriginal;
+        string textoLimpo = textoDesconto.Replace("%", "").Replace(" ", "");
+        string[] descontos = textoLimpo.Split('+');
+        decimal precoFinal = precoOriginal;
+        foreach (string desc in descontos)
+        {
+            if (decimal.TryParse(desc, out decimal percentagem))
+            {
+                precoFinal -= (precoFinal * (percentagem / 100m));
+            }
+        }
+        return precoFinal;
+    }
 
     private void PesquisarCliente(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") PesquisarClienteBtn();
+        PesquisarClienteBtn();
     }
 
     private void PesquisarClienteBtn()
@@ -277,20 +301,18 @@
     {
         if (string.IsNullOrWhiteSpace(novoArtigoCodigo) || novoArtigoPreco <= 0 || novoArtigoQtd <= 0) return;
 
-        linhas.Add(new LinhaEncomendaModel
+                linhas.Add(new LinhaEncomendaModel
         {
             Codigo = novoArtigoCodigo,
             Descricao = novoArtigoDescricao,
             PrecoUnitario = novoArtigoPreco,
             Quantidade = novoArtigoQtd,
-            TaxaIva = novoArtigoIva
+            TaxaIva = novoArtigoIva,
+            DescontoTexto = novoArtigoDesconto,
+            PrecoFinalCalculado = CalcularDescontoComposto(novoArtigoPreco, novoArtigoDesconto)
         });
 
-        // Limpar inputs
-        novoArtigoCodigo = "";
-        novoArtigoDescricao = "";
-        novoArtigoPreco = 0;
-        novoArtigoQtd = 1;
+        novoArtigoCodigo = ""; novoArtigoDescricao = ""; novoArtigoPreco = 0; novoArtigoQtd = 1; novoArtigoDesconto = "";
     }
 
     private void RemoverLinha(LinhaEncomendaModel l)
@@ -355,6 +377,7 @@
                             cmdLinha.Parameters.AddWithValue("@preco", linha.PrecoUnitario);
                             cmdLinha.Parameters.AddWithValue("@iva", linha.TaxaIva);
                             cmdLinha.Parameters.AddWithValue("@codMat", linha.Codigo);
+                            cmdLinha.Parameters.AddWithValue("@descTxt", linha.DescontoTexto);
                             cmdLinha.ExecuteNonQuery();
                         }
                         
@@ -385,13 +408,15 @@
         }
     }
 
-    public class LinhaEncomendaModel
+            public class LinhaEncomendaModel
     {
         public string Codigo { get; set; } = "";
         public string Descricao { get; set; } = "";
         public int Quantidade { get; set; }
         public decimal PrecoUnitario { get; set; }
         public decimal TaxaIva { get; set; }
-        public decimal TotalLinha => Quantidade * PrecoUnitario * (1 + TaxaIva / 100m);
+        public string DescontoTexto { get; set; } = "";
+        public decimal PrecoFinalCalculado { get; set; }
+        public decimal TotalLinha => Quantidade * PrecoFinalCalculado * (1 + TaxaIva / 100m);
     }
 }

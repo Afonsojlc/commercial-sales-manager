@@ -1,93 +1,110 @@
 ﻿@page "/definicoes"
-@using Microsoft.Data.SqlClient
+@using System.Data.SqlClient
 @using SoftwareVendas
+@inject NavigationManager NavManager
 
 <div class="p-8 h-full">
-    <div class="flex justify-between items-center mb-6">
+    <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Definições do Sistema</h1>
-        <button @onclick="Guardar" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">
-            Guardar Alterações
-        </button>
+        <p class="text-gray-500 mt-1">Configuração da Sessão e Base de Dados</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Database Settings -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Bloco de Sessão -->
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                Base de Dados
+            <h2 class="text-lg font-bold text-[#2B3347] border-b pb-2 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Utilizador Atual
             </h2>
-            
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">String de Conexão SQL Server</label>
-                    <textarea @bind="connString" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded font-mono text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Por exemplo: Data Source=SERVIDOR;Initial Catalog=Vendas;Integrated Security=True</p>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Nome</p>
+                    <p class="font-medium text-gray-800 text-lg">@Sessao.Nome</p>
                 </div>
-                
-                <div class="flex space-x-3">
-                    <button @onclick="Testar" class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 border border-gray-300 transition text-sm font-semibold">
-                        Testar Conexão
-                    </button>
-                    @if (testeSucesso == true)
-                    {
-                        <span class="flex items-center text-green-600 text-sm font-semibold"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Ligação OK</span>
-                    }
-                    else if (testeSucesso == false)
-                    {
-                        <span class="flex items-center text-red-600 text-sm font-semibold"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Falhou</span>
-                    }
+                <div>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cargo</p>
+                    <p class="font-medium text-gray-800 text-lg">@Sessao.Cargo</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Comissão Atribuída</p>
+                    <p class="font-medium text-green-600 text-lg">@Sessao.PercentagemComissao.ToString("N2")%</p>
                 </div>
             </div>
         </div>
 
-        <!-- Preferences -->
+        <!-- Bloco de Base de Dados -->
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Preferências Locais
+            <h2 class="text-lg font-bold text-[#2B3347] border-b pb-2 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                Conexão SQL Server
             </h2>
-            
             <div class="space-y-4">
-                <p class="text-gray-500 text-sm">As definições visuais agora são geridas globalmente pelo tema Blazor WebView2. Opções antigas de cor e janelas foram desativadas a favor de um design moderno unificado.</p>
-                <div class="bg-blue-50 p-4 rounded text-blue-800 text-sm">
-                    <strong>Informação:</strong> O tema Flowlu encontra-se ativado e não pode ser removido.
+                <div>
+                    <label class="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Connection String</label>
+                    <textarea @bind="connString" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                
+                @if(!string.IsNullOrEmpty(mensagem))
+                {
+                    <div class="p-3 rounded text-sm @(sucesso ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800")">
+                        @mensagem
+                    </div>
+                }
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button @onclick="TestarConexao" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-semibold border border-gray-300 transition">
+                        Testar
+                    </button>
+                    <button @onclick="GuardarConexao" class="px-4 py-2 bg-[#3F6CD8] text-white rounded hover:bg-blue-700 font-semibold shadow transition">
+                        Guardar
+                    </button>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
 @code {
     private string connString = "";
-    private bool? testeSucesso = null;
+    private string mensagem = "";
+    private bool sucesso = false;
 
     protected override void OnInitialized()
     {
         connString = DatabaseConfig.ConnectionString;
     }
 
-    private void Testar()
+    private void TestarConexao()
     {
-        try
+        string stringOriginal = DatabaseConfig.ConnectionString;
+        DatabaseConfig.ConnectionString = connString.Trim();
+
+        if (DatabaseConfig.TestarConexao(out string erro))
         {
-            using (SqlConnection con = new SqlConnection(connString))
-            {
-                con.Open();
-                testeSucesso = true;
-            }
+            sucesso = true;
+            mensagem = "Conexão estabelecida com sucesso!";
         }
-        catch
+        else
         {
-            testeSucesso = false;
+            sucesso = false;
+            mensagem = "Falha: " + erro;
+            DatabaseConfig.ConnectionString = stringOriginal;
         }
     }
 
-    private void Guardar()
+    private void GuardarConexao()
     {
-        if (!string.IsNullOrWhiteSpace(connString))
+        if (string.IsNullOrWhiteSpace(connString))
         {
-            DatabaseConfig.ConnectionString = connString.Trim();
+            sucesso = false;
+            mensagem = "A Connection String não pode estar vazia.";
+            return;
         }
+
+        DatabaseConfig.ConnectionString = connString.Trim();
+        sucesso = true;
+        mensagem = "Configurações guardadas com sucesso!";
     }
 }

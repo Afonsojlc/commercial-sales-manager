@@ -87,6 +87,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery]
+    public string? q { get; set; }
+
     private string filtro = "";
     private DateTime dataInicio = DateTime.Now.AddMonths(-1);
     private DateTime dataFim = DateTime.Now.AddDays(1);
@@ -94,6 +97,10 @@
 
     protected override void OnInitialized()
     {
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            filtro = q;
+        }
         CarregarDados();
     }
 
@@ -115,7 +122,7 @@
                         E.Estado as 'Estado'
                     FROM Encomenda E
                     INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                    INNER JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
+                    LEFT JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
                     WHERE E.Data_Encomenda BETWEEN @dataI AND @dataF
                       AND (@filtro = '' OR 
                            C.Nome_Cliente LIKE @filtroBusca OR 
@@ -154,3 +161,4 @@
         NavManager.NavigateTo($"/encomendas/{id}");
     }
 }
+

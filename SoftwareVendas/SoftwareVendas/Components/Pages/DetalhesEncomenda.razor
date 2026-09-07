@@ -90,6 +90,7 @@
                         <th class="py-3 font-semibold text-sm">Descrição do Artigo</th>
                         <th class="py-3 font-semibold text-sm text-right">Qtd</th>
                         <th class="py-3 font-semibold text-sm text-right">Preço Unit.</th>
+                        <th class="py-3 font-semibold text-sm text-center">Desc. (%)</th>
                         <th class="py-3 font-semibold text-sm text-right">IVA</th>
                         <th class="py-3 font-semibold text-sm text-right">Total</th>
                     </tr>
@@ -102,6 +103,7 @@
                             <td class="py-4 text-sm">@l.Descricao</td>
                             <td class="py-4 text-sm text-right font-medium">@l.Qtd</td>
                             <td class="py-4 text-sm text-right">€ @l.Preco.ToString("N2")</td>
+                            <td class="py-4 text-sm text-center">@l.DescontoTexto</td>
                             <td class="py-4 text-sm text-right">@l.Iva%</td>
                             <td class="py-4 text-sm text-right font-bold text-gray-800">€ @l.Subtotal.ToString("N2")</td>
                         </tr>
@@ -143,20 +145,17 @@
     
     private bool carregando = true;
 
-    // Encomenda Data
     private DateTime dataEncomenda;
     private decimal valorTotal;
     private decimal descontoGlobal;
     private string estadoOriginal = "";
     private string estadoSelecionado = "";
     
-    // Cliente Data
     private string clienteNome = "";
     private string clienteNIF = "";
     private string clienteEmail = "";
     private string clienteTelefone = "";
 
-    // Linhas
     private List<LinhaView> linhas = new List<LinhaView>();
 
     protected override void OnInitialized()
@@ -206,7 +205,7 @@
 
                 // 2. Linhas
                 string queryL = @"
-                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Desconto, Imposto
+                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Desconto, Imposto, Desconto_Texto
                     FROM Linha_Encomenda WHERE NE = @id";
                 
                 using (SqlCommand cmd = new SqlCommand(queryL, con))
@@ -220,9 +219,10 @@
                             {
                                 Codigo = rd["Codigo_Material"].ToString()!,
                                 Descricao = rd["Descricao"].ToString()!,
-                                Qtd = Convert.ToInt32(rd["Quantidade"]),
+                                                                Qtd = Convert.ToInt32(rd["Quantidade"]),
                                 Preco = Convert.ToDecimal(rd["Preco"]),
-                                Iva = Convert.ToDecimal(rd["Imposto"])
+                                Iva = Convert.ToDecimal(rd["Imposto"]),
+                                DescontoTexto = rd["Desconto_Texto"]?.ToString() ?? ""
                             });
                         }
                     }
@@ -263,13 +263,30 @@
         await JS.InvokeVoidAsync("window.print");
     }
 
-    public class LinhaView
+            public class LinhaView
     {
         public string Codigo { get; set; } = "";
         public string Descricao { get; set; } = "";
         public int Qtd { get; set; }
         public decimal Preco { get; set; }
         public decimal Iva { get; set; }
-        public decimal Subtotal => Qtd * Preco * (1 + Iva/100m);
+        public string DescontoTexto { get; set; } = "";
+
+        private decimal PrecoCalculado 
+        {
+            get 
+            {
+                if (string.IsNullOrWhiteSpace(DescontoTexto)) return Preco;
+                string textoLimpo = DescontoTexto.Replace("%", "").Replace(" ", "");
+                decimal final = Preco;
+                foreach (var d in textoLimpo.Split('+'))
+                {
+                    if (decimal.TryParse(d, out decimal p)) final -= (final * (p / 100m));
+                }
+                return final;
+            }
+        }
+        public decimal Subtotal => Qtd * PrecoCalculado * (1 + Iva/100m);
     }
 }
+

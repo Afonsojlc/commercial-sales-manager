@@ -18,7 +18,7 @@
             <option value="Morada">Morada</option>
         </select>
         
-        <input @bind="termo" @onkeydown="OnEnter" type="text" placeholder="Pesquisar cliente..." class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
+        <input @bind="termo" @bind:event="oninput" @onkeyup="Pesquisar" type="text" placeholder="Pesquisar cliente..." class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
         
         <button @onclick="Pesquisar" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">
             Pesquisar
@@ -179,3 +179,4 @@
         }
     }
 }
+

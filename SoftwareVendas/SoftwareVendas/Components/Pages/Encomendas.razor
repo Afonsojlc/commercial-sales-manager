@@ -91,7 +91,7 @@
     public string? q { get; set; }
 
     private string filtro = "";
-    private DateTime dataInicio = DateTime.Now.AddMonths(-1);
+    private DateTime dataInicio = DateTime.Now.AddYears(-10);
     private DateTime dataFim = DateTime.Now.AddDays(1);
     private DataTable? dtEncomendas;
 
@@ -161,4 +161,5 @@
         NavManager.NavigateTo($"/encomendas/{id}");
     }
 }
+
 

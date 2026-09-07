@@ -69,10 +69,21 @@
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4">Adicionar Produto</h2>
                 <div class="grid grid-cols-12 gap-4 items-end">
-                    <div class="col-span-3">
-                        <label class="block text-xs text-gray-600 mb-1">Cód. Artigo</label>
-                        <input type="text" @bind="novoArtigoCodigo" @onfocusout="BuscarProdutoCodigo" class="w-full border border-gray-300 rounded px-2 py-1" />
-                    </div>
+                                          <div class="col-span-3 relative">
+                          <label class="block text-xs text-gray-600 mb-1">Artigo (Cód ou Nome)</label>
+                          <input type="text" @bind="novoArtigoCodigo" @bind:event="oninput" @onkeyup="BuscarProdutoCodigo" autocomplete="off" placeholder="Ex: PRD001" class="w-full border border-gray-300 rounded px-2 py-1 focus:ring-blue-500" />
+                          @if (produtosResultados != null && produtosResultados.Count > 0)
+                          {
+                              <div class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto">
+                                  @foreach (var p in produtosResultados)
+                                  {
+                                      <div class="p-2 hover:bg-blue-50 cursor-pointer border-b text-xs" @onclick="() => SelecionarProduto(p)">
+                                          <span class="font-bold">@p.Codigo</span> - <span>@p.Descricao</span>
+                                      </div>
+                                  }
+                              </div>
+                          }
+                      </div>
                     <div class="col-span-4">
                         <label class="block text-xs text-gray-600 mb-1">Descrição</label>
                         <input type="text" @bind="novoArtigoDescricao" readonly class="w-full border border-gray-300 rounded px-2 py-1 bg-gray-50 text-gray-500" />
@@ -264,37 +275,53 @@
         pesquisaCliente = "";
     }
 
-    private void BuscarProdutoCodigo()
+        private List<dynamic> produtosResultados = new List<dynamic>();
+
+    private void BuscarProdutoCodigo(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(novoArtigoCodigo)) return;
+        produtosResultados.Clear();
+        if (string.IsNullOrWhiteSpace(novoArtigoCodigo)) 
+        {
+            novoArtigoDescricao = ""; novoArtigoPreco = 0; novoArtigoIva = 23; return;
+        }
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
             {
                 con.Open();
-                string query = "SELECT Descricao, PVP_Unidade, Taxa_IVA FROM Material WHERE Codigo = @cod";
+                string query = "SELECT Codigo, Descricao, PVP_Unidade, Taxa_IVA FROM Material WHERE Codigo LIKE @cod OR Descricao LIKE @cod";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@cod", novoArtigoCodigo.Trim());
+                    cmd.Parameters.AddWithValue("@cod", "%" + novoArtigoCodigo.Trim() + "%");
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
-                        if (rd.Read())
+                        while (rd.Read())
                         {
-                            novoArtigoDescricao = rd["Descricao"].ToString()!;
-                            novoArtigoPreco = Convert.ToDecimal(rd["PVP_Unidade"]);
-                            novoArtigoIva = Convert.ToDecimal(rd["Taxa_IVA"]);
-                        }
-                        else
-                        {
-                            novoArtigoDescricao = "Não Encontrado";
-                            novoArtigoPreco = 0;
+                            produtosResultados.Add(new {
+                                Codigo = rd["Codigo"].ToString()!,
+                                Descricao = rd["Descricao"].ToString()!,
+                                PVP_Unidade = Convert.ToDecimal(rd["PVP_Unidade"]),
+                                Taxa_IVA = Convert.ToDecimal(rd["Taxa_IVA"])
+                            });
                         }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                mensagemAviso = "Erro ao pesquisar produto: " + ex.Message;
+            }
         }
+    }
+
+    private void SelecionarProduto(dynamic p)
+    {
+        novoArtigoCodigo = p.Codigo;
+        novoArtigoDescricao = p.Descricao;
+        novoArtigoPreco = p.PVP_Unidade;
+        novoArtigoIva = p.Taxa_IVA;
+        produtosResultados.Clear();
     }
 
     private void AdicionarLinha()
@@ -420,3 +447,6 @@
         public decimal TotalLinha => Quantidade * PrecoFinalCalculado * (1 + TaxaIva / 100m);
     }
 }
+
+
+

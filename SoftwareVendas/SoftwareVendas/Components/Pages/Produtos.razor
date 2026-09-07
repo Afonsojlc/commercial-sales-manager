@@ -1,5 +1,5 @@
 ﻿@page "/produtos"
-@using System.Data.SqlClient
+@using Microsoft.Data.SqlClient
 @using SoftwareVendas
 
 <div class="p-8 flex flex-col h-full">
@@ -46,7 +46,7 @@
                                     <p class="text-2xl font-bold text-[#3F6CD8]">€ @p.Preco.ToString("N2")</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs text-gray-500">IVA @p.TaxaIVA%</span>
+                                    <span class="text-xs text-gray-500">IVA 23%</span>
                                 </div>
                             </div>
                         </div>
@@ -131,13 +131,13 @@
                                 Descricao = reader["Descricao"].ToString()!,
                                 Preco = Convert.ToDecimal(reader["PVP_Unidade"]),
                                 Stock = Convert.ToInt32(reader["Stock"]),
-                                TaxaIVA = Convert.ToInt32(reader["Taxa_IVA"]),
-                                TipoID = Convert.ToInt32(reader["ID_Tipo"])
+                                
+                                
                             };
                             // Hardcoded category logic from FormProdutos
-                            if (p.TipoID == 1) p.Categoria = "Produtos Físicos";
-                            else if (p.TipoID == 2) p.Categoria = "Serviços";
-                            else p.Categoria = "Outros";
+                            
+                            
+                            
 
                             produtos.Add(p);
                         }
@@ -167,3 +167,4 @@
         CarregarProdutos();
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 
 namespace SoftwareVendas
@@ -8,12 +8,63 @@ namespace SoftwareVendas
     /// </summary>
     public static class DatabaseConfig
     {
+        private static string _connectionString =
+            @"Server=(localdb)\MSSQLLocalDB;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        private static bool _instanciaDetectada = false;
+
+        public static string ConnectionString
+        {
+            get
+            {
+                if (!_instanciaDetectada)
+                {
+                    DetectarMelhorInstancia();
+                }
+                return _connectionString;
+            }
+            set
+            {
+                _connectionString = value;
+                _instanciaDetectada = true;
+            }
+        }
+
+        private static readonly string[] ServidoresCandidatos = new[]
+        {
+            @"(localdb)\MSSQLLocalDB",
+            @"DESKTOP-P0S20G1\SQLEXPRESS",
+            @"localhost\SQLEXPRESS",
+            @".\SQLEXPRESS",
+            @"localhost"
+        };
+
         /// <summary>
-        /// Default connection string targeting Microsoft SQL Server instance.
-        /// Can be customized at runtime or retrieved from settings.
+        /// Attempts to connect to known SQL Server instances and selects the first active one.
         /// </summary>
-        public static string ConnectionString { get; set; } =
-            @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
+        public static void DetectarMelhorInstancia()
+        {
+            foreach (string servidor in ServidoresCandidatos)
+            {
+                string connStr = $"Server={servidor};Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;Connection Timeout=2;";
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(connStr))
+                    {
+                        con.Open();
+                        _connectionString = connStr;
+                        _instanciaDetectada = true;
+                        return;
+                    }
+                }
+                catch
+                {
+                    // Continue to next candidate
+                }
+            }
+
+            _instanciaDetectada = true;
+        }
 
         /// <summary>
         /// Creates and returns a new SqlConnection instance using the active connection string.

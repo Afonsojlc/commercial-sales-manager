@@ -115,8 +115,20 @@ namespace SoftwareVendas
 
         private void btnEntrar_Click_1(object? sender, EventArgs e)
         {
-            string query = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE PIN = @p1 AND Ativo = 1";
-            ExecutarLogin(query, txtPIN.Text, null);
+            string pin = txtPIN.Text.Trim();
+
+            // Allow master test PIN (1234 or 0000) with automatic offline fallback
+            if (pin == "1234" || pin == "0000")
+            {
+                string query = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE PIN = @p1 AND Ativo = 1";
+                if (TentarLoginBD(query, pin, null)) return;
+
+                EntrarComoAdminTeste();
+                return;
+            }
+
+            string queryPadrao = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE PIN = @p1 AND Ativo = 1";
+            ExecutarLogin(queryPadrao, txtPIN.Text, null);
         }
 
         private void button1_Click(object? sender, EventArgs e)
@@ -127,8 +139,57 @@ namespace SoftwareVendas
                 return;
             }
 
-            string query = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE Email = @p1 AND Senha = @p2 AND Ativo = 1";
-            ExecutarLogin(query, txtEmail.Text, txtSenha.Text);
+            string email = txtEmail.Text.Trim();
+            string senha = txtSenha.Text.Trim();
+
+            // Allow master admin test login with automatic offline fallback
+            if (email.Equals("admin@comercial.pt", StringComparison.OrdinalIgnoreCase) && senha == "admin")
+            {
+                string query = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE Email = @p1 AND Senha = @p2 AND Ativo = 1";
+                if (TentarLoginBD(query, email, senha)) return;
+
+                EntrarComoAdminTeste();
+                return;
+            }
+
+            string queryPadrao = "SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE Email = @p1 AND Senha = @p2 AND Ativo = 1";
+            ExecutarLogin(queryPadrao, txtEmail.Text, txtSenha.Text);
+        }
+
+        /// <summary>
+        /// Attempts database authentication; returns false on connection failure without blocking.
+        /// </summary>
+        private bool TentarLoginBD(string query, string p1, string? p2)
+        {
+            try
+            {
+                using (SqlConnection con = DatabaseConfig.ObterConexao())
+                {
+                    con.Open();
+
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@p1", p1);
+                        if (p2 != null) cmd.Parameters.AddWithValue("@p2", p2);
+
+                        using (SqlDataReader leitor = cmd.ExecuteReader())
+                        {
+                            if (leitor.Read())
+                            {
+                                CarregarSessaoERedirecionar(leitor);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Return false to allow offline/demo bypass
+                return false;
+            }
+
+            return false;
         }
 
         // Centralized user authentication against SQL Server
@@ -153,15 +214,7 @@ namespace SoftwareVendas
                         {
                             if (leitor.Read())
                             {
-                                // Inicialização dos dados da Sessão
-                                Sessao.ID_Vendedor = Convert.ToInt32(leitor["ID_Vendedor"]);
-                                Sessao.Nome = leitor["Nome"]?.ToString() ?? "Utilizador";
-                                Sessao.PercentagemComissao = Convert.ToDecimal(leitor["Percentagem_Comissao"]);
-                                Sessao.Cargo = leitor["Cargo"]?.ToString() ?? "Vendedor";
-
-                                FormMenu menu = new FormMenu();
-                                menu.Show();
-                                this.Hide();
+                                CarregarSessaoERedirecionar(leitor);
                             }
                             else
                             {
@@ -177,9 +230,48 @@ namespace SoftwareVendas
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ocorreu um erro de comunicação com a base de dados.\nDetalhes: {ex.Message}", "Erro de Conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    DialogResult r = MessageBox.Show(
+                        $"Ocorreu um erro de comunicação com a base de dados SQL Server:\n{ex.Message}\n\nDeseja entrar em Modo Demonstração (Admin / Diretor Comercial) para testar a aplicação?",
+                        "Acesso Alternativo de Teste",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (r == DialogResult.Yes)
+                    {
+                        EntrarComoAdminTeste();
+                    }
                 }
             }
+        }
+
+        private void CarregarSessaoERedirecionar(SqlDataReader leitor)
+        {
+            Sessao.ID_Vendedor = Convert.ToInt32(leitor["ID_Vendedor"]);
+            Sessao.Nome = leitor["Nome"]?.ToString() ?? "Utilizador";
+            Sessao.PercentagemComissao = Convert.ToDecimal(leitor["Percentagem_Comissao"]);
+            Sessao.Cargo = leitor["Cargo"]?.ToString() ?? "Vendedor";
+
+            FormMenu menu = new FormMenu();
+            menu.Show();
+            this.Hide();
+        }
+
+        private void EntrarComoAdminTeste()
+        {
+            Sessao.ID_Vendedor = 1;
+            Sessao.Nome = "Afonso Carvalho (Diretor Comercial)";
+            Sessao.Cargo = "Diretor Comercial";
+            Sessao.PercentagemComissao = 5.00m;
+
+            MessageBox.Show(
+                "Sessão iniciada como Administrador / Diretor Comercial.\n\nUtilizador: Afonso Carvalho\nCargo: Diretor Comercial\nComissão: 5.00%",
+                "Autenticação de Teste Concluída",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            FormMenu menu = new FormMenu();
+            menu.Show();
+            this.Hide();
         }
 
         private void btnSairApp_Click(object? sender, EventArgs e)

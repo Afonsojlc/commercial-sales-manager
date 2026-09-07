@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SoftwareVendas
 {
     internal static class Program
@@ -8,8 +10,11 @@ namespace SoftwareVendas
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Enforce Portuguese culture (pt-PT) globally for standard Euro (€) formatting and comma decimals
+            var culturaPt = new CultureInfo("pt-PT");
+            CultureInfo.DefaultThreadCurrentCulture = culturaPt;
+            CultureInfo.DefaultThreadCurrentUICulture = culturaPt;
+
             ApplicationConfiguration.Initialize();
             Application.Run(new FormLogin());
         }

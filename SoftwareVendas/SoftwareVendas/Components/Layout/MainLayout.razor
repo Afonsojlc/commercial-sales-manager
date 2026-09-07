@@ -1,0 +1,47 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="flex h-screen w-full">
+    <!-- Sidebar -->
+    <div class="w-72 bg-[#3B4358] flex flex-col">
+        <div class="h-20 flex items-center px-6">
+            <span class="text-white text-2xl font-bold">AJLC Soluctions</span>
+        </div>
+        <nav class="flex-1 px-4 py-4 space-y-2">
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-gray-300 hover:text-white hover:bg-gray-700 transition" href="novavenda" Match="NavLinkMatch.All">
+                Nova Venda
+            </NavLink>
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-gray-300 hover:text-white hover:bg-gray-700 transition" href="produtos">
+                Produtos
+            </NavLink>
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-gray-300 hover:text-white hover:bg-gray-700 transition" href="clientes">
+                Clientes
+            </NavLink>
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-gray-300 hover:text-white hover:bg-gray-700 transition" href="encomendas">
+                Encomendas
+            </NavLink>
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-gray-300 hover:text-white hover:bg-gray-700 transition" href="dashboard">
+                Meus Ganhos
+            </NavLink>
+        </nav>
+        <div class="p-4">
+            <NavLink class="block w-full text-left px-4 py-3 rounded text-red-400 hover:text-red-300 hover:bg-gray-700 transition" href="/" Match="NavLinkMatch.All">
+                Sair
+            </NavLink>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col bg-[#F7F8FA] overflow-hidden">
+        <!-- Header -->
+        <div class="h-20 bg-[#2B3347] flex items-center justify-between px-8 shrink-0">
+            <div class="text-white text-lg">Diretor Comercial: Afonso Carvalho</div>
+            <div class="text-white font-bold text-lg">@DateTime.Now.ToString("HH:mm:ss | dd/MM/yyyy")</div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="flex-1 overflow-auto">
+            @Body
+        </div>
+    </div>
+</div>

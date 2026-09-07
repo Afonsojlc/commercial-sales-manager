@@ -1,0 +1,135 @@
+﻿@page "/encomendas"
+@using System.Data
+@using System.Data.SqlClient
+@using SoftwareVendas
+
+<div class="p-8 flex flex-col h-full">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Gestão de Encomendas</h1>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center space-x-4 mb-6 shrink-0">
+        <input @bind="termoPesquisa" type="text" placeholder="Pesquisar por NIF, Nome do Cliente ou Nº da Encomenda..." class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
+        
+        <select @bind="estadoFiltro" class="border border-gray-300 rounded px-3 py-2 w-48 focus:ring-blue-500 focus:border-blue-500">
+            <option value="Todos">Todos os Estados</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="PAGA">Paga</option>
+            <option value="FECHADA">Fechada</option>
+        </select>
+        
+        <button @onclick="Pesquisar" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">
+            Pesquisar
+        </button>
+    </div>
+
+    <div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        <div class="bg-[#2B3347] text-white px-4 py-3 font-semibold">Listagem de Encomendas</div>
+        <div class="flex-1 overflow-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600">Nº Venda</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600">Cliente</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600">NIF</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600">Data</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600">Estado</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600 text-right">Total</th>
+                        <th class="px-4 py-3 border-b font-medium text-gray-600 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dtEncomendas != null)
+                    {
+                        @foreach (DataRow row in dtEncomendas.Rows)
+                        {
+                            string estado = row["Estado"].ToString() ?? "";
+                            string corEstado = "bg-gray-100 text-gray-800";
+                            if (estado == "PENDENTE") corEstado = "bg-yellow-100 text-yellow-800";
+                            if (estado == "PAGA") corEstado = "bg-green-100 text-green-800";
+                            if (estado == "FECHADA") corEstado = "bg-blue-100 text-blue-800";
+
+                            <tr class="border-b hover:bg-blue-50 transition">
+                                <td class="px-4 py-4 text-sm font-bold text-gray-700">#@row["Nº Venda"]</td>
+                                <td class="px-4 py-4 text-sm">@row["Nome Cliente"]</td>
+                                <td class="px-4 py-4 text-sm text-gray-500">@row["NIF"]</td>
+                                <td class="px-4 py-4 text-sm">@Convert.ToDateTime(row["Data"]).ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="px-4 py-4 text-sm">
+                                    <span class="px-2 py-1 rounded text-xs font-bold @corEstado">@estado</span>
+                                </td>
+                                <td class="px-4 py-4 text-sm font-bold text-right text-[#3F6CD8]">
+                                    € @Convert.ToDecimal(row["Total (€)"]).ToString("N2")
+                                </td>
+                                <td class="px-4 py-4 text-sm text-center">
+                                    <button class="text-blue-500 hover:text-blue-700 font-semibold">Ver Detalhes</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string termoPesquisa = "";
+    private string estadoFiltro = "Todos";
+    private DataTable? dtEncomendas;
+
+    protected override void OnInitialized()
+    {
+        Pesquisar();
+    }
+
+    private void Pesquisar()
+    {
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = @"SELECT 
+                                E.Numero_Encomenda as 'Nº Venda', 
+                                C.Nome_Cliente as 'Nome Cliente', 
+                                C.NIF as 'NIF',
+                                E.Data_Encomenda as 'Data', 
+                                E.Valor_Total as 'Total (€)', 
+                                E.Estado as 'Estado'
+                                FROM Encomenda E
+                                INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                                WHERE 1=1 ";
+
+                if (!string.IsNullOrWhiteSpace(termoPesquisa))
+                {
+                    query += " AND (C.NIF LIKE @t OR C.Nome_Cliente LIKE @t OR CAST(E.Numero_Encomenda as varchar) LIKE @t) " ;
+                }
+                
+                if (estadoFiltro != "Todos")
+                {
+                    query += " AND E.Estado = @est " ;
+                }
+
+                query += " ORDER BY E.Data_Encomenda DESC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    if (!string.IsNullOrWhiteSpace(termoPesquisa))
+                    {
+                        cmd.Parameters.AddWithValue("@t", "%" + termoPesquisa + "%");
+                    }
+                    if (estadoFiltro != "Todos")
+                    {
+                        cmd.Parameters.AddWithValue("@est", estadoFiltro);
+                    }
+                    
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    dtEncomendas = new DataTable();
+                    da.Fill(dtEncomendas);
+                }
+            }
+            catch { }
+        }
+    }
+}

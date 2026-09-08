@@ -154,11 +154,12 @@
 </div>
 
 @code {
+    #region Component State & Fields
     private string connString = "";
     private string mensagem = "";
     private bool sucesso = false;
 
-    // Campos da Empresa
+    // Company profile fields
     private string empresaNome = "";
     private string empresaSubtitulo = "";
     private string empresaNif = "";
@@ -167,12 +168,14 @@
     private string empresaTelefone = "";
     private string empresaEmail = "";
     private string mensagemEmpresa = "";
+    #endregion
 
+    #region Lifecycle Hooks
     protected override void OnInitialized()
     {
         connString = DatabaseConfig.ConnectionString;
 
-        // Carregar valores de ConfiguracaoEmpresa
+        // Initialize company settings from persisted storage
         empresaNome = ConfiguracaoEmpresa.NomeEmpresa;
         empresaSubtitulo = ConfiguracaoEmpresa.Subtitulo;
         empresaNif = ConfiguracaoEmpresa.NIF;
@@ -181,7 +184,12 @@
         empresaTelefone = ConfiguracaoEmpresa.Telefone;
         empresaEmail = ConfiguracaoEmpresa.Email;
     }
+    #endregion
 
+    #region Company Profile Operations
+    /// <summary>
+    /// Persists updated company details to local JSON configuration.
+    /// </summary>
     private void GuardarDadosEmpresa()
     {
         ConfiguracaoEmpresa.NomeEmpresa = empresaNome.Trim();
@@ -195,7 +203,12 @@
         ConfiguracaoEmpresa.Guardar();
         mensagemEmpresa = "Dados da empresa gravados e atualizados em todas as notas de encomenda!";
     }
+    #endregion
 
+    #region Database Connection Management
+    /// <summary>
+    /// Validates SQL Server connectivity against the specified connection string.
+    /// </summary>
     private void TestarConexao()
     {
         string stringOriginal = DatabaseConfig.ConnectionString;
@@ -214,6 +227,9 @@
         }
     }
 
+    /// <summary>
+    /// Persists the active connection string.
+    /// </summary>
     private void GuardarConexao()
     {
         if (string.IsNullOrWhiteSpace(connString))
@@ -227,4 +243,5 @@
         sucesso = true;
         mensagem = "Configurações guardadas com sucesso!";
     }
+    #endregion
 }

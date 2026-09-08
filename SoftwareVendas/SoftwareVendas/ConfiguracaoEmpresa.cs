@@ -4,8 +4,13 @@ using System.Text.Json;
 
 namespace SoftwareVendas
 {
+    /// <summary>
+    /// Manages enterprise profile settings and JSON persistence for headers and printable documents.
+    /// </summary>
     public static class ConfiguracaoEmpresa
     {
+        #region Company Profile Properties
+
         public static string NomeEmpresa { get; set; } = "AJLC Soluctions";
         public static string Subtitulo { get; set; } = "Gestão Comercial & Distribuição de Material Elétrico";
         public static string NIF { get; set; } = "509 999 999";
@@ -16,11 +21,18 @@ namespace SoftwareVendas
 
         private static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "empresa_config.json");
 
+        #endregion
+
+        #region Configuration Persistence
+
         static ConfiguracaoEmpresa()
         {
             Carregar();
         }
 
+        /// <summary>
+        /// Loads saved company details from the local configuration file.
+        /// </summary>
         public static void Carregar()
         {
             try
@@ -41,9 +53,15 @@ namespace SoftwareVendas
                     }
                 }
             }
-            catch { }
+            catch
+            {
+                // Fallback to default in-memory values if file read fails
+            }
         }
 
+        /// <summary>
+        /// Persists company profile values to local JSON storage.
+        /// </summary>
         public static void Guardar()
         {
             try
@@ -61,8 +79,15 @@ namespace SoftwareVendas
                 string json = JsonSerializer.Serialize(dados, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(ConfigFilePath, json);
             }
-            catch { }
+            catch
+            {
+                // Suppress disk write exceptions on restricted environments
+            }
         }
+
+        #endregion
+
+        #region Data Transfer Object
 
         private class EmpresaDadosDTO
         {
@@ -74,5 +99,7 @@ namespace SoftwareVendas
             public string? Telefone { get; set; }
             public string? Email { get; set; }
         }
+
+        #endregion
     }
 }

@@ -168,8 +168,13 @@
 </div>
 
 @code {
+    #region Search State & Navigation
+
     private string termoBuscaGlobal = "";
 
+    /// <summary>
+    /// Dispatches top navbar search query to the orders management grid.
+    /// </summary>
     private void ExecutarBuscaGlobal(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(termoBuscaGlobal))
@@ -177,4 +182,6 @@
             NavManager.NavigateTo($"/encomendas?q={Uri.EscapeDataString(termoBuscaGlobal)}", forceLoad: true);
         }
     }
+
+    #endregion
 }

@@ -167,6 +167,8 @@
 </div>
 
 @code {
+    #region Component State & Parameters
+
     [SupplyParameterFromQuery]
     public string? q { get; set; }
 
@@ -176,6 +178,10 @@
     private DataTable? dtEncomendas;
     private string mensagemErro = "";
 
+    #endregion
+
+    #region Lifecycle Hooks
+
     protected override void OnInitialized()
     {
         if (!string.IsNullOrWhiteSpace(q))
@@ -184,6 +190,10 @@
         }
         CarregarDados();
     }
+
+    #endregion
+
+    #region Data Loading
 
     private void CarregarDados()
     {
@@ -254,6 +264,10 @@
         CarregarDados();
     }
 
+    #endregion
+
+    #region Navigation & Order Actions
+
     private void NovaVenda()
     {
         NavManager.NavigateTo("/novavenda");
@@ -269,12 +283,18 @@
         NavManager.NavigateTo($"/novavenda/{id}");
     }
 
+    #endregion
+
+    #region CSV & Excel Export
+
+    /// <summary>
+    /// Generates semicolon-delimited CSV with UTF-8 BOM for Microsoft Excel (pt-PT).
+    /// </summary>
     private async Task ExportarExcel()
     {
         if (dtEncomendas == null || dtEncomendas.Rows.Count == 0) return;
 
         var sb = new StringBuilder();
-        // Cabeçalho CSV compatível com Excel pt-PT (separador ';')
         sb.AppendLine("Nº Encomenda;Data Encomenda;Cliente;Vendedor;Total Venda (€);Estado");
 
         foreach (DataRowView row in dtEncomendas.DefaultView)
@@ -303,4 +323,6 @@
         }
         return text;
     }
+
+    #endregion
 }

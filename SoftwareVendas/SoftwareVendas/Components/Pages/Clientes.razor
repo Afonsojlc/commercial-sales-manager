@@ -225,6 +225,8 @@
 </div>
 
 @code {
+    #region Filter & Component State
+
     private string filtro = "Nome";
     private string termo = "";
     private DataTable? dtClientes;
@@ -232,7 +234,7 @@
     private string idClienteSelecionado = "";
     private string mensagemAviso = "";
 
-    // Modal Novo Cliente
+    // New Customer modal form buffer
     private bool mostrarModalNovoCliente = false;
     private string novoIdCliente = "";
     private string novoNome = "";
@@ -248,6 +250,10 @@
     {
         Pesquisar();
     }
+
+    #endregion
+
+    #region Data Retrieval & Customer Search
 
     private void Pesquisar()
     {
@@ -359,6 +365,10 @@
             }
         }
     }
+
+    #endregion
+
+    #region Customer Creation & Modal Management
 
     private void AbrirModalNovoCliente()
     {
@@ -503,6 +513,10 @@
         }
     }
 
+    #endregion
+
+    #region Navigation & Quick Actions
+
     private void IniciarVendaParaCliente(string id)
     {
         if (!string.IsNullOrEmpty(id))
@@ -518,4 +532,6 @@
             NavManager.NavigateTo($"/encomendas/{ne}");
         }
     }
+
+    #endregion
 }

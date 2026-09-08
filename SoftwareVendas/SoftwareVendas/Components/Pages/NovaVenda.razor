@@ -348,6 +348,8 @@
 </div>
 
 @code {
+    #region Parameters & Component State
+
     [Parameter]
     public int? IdEditar { get; set; }
 
@@ -365,7 +367,7 @@
     private int idEncomendaEditar = 0;
     private string mensagemAviso = "";
     
-    // Cliente
+    // Customer search state
     private string _pesquisaCliente = "";
     private string PesquisaCliente
     {
@@ -379,7 +381,7 @@
     private List<ClienteSearchResult> clientesResultados = new List<ClienteSearchResult>();
     private ClienteSearchResult? clienteSelecionado = null;
 
-    // Novo Artigo
+    // Article entry buffer
     private string _pesquisaProduto = "";
     private string PesquisaProduto
     {
@@ -398,14 +400,18 @@
     private string novoArtigoDesconto = "";
     private int novoArtigoQtd = 1;
 
-    // Linhas
+    // Order items
     private List<LinhaEncomendaModel> linhas = new List<LinhaEncomendaModel>();
 
-    // Totais
+    // Order totals
     private decimal descontoGlobal = 0;
     private decimal subtotal => linhas.Sum(l => l.PrecoFinalCalculado * l.Quantidade);
     private decimal totalIva => linhas.Sum(l => (l.PrecoFinalCalculado * (l.TaxaIva / 100m)) * l.Quantidade);
     private decimal totalFinal => Math.Max(0, (subtotal + totalIva) - descontoGlobal);
+
+    #endregion
+
+    #region Lifecycle Hooks
 
     protected override void OnParametersSet()
     {
@@ -431,12 +437,16 @@
             mensagemAviso = "";
         }
 
-        // Se passar query parameter de cliente direto
+        // Pre-select customer if query param is passed
         if (!string.IsNullOrWhiteSpace(cliente) && clienteSelecionado == null)
         {
             CarregarClientePorId(cliente);
         }
     }
+
+    #endregion
+
+    #region Data Loading & Editing
 
     private void CarregarClientePorId(string id)
     {
@@ -604,6 +614,13 @@
         }
     }
 
+    #endregion
+
+    #region Discount & Calculation Algorithms
+
+    /// <summary>
+    /// Computes compounding commercial discounts (e.g., '50+10' or '20+5%').
+    /// </summary>
     private decimal CalcularDescontoComposto(decimal precoOriginal, string textoDesconto)
     {
         if (string.IsNullOrWhiteSpace(textoDesconto)) return precoOriginal;
@@ -619,6 +636,10 @@
         }
         return precoFinal;
     }
+
+    #endregion
+
+    #region Customer Search & Selection
 
     private void ExecutarPesquisaCliente(string termo)
     {
@@ -691,6 +712,10 @@
     {
         clienteSelecionado = null;
     }
+
+    #endregion
+
+    #region Product Search & Keyboard Navigation
 
     private void ExecutarPesquisaProduto(string termo)
     {
@@ -786,6 +811,10 @@
         produtosResultados.Clear();
     }
 
+    #endregion
+
+    #region Order Lines Management
+
     private void AdicionarLinha()
     {
         if (string.IsNullOrWhiteSpace(novoArtigoCodigo) || novoArtigoPreco <= 0 || novoArtigoQtd <= 0) return;
@@ -845,6 +874,10 @@
     {
         NavManager.NavigateTo($"/encomendas/{idEncomendaEditar}");
     }
+
+    #endregion
+
+    #region Order Submission & Inventory Abatement
 
     private void FinalizarEncomenda()
     {
@@ -1026,6 +1059,10 @@
         }
     }
 
+    #endregion
+
+    #region Data Models & DTOs
+
     public class LinhaEncomendaModel
     {
         public string Codigo { get; set; } = "";
@@ -1053,4 +1090,6 @@
         public decimal PVP_Unidade { get; set; }
         public decimal Taxa_IVA { get; set; }
     }
+
+    #endregion
 }

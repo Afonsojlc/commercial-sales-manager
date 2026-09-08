@@ -68,11 +68,17 @@
 </div>
 
 @code {
+    #region Component State & Input Fields
     private string email = "";
     private string senha = "";
     private string pin = "";
     private string errorMessage = "";
+    #endregion
 
+    #region Authentication Workflows
+    /// <summary>
+    /// Authenticates seller using Email and Password against SQL Server Vendedores table.
+    /// </summary>
     private void LoginEmail()
     {
         errorMessage = "";
@@ -119,6 +125,9 @@
         }
     }
 
+    /// <summary>
+    /// Authenticates seller using Quick PIN entry against SQL Server Vendedores table.
+    /// </summary>
     private void LoginPin()
     {
         errorMessage = "";
@@ -163,7 +172,12 @@
             errorMessage = "Erro de conexão com o SQL Server.";
         }
     }
+    #endregion
 
+    #region Offline & Demonstration Fallbacks
+    /// <summary>
+    /// Fallback session initializer for offline/demonstration usage.
+    /// </summary>
     private void EntrarComoAdminTeste()
     {
         Sessao.ID_Vendedor = 1;
@@ -172,4 +186,5 @@
         Sessao.Cargo = "Diretor Comercial";
         NavManager.NavigateTo("/dashboard");
     }
+    #endregion
 }

@@ -183,6 +183,7 @@
 </div>
 
 @code {
+    #region Component State & Modal Controls
     private string termo = "";
     private List<ProdutoDTO>? produtos;
 
@@ -203,29 +204,28 @@
     private string novoProdTipo = "CAB";
     private string novoProdErro = "";
     private List<TipoProdutoDTO> tiposProduto = new List<TipoProdutoDTO>();
+    #endregion
 
-    private void AbrirModalNovoProduto()
+    #region Lifecycle Hooks
+    protected override void OnInitialized()
     {
-        novoProdCodigo = "";
-        novoProdDescricao = "";
-        novoProdPreco = 0;
-        novoProdStock = 0;
-        novoProdErro = "";
+        CarregarTiposProduto();
+        CarregarProdutos();
+    }
+    #endregion
 
-        if (tiposProduto.Count == 0)
-        {
-            CarregarTiposProduto();
-        }
-        if (tiposProduto.Count > 0 && !tiposProduto.Any(t => t.Id_Produto == novoProdTipo))
-        {
-            novoProdTipo = tiposProduto[0].Id_Produto;
-        }
-
-        mostrarModalNovo = true;
+    #region Product & Category Loading
+    /// <summary>
+    /// Filters product catalog based on search query.
+    /// </summary>
+    private void Pesquisar()
+    {
+        CarregarProdutos();
     }
 
-    private void CancelarNovoProduto() => mostrarModalNovo = false;
-
+    /// <summary>
+    /// Loads product families/categories from SQL Server or fallback in-memory dataset.
+    /// </summary>
     private void CarregarTiposProduto()
     {
         tiposProduto.Clear();
@@ -270,66 +270,9 @@
         }
     }
 
-    private void GuardarNovoProduto()
-    {
-        if(string.IsNullOrWhiteSpace(novoProdCodigo) || string.IsNullOrWhiteSpace(novoProdDescricao)) {
-            novoProdErro = "Preencha os campos obrigatórios."; return;
-        }
-
-        if (!DatabaseConfig.ConexaoAtiva)
-        {
-            DadosDemonstracao.AdicionarArtigo(new DadosDemonstracao.ArtigoDemo
-            {
-                Codigo = novoProdCodigo.Trim(),
-                Descricao = novoProdDescricao.Trim(),
-                PVP_Unidade = novoProdPreco,
-                Stock = novoProdStock,
-                ID_Tipo = novoProdTipo
-            });
-            mostrarModalNovo = false;
-            CarregarProdutos();
-            return;
-        }
-
-        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
-        {
-            try
-            {
-                con.Open();
-                string q = @"
-                    INSERT INTO Material (Codigo, Descricao, PVP_Unidade, Stock, Taxa_IVA, ID_Tipo, Unidade_Venda) 
-                    VALUES (@c, @d, @p, @s, 23, @t, 'UN')";
-
-                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(q, con))
-                {
-                    cmd.Parameters.AddWithValue("@c", novoProdCodigo.Trim());
-                    cmd.Parameters.AddWithValue("@d", novoProdDescricao.Trim());
-                    cmd.Parameters.AddWithValue("@p", novoProdPreco);
-                    cmd.Parameters.AddWithValue("@s", novoProdStock);
-                    cmd.Parameters.AddWithValue("@t", novoProdTipo);
-                    cmd.ExecuteNonQuery();
-                }
-                mostrarModalNovo = false;
-                CarregarProdutos();
-            }
-            catch (Exception ex)
-            {
-                novoProdErro = "Erro: " + ex.Message;
-            }
-        }
-    }
-
-    protected override void OnInitialized()
-    {
-        CarregarTiposProduto();
-        CarregarProdutos();
-    }
-
-    private void Pesquisar()
-    {
-        CarregarProdutos();
-    }
-
+    /// <summary>
+    /// Queries the material table or in-memory catalog matching search criteria.
+    /// </summary>
     private void CarregarProdutos()
     {
         produtos = new List<ProdutoDTO>();
@@ -377,7 +320,84 @@
             catch { }
         }
     }
+    #endregion
 
+    #region Product Creation
+    private void AbrirModalNovoProduto()
+    {
+        novoProdCodigo = "";
+        novoProdDescricao = "";
+        novoProdPreco = 0;
+        novoProdStock = 0;
+        novoProdErro = "";
+
+        if (tiposProduto.Count == 0)
+        {
+            CarregarTiposProduto();
+        }
+        if (tiposProduto.Count > 0 && !tiposProduto.Any(t => t.Id_Produto == novoProdTipo))
+        {
+            novoProdTipo = tiposProduto[0].Id_Produto;
+        }
+
+        mostrarModalNovo = true;
+    }
+
+    private void CancelarNovoProduto() => mostrarModalNovo = false;
+
+    private void GuardarNovoProduto()
+    {
+        if (string.IsNullOrWhiteSpace(novoProdCodigo) || string.IsNullOrWhiteSpace(novoProdDescricao))
+        {
+            novoProdErro = "Preencha os campos obrigatórios.";
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            DadosDemonstracao.AdicionarArtigo(new DadosDemonstracao.ArtigoDemo
+            {
+                Codigo = novoProdCodigo.Trim(),
+                Descricao = novoProdDescricao.Trim(),
+                PVP_Unidade = novoProdPreco,
+                Stock = novoProdStock,
+                ID_Tipo = novoProdTipo
+            });
+            mostrarModalNovo = false;
+            CarregarProdutos();
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string q = @"
+                    INSERT INTO Material (Codigo, Descricao, PVP_Unidade, Stock, Taxa_IVA, ID_Tipo, Unidade_Venda) 
+                    VALUES (@c, @d, @p, @s, 23, @t, 'UN')";
+
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(q, con))
+                {
+                    cmd.Parameters.AddWithValue("@c", novoProdCodigo.Trim());
+                    cmd.Parameters.AddWithValue("@d", novoProdDescricao.Trim());
+                    cmd.Parameters.AddWithValue("@p", novoProdPreco);
+                    cmd.Parameters.AddWithValue("@s", novoProdStock);
+                    cmd.Parameters.AddWithValue("@t", novoProdTipo);
+                    cmd.ExecuteNonQuery();
+                }
+                mostrarModalNovo = false;
+                CarregarProdutos();
+            }
+            catch (Exception ex)
+            {
+                novoProdErro = "Erro: " + ex.Message;
+            }
+        }
+    }
+    #endregion
+
+    #region Inventory Adjustments
     private void ConfirmarUpdate(string codigo, string nome)
     {
         produtoUpdateCodigo = codigo;
@@ -425,7 +445,9 @@
         mostrarModalUpdate = false;
         CarregarProdutos();
     }
+    #endregion
 
+    #region Product Deletion
     private void ConfirmarApagar(string codigo, string nome)
     {
         produtoApagarCodigo = codigo;
@@ -465,10 +487,13 @@
         mostrarModalDelete = false;
         CarregarProdutos();
     }
+    #endregion
 
+    #region Data Transfer Objects
     public class TipoProdutoDTO
     {
         public string Id_Produto { get; set; } = "";
         public string Designacao { get; set; } = "";
     }
+    #endregion
 }

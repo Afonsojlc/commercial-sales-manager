@@ -432,6 +432,7 @@
 </div>
 
 @code {
+    #region Data Models
     public class VendaGanhosModel
     {
         public int NE { get; set; }
@@ -441,8 +442,9 @@
         public decimal ValorTotal { get; set; }
         public decimal Comissao { get; set; }
     }
+    #endregion
 
-    // Filtros Dashboard
+    #region Component State & Period Filters
     private string filtroPeriodoDashboard = "mes";
     private string periodoDescricaoDashboard = "Este Mês";
     private DateTime dashboardDataInicio = DateTime.Today.AddDays(-30);
@@ -455,7 +457,6 @@
 
     private List<VendaGanhosModel> vendasRecentes = new List<VendaGanhosModel>();
 
-    // Modal Relatório
     private bool mostrarModalRelatorio = false;
     private string periodoSelecionado = "mes";
     private string periodoDescricaoRelatorio = "Este Mês";
@@ -465,12 +466,16 @@
     private decimal relatorioTotalComissao = 0;
     private int relatorioTotalQtd = 0;
     private List<VendaGanhosModel> relatorioLinhas = new List<VendaGanhosModel>();
+    #endregion
 
+    #region Lifecycle Hooks
     protected override void OnInitialized()
     {
         OnMudarPeriodoDashboard();
     }
+    #endregion
 
+    #region Dashboard Metrics & Sales Loading
     private void SetFiltroPeriodo(string periodo)
     {
         filtroPeriodoDashboard = periodo;
@@ -503,6 +508,9 @@
         CarregarDashboard();
     }
 
+    /// <summary>
+    /// Loads sales totals, commission calculations, and recent sales for the selected period.
+    /// </summary>
     private void CarregarDashboard()
     {
         totalVendasMes = 0;
@@ -571,7 +579,7 @@
                 
                 int isDiretor = (Sessao.Cargo == "Diretor Comercial" || Sessao.Cargo == "Administrador" || Sessao.ID_Vendedor == 1) ? 1 : 0;
 
-                // 1. Vendas e Comissões do Período (Excluindo Encomendas Canceladas)
+                // 1. Period sales and commissions (excluding canceled orders)
                 string queryVendas = $@"
                     SELECT SUM(E.Valor_Total) as Total_Vendas, COUNT(E.Numero_Encomenda) as Num_Vendas
                     FROM Encomenda E
@@ -599,7 +607,7 @@
                     }
                 }
 
-                // 2. Total de Clientes
+                // 2. Active client count
                 string queryClientes = "SELECT COUNT(*) FROM Clientes";
                 using (SqlCommand cmd = new SqlCommand(queryClientes, con))
                 {
@@ -610,7 +618,7 @@
                     }
                 }
 
-                // 3. Vendas Recentes do Período
+                // 3. Recent orders list
                 string queryGrid = $@"
                     SELECT TOP 50 
                         E.Numero_Encomenda,
@@ -658,7 +666,9 @@
             catch { }
         }
     }
+    #endregion
 
+    #region Executive Report Generation
     private void AbrirModalRelatorio()
     {
         mostrarModalRelatorio = true;
@@ -696,6 +706,9 @@
         GerarRelatorio();
     }
 
+    /// <summary>
+    /// Aggregates order lines and performance metrics for the executive printable report.
+    /// </summary>
     private void GerarRelatorio()
     {
         relatorioLinhas.Clear();
@@ -823,12 +836,16 @@
             catch { }
         }
     }
+    #endregion
 
+    #region Navigation & Order Actions
     private void AbrirEncomenda(int ne)
     {
         NavManager.NavigateTo($"/encomendas/{ne}");
     }
+    #endregion
 
+    #region Export & Printing Operations
     private async Task ExportarExcelDashboard()
     {
         if (vendasRecentes.Count == 0) return;
@@ -880,4 +897,5 @@
     {
         await JS.InvokeVoidAsync("window.print");
     }
+    #endregion
 }

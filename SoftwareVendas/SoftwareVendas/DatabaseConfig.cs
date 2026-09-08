@@ -4,10 +4,12 @@ using System;
 namespace SoftwareVendas
 {
     /// <summary>
-    /// Centralized database configuration and connection provider.
+    /// Centralized database configuration and connection provider with automatic local instance detection.
     /// </summary>
     public static class DatabaseConfig
     {
+        #region Connection State & Settings
+
         private static string _connectionString =
             @"Server=(localdb)\MSSQLLocalDB;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
 
@@ -53,6 +55,10 @@ namespace SoftwareVendas
             @"localhost"
         };
 
+        #endregion
+
+        #region Auto-Discovery & Connectivity Checks
+
         /// <summary>
         /// Attempts to connect to known SQL Server instances and selects the first active one.
         /// </summary>
@@ -74,20 +80,12 @@ namespace SoftwareVendas
                 }
                 catch
                 {
-                    // Continue to next candidate
+                    // Continue scanning candidate instances
                 }
             }
 
             _instanciaDetectada = true;
             _conexaoAtiva = false;
-        }
-
-        /// <summary>
-        /// Creates and returns a new SqlConnection instance using the active connection string.
-        /// </summary>
-        public static SqlConnection ObterConexao()
-        {
-            return new SqlConnection(ConnectionString);
         }
 
         /// <summary>
@@ -110,5 +108,19 @@ namespace SoftwareVendas
                 return false;
             }
         }
+
+        #endregion
+
+        #region Connection Factory
+
+        /// <summary>
+        /// Creates and returns a new SqlConnection instance using the active connection string.
+        /// </summary>
+        public static SqlConnection ObterConexao()
+        {
+            return new SqlConnection(ConnectionString);
+        }
+
+        #endregion
     }
 }

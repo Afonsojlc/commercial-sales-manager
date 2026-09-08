@@ -6,11 +6,12 @@ using System.Linq;
 namespace SoftwareVendas
 {
     /// <summary>
-    /// In-memory mock data store to allow seamless demonstration and testing
-    /// on environments where SQL Server is not locally available.
+    /// In-memory mock data store for offline demonstration and testing.
     /// </summary>
     public static class DadosDemonstracao
     {
+        #region Data Models
+
         public class ClienteDemo
         {
             public string ID_Cliente { get; set; } = "";
@@ -66,11 +67,19 @@ namespace SoftwareVendas
             public List<LinhaDemo> Linhas { get; set; } = new List<LinhaDemo>();
         }
 
+        #endregion
+
+        #region In-Memory Storage
+
         private static readonly List<ClienteDemo> _clientes = new List<ClienteDemo>();
         private static readonly List<ArtigoDemo> _artigos = new List<ArtigoDemo>();
         private static readonly List<EncomendaDemo> _encomendas = new List<EncomendaDemo>();
         private static int _proximoNumeroEncomenda = 1005;
         private static bool _inicializado = false;
+
+        #endregion
+
+        #region Initialization & Seed Data
 
         static DadosDemonstracao()
         {
@@ -81,7 +90,7 @@ namespace SoftwareVendas
         {
             if (_inicializado) return;
 
-            // 1. Clientes de Material Elétrico
+            // Seed clients
             _clientes.AddRange(new[]
             {
                 new ClienteDemo { ID_Cliente = "CLI-001", Nome_Cliente = "ElectroLuz Porto Lda", NIF = "501234567", Morada_Completa = "Rua de Santa Catarina, 120", Codigo_Postal = "4000-447", Cidade = "Porto", Email = "compras@electroluz.pt", Telefone = "220123456" },
@@ -91,7 +100,7 @@ namespace SoftwareVendas
                 new ClienteDemo { ID_Cliente = "CLI-005", Nome_Cliente = "Iluminação & Projetos Ribatejo Lda", NIF = "502987123", Morada_Completa = "Estrada Nacional 3, Km 14", Codigo_Postal = "2000-112", Cidade = "Santarém", Email = "comercial@iluribatejo.pt", Telefone = "243123789" }
             });
 
-            // 2. Artigos de Distribuição Elétrica
+            // Seed catalog items
             _artigos.AddRange(new[]
             {
                 new ArtigoDemo { Codigo = "CAB-001", Descricao = "Cabo H07V-U 1.5mm² Preto (Rolo 100m)", Unidade_Venda = "RL", Embalagem = 1, PVP_Unidade = 24.50m, Stock = 140, Taxa_IVA = 23m, ID_Tipo = "CAB" },
@@ -105,7 +114,7 @@ namespace SoftwareVendas
                 new ArtigoDemo { Codigo = "TOM-001", Descricao = "Tomada Schuko 2P+T 16A Branca c/ Obturador", Unidade_Venda = "UN", Embalagem = 20, PVP_Unidade = 3.20m, Stock = 180, Taxa_IVA = 23m, ID_Tipo = "APA" }
             });
 
-            // 3. Encomendas de Exemplo
+            // Seed sample orders
             var enc1 = new EncomendaDemo
             {
                 Numero_Encomenda = 1001,
@@ -188,9 +197,10 @@ namespace SoftwareVendas
             _inicializado = true;
         }
 
-        // ==========================================
-        // Clientes
-        // ==========================================
+        #endregion
+
+        #region Customer Operations
+
         public static List<ClienteDemo> ObterClientes(string termo = "")
         {
             if (string.IsNullOrWhiteSpace(termo)) return _clientes.ToList();
@@ -213,9 +223,10 @@ namespace SoftwareVendas
             _clientes.Add(cliente);
         }
 
-        // ==========================================
-        // Artigos
-        // ==========================================
+        #endregion
+
+        #region Product & Stock Operations
+
         public static List<ArtigoDemo> ObterArtigos(string termo = "")
         {
             if (string.IsNullOrWhiteSpace(termo)) return _artigos.ToList();
@@ -249,9 +260,10 @@ namespace SoftwareVendas
             _artigos.RemoveAll(a => a.Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase));
         }
 
-        // ==========================================
-        // Encomendas
-        // ==========================================
+        #endregion
+
+        #region Order Operations
+
         public static List<EncomendaDemo> ObterEncomendas(string filtro = "", DateTime? dInicio = null, DateTime? dFim = null)
         {
             var query = _encomendas.AsEnumerable();
@@ -304,7 +316,7 @@ namespace SoftwareVendas
                 var existente = ObterEncomendaPorId(numero);
                 if (existente != null)
                 {
-                    // Reverter stock anterior
+                    // Revert previous inventory deductions
                     foreach (var l in existente.Linhas)
                     {
                         AtualizarStockArtigo(l.Codigo, l.Quantidade);
@@ -317,7 +329,7 @@ namespace SoftwareVendas
                 numero = _proximoNumeroEncomenda++;
             }
 
-            // Abater novo stock
+            // Deduct current ordered quantities from stock
             foreach (var l in linhas)
             {
                 AtualizarStockArtigo(l.Codigo, -l.Quantidade);
@@ -347,5 +359,7 @@ namespace SoftwareVendas
             _encomendas.Insert(0, novaEnc);
             return numero;
         }
+
+        #endregion
     }
 }

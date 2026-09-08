@@ -209,6 +209,8 @@
 </div>
 
 @code {
+    #region Component Parameters & State
+
     [Parameter] public string IdEncomenda { get; set; } = "";
     
     private bool carregando = true;
@@ -231,6 +233,10 @@
     {
         CarregarDados();
     }
+
+    #endregion
+
+    #region Data Retrieval & Order Loading
 
     private void CarregarDados()
     {
@@ -276,7 +282,7 @@
             try
             {
                 con.Open();
-                // 1. Dados Cabeçalho e Cliente
+                // 1. Order header and customer details
                 string queryE = @"
                     SELECT 
                         E.Data_Encomenda, E.Valor_Total, E.Estado, E.Desconto_Global,
@@ -312,28 +318,28 @@
                     }
                 }
 
-                // 2. Linhas
+                // 2. Ordered lines
                 string queryL = @"
                     SELECT Codigo_Material, Descricao, Quantidade, Preco, Imposto, Desconto_Texto
                     FROM Linha_Encomenda 
                     WHERE NE = @id
                     ORDER BY Linha_Encomenda ASC";
                 
-                using (SqlCommand cmd = new SqlCommand(queryL, con))
+                using (SqlCommand cmdL = new SqlCommand(queryL, con))
                 {
-                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
-                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    cmdL.Parameters.AddWithValue("@id", IdEncomenda);
+                    using (SqlDataReader rdL = cmdL.ExecuteReader())
                     {
-                        while (rd.Read())
+                        while (rdL.Read())
                         {
                             linhas.Add(new LinhaView
                             {
-                                Codigo = rd["Codigo_Material"]?.ToString() ?? "",
-                                Descricao = rd["Descricao"]?.ToString() ?? "",
-                                Qtd = rd["Quantidade"] != DBNull.Value ? Convert.ToInt32(rd["Quantidade"]) : 0,
-                                Preco = rd["Preco"] != DBNull.Value ? Convert.ToDecimal(rd["Preco"]) : 0m,
-                                Iva = rd["Imposto"] != DBNull.Value ? Convert.ToDecimal(rd["Imposto"]) : 23m,
-                                DescontoTexto = rd["Desconto_Texto"]?.ToString() ?? ""
+                                Codigo = rdL["Codigo_Material"]?.ToString() ?? "",
+                                Descricao = rdL["Descricao"]?.ToString() ?? "",
+                                Qtd = rdL["Quantidade"] != DBNull.Value ? Convert.ToInt32(rdL["Quantidade"]) : 0,
+                                Preco = rdL["Preco"] != DBNull.Value ? Convert.ToDecimal(rdL["Preco"]) : 0m,
+                                Iva = rdL["Imposto"] != DBNull.Value ? Convert.ToDecimal(rdL["Imposto"]) : 23m,
+                                DescontoTexto = rdL["Desconto_Texto"]?.ToString() ?? ""
                             });
                         }
                     }
@@ -343,6 +349,10 @@
         }
         carregando = false;
     }
+
+    #endregion
+
+    #region Order Actions & Printing
 
     private void ModificarEncomenda()
     {
@@ -386,6 +396,10 @@
         await JS.InvokeVoidAsync("window.print");
     }
 
+    #endregion
+
+    #region View Models
+
     public class LinhaView
     {
         public string Codigo { get; set; } = "";
@@ -414,4 +428,6 @@
         }
         public decimal Subtotal => Qtd * PrecoCalculado * (1 + Iva/100m);
     }
+
+    #endregion
 }

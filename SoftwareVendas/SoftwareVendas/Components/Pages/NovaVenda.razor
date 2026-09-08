@@ -440,6 +440,22 @@
 
     private void CarregarClientePorId(string id)
     {
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var cDemo = DadosDemonstracao.ObterClientePorId(id);
+            if (cDemo != null)
+            {
+                clienteSelecionado = new ClienteSearchResult
+                {
+                    ID_Cliente = cDemo.ID_Cliente,
+                    Nome_Cliente = cDemo.Nome_Cliente,
+                    NIF = cDemo.NIF,
+                    Morada_Completa = cDemo.Morada_Completa
+                };
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -470,6 +486,39 @@
 
     private void CarregarDadosEdicao(int id)
     {
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var encDemo = DadosDemonstracao.ObterEncomendaPorId(id);
+            if (encDemo != null)
+            {
+                modoEdicao = true;
+                idEncomendaEditar = id;
+                descontoGlobal = encDemo.Desconto_Global;
+                clienteSelecionado = new ClienteSearchResult
+                {
+                    ID_Cliente = encDemo.ID_Cliente,
+                    Nome_Cliente = encDemo.NomeCliente,
+                    NIF = encDemo.NIFCliente,
+                    Morada_Completa = encDemo.MoradaCliente
+                };
+                linhas.Clear();
+                foreach (var l in encDemo.Linhas)
+                {
+                    linhas.Add(new LinhaEncomendaModel
+                    {
+                        Codigo = l.Codigo,
+                        Descricao = l.Descricao,
+                        Quantidade = l.Quantidade,
+                        PrecoUnitario = l.PrecoUnitario,
+                        TaxaIva = l.TaxaIva,
+                        DescontoTexto = l.DescontoTexto,
+                        PrecoFinalCalculado = l.PrecoComDesconto
+                    });
+                }
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -577,6 +626,21 @@
         mensagemAviso = "";
         if (string.IsNullOrWhiteSpace(termo)) return;
 
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var demoList = DadosDemonstracao.ObterClientes(termo);
+            foreach (var c in demoList)
+            {
+                clientesResultados.Add(new ClienteSearchResult {
+                    ID_Cliente = c.ID_Cliente,
+                    Nome_Cliente = c.Nome_Cliente,
+                    NIF = c.NIF,
+                    Morada_Completa = c.Morada_Completa
+                });
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -633,6 +697,21 @@
         produtosResultados.Clear();
         mensagemAviso = "";
         if (string.IsNullOrWhiteSpace(termo)) return;
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var demoList = DadosDemonstracao.ObterArtigos(termo);
+            foreach (var p in demoList)
+            {
+                produtosResultados.Add(new ProdutoSearchResult {
+                    Codigo = p.Codigo,
+                    Descricao = p.Descricao,
+                    PVP_Unidade = p.PVP_Unidade,
+                    Taxa_IVA = p.Taxa_IVA
+                });
+            }
+            return;
+        }
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -780,6 +859,46 @@
             return;
         }
 
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var cDemo = new DadosDemonstracao.ClienteDemo
+            {
+                ID_Cliente = clienteSelecionado.ID_Cliente,
+                Nome_Cliente = clienteSelecionado.Nome_Cliente,
+                NIF = clienteSelecionado.NIF,
+                Morada_Completa = clienteSelecionado.Morada_Completa
+            };
+
+            var linhasDemo = linhas.Select((l, i) => new DadosDemonstracao.LinhaDemo
+            {
+                LinhaNum = i + 1,
+                Codigo = l.Codigo,
+                Descricao = l.Descricao,
+                Quantidade = l.Quantidade,
+                PrecoUnitario = l.PrecoUnitario,
+                TaxaIva = l.TaxaIva,
+                DescontoTexto = l.DescontoTexto,
+                PrecoComDesconto = l.PrecoFinalCalculado
+            }).ToList();
+
+            int idGerado = DadosDemonstracao.SalvarEncomenda(cDemo, linhasDemo, descontoGlobal, modoEdicao ? idEncomendaEditar : null);
+
+            if (modoEdicao)
+            {
+                mensagemAviso = $"Encomenda #{idGerado} modificada com sucesso no Modo Demonstração! O inventário foi reajustado.";
+            }
+            else
+            {
+                clienteSelecionado = null;
+                linhas.Clear();
+                descontoGlobal = 0;
+                _pesquisaCliente = "";
+                _pesquisaProduto = "";
+                mensagemAviso = $"Encomenda #{idGerado} registada com sucesso no Modo Demonstração!";
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             con.Open();
@@ -843,7 +962,7 @@
                             cmdEnc.Parameters.AddWithValue("@total", totalFinal);
                             cmdEnc.Parameters.AddWithValue("@idCliente", clienteSelecionado.ID_Cliente);
                             cmdEnc.Parameters.AddWithValue("@descGlobal", descontoGlobal);
-                            cmdEnc.Parameters.AddWithValue("@idVend", Sessao.ID_Vendedor);
+                            cmdEnc.Parameters.AddWithValue("@idVend", Sessao.ID_Vendedor > 0 ? (object)Sessao.ID_Vendedor : DBNull.Value);
 
                             idEncomenda = Convert.ToInt32(cmdEnc.ExecuteScalar());
                         }

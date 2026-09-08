@@ -12,6 +12,19 @@ namespace SoftwareVendas
             @"Server=(localdb)\MSSQLLocalDB;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
 
         private static bool _instanciaDetectada = false;
+        private static bool _conexaoAtiva = false;
+
+        public static bool ConexaoAtiva
+        {
+            get
+            {
+                if (!_instanciaDetectada)
+                {
+                    DetectarMelhorInstancia();
+                }
+                return _conexaoAtiva;
+            }
+        }
 
         public static string ConnectionString
         {
@@ -27,6 +40,7 @@ namespace SoftwareVendas
             {
                 _connectionString = value;
                 _instanciaDetectada = true;
+                _conexaoAtiva = TestarConexao(out _);
             }
         }
 
@@ -54,6 +68,7 @@ namespace SoftwareVendas
                         con.Open();
                         _connectionString = connStr;
                         _instanciaDetectada = true;
+                        _conexaoAtiva = true;
                         return;
                     }
                 }
@@ -64,6 +79,7 @@ namespace SoftwareVendas
             }
 
             _instanciaDetectada = true;
+            _conexaoAtiva = false;
         }
 
         /// <summary>

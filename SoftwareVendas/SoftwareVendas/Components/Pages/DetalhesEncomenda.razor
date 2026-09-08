@@ -237,6 +237,40 @@
         carregando = true;
         linhas.Clear();
 
+        if (!DatabaseConfig.ConexaoAtiva && int.TryParse(IdEncomenda, out int numEnc))
+        {
+            var encDemo = DadosDemonstracao.ObterEncomendaPorId(numEnc);
+            if (encDemo != null)
+            {
+                dataEncomenda = encDemo.Data_Encomenda;
+                valorTotal = encDemo.Valor_Total;
+                estadoOriginal = encDemo.Estado;
+                estadoSelecionado = estadoOriginal;
+                descontoGlobal = encDemo.Desconto_Global;
+
+                clienteNome = encDemo.NomeCliente;
+                clienteNIF = encDemo.NIFCliente;
+                clienteEmail = encDemo.EmailCliente;
+                clienteTelefone = encDemo.TelefoneCliente;
+                vendedorNome = encDemo.NomeVendedor;
+
+                foreach (var l in encDemo.Linhas)
+                {
+                    linhas.Add(new LinhaView
+                    {
+                        Codigo = l.Codigo,
+                        Descricao = l.Descricao,
+                        Qtd = l.Quantidade,
+                        Preco = l.PrecoUnitario,
+                        Iva = l.TaxaIva,
+                        DescontoTexto = l.DescontoTexto
+                    });
+                }
+            }
+            carregando = false;
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -317,6 +351,13 @@
 
     private void GuardarEstado()
     {
+        if (!DatabaseConfig.ConexaoAtiva && int.TryParse(IdEncomenda, out int numEnc))
+        {
+            DadosDemonstracao.AtualizarEstadoEncomenda(numEnc, estadoSelecionado);
+            estadoOriginal = estadoSelecionado;
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try

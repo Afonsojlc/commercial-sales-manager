@@ -510,6 +510,40 @@
         totalEncomendasMes = 0;
         vendasRecentes.Clear();
 
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var encs = DadosDemonstracao.ObterEncomendas();
+            if (filtroPeriodoDashboard == "hoje")
+                encs = encs.Where(e => e.Data_Encomenda.Date == DateTime.Today).ToList();
+            else if (filtroPeriodoDashboard == "mes")
+                encs = encs.Where(e => e.Data_Encomenda.Month == DateTime.Today.Month && e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (filtroPeriodoDashboard == "ano")
+                encs = encs.Where(e => e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (filtroPeriodoDashboard == "calendario")
+                encs = encs.Where(e => e.Data_Encomenda.Date >= dashboardDataInicio.Date && e.Data_Encomenda.Date <= dashboardDataFim.Date).ToList();
+
+            var encsAtivas = encs.Where(e => e.Estado != "CANCELADA").ToList();
+            totalVendasMes = encsAtivas.Sum(e => e.Valor_Total);
+            totalEncomendasMes = encsAtivas.Count;
+            totalComissao = totalVendasMes * (Sessao.PercentagemComissao / 100m);
+            totalClientes = DadosDemonstracao.ObterClientes().Count;
+
+            decimal taxa = Sessao.PercentagemComissao / 100m;
+            foreach (var e in encs)
+            {
+                vendasRecentes.Add(new VendaGanhosModel
+                {
+                    NE = e.Numero_Encomenda,
+                    Data = e.Data_Encomenda,
+                    Cliente = e.NomeCliente,
+                    Estado = e.Estado,
+                    ValorTotal = e.Valor_Total,
+                    Comissao = e.Estado == "CANCELADA" ? 0m : e.Valor_Total * taxa
+                });
+            }
+            return;
+        }
+
         string filtroData = "";
         if (filtroPeriodoDashboard == "hoje")
         {
@@ -668,6 +702,42 @@
         relatorioTotalFaturado = 0;
         relatorioTotalComissao = 0;
         relatorioTotalQtd = 0;
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var encs = DadosDemonstracao.ObterEncomendas();
+            if (periodoSelecionado == "hoje")
+                encs = encs.Where(e => e.Data_Encomenda.Date == DateTime.Today).ToList();
+            else if (periodoSelecionado == "mes")
+                encs = encs.Where(e => e.Data_Encomenda.Month == DateTime.Today.Month && e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (periodoSelecionado == "ano")
+                encs = encs.Where(e => e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (periodoSelecionado == "calendario")
+                encs = encs.Where(e => e.Data_Encomenda.Date >= relatorioDataInicio.Date && e.Data_Encomenda.Date <= relatorioDataFim.Date).ToList();
+
+            decimal taxa = Sessao.PercentagemComissao / 100m;
+            foreach (var e in encs)
+            {
+                decimal com = e.Estado == "CANCELADA" ? 0m : e.Valor_Total * taxa;
+                if (e.Estado != "CANCELADA")
+                {
+                    relatorioTotalFaturado += e.Valor_Total;
+                    relatorioTotalComissao += com;
+                    relatorioTotalQtd++;
+                }
+
+                relatorioLinhas.Add(new VendaGanhosModel
+                {
+                    NE = e.Numero_Encomenda,
+                    Data = e.Data_Encomenda,
+                    Cliente = e.NomeCliente,
+                    Estado = e.Estado,
+                    ValorTotal = e.Valor_Total,
+                    Comissao = com
+                });
+            }
+            return;
+        }
 
         string filtroData = "";
 

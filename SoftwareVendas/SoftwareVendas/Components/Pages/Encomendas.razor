@@ -189,6 +189,24 @@
     {
         mensagemErro = "";
         dtEncomendas = new DataTable();
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            dtEncomendas.Columns.Add("Nº Venda", typeof(int));
+            dtEncomendas.Columns.Add("Data Venda", typeof(DateTime));
+            dtEncomendas.Columns.Add("Cliente", typeof(string));
+            dtEncomendas.Columns.Add("Vendedor", typeof(string));
+            dtEncomendas.Columns.Add("Total Venda", typeof(decimal));
+            dtEncomendas.Columns.Add("Estado", typeof(string));
+
+            var listaDemo = DadosDemonstracao.ObterEncomendas(filtro, dataInicio, dataFim);
+            foreach (var e in listaDemo)
+            {
+                dtEncomendas.Rows.Add(e.Numero_Encomenda, e.Data_Encomenda, e.NomeCliente, e.NomeVendedor, e.Valor_Total, e.Estado);
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try

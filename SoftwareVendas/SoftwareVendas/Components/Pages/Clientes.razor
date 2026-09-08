@@ -253,6 +253,25 @@
     {
         idClienteSelecionado = "";
         dtHistorico = null;
+        dtClientes = new DataTable();
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            dtClientes.Columns.Add("ID_Cliente", typeof(string));
+            dtClientes.Columns.Add("Nome_Cliente", typeof(string));
+            dtClientes.Columns.Add("NIF", typeof(string));
+            dtClientes.Columns.Add("Email", typeof(string));
+            dtClientes.Columns.Add("Telefone", typeof(string));
+            dtClientes.Columns.Add("Cidade", typeof(string));
+
+            var lista = DadosDemonstracao.ObterClientes(termo);
+            foreach (var c in lista)
+            {
+                dtClientes.Rows.Add(c.ID_Cliente, c.Nome_Cliente, c.NIF, c.Email, c.Telefone, c.Cidade);
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -299,6 +318,24 @@
 
     private void CarregarHistorico()
     {
+        dtHistorico = new DataTable();
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            dtHistorico.Columns.Add("Nº Venda", typeof(int));
+            dtHistorico.Columns.Add("Data", typeof(DateTime));
+            dtHistorico.Columns.Add("Total (€)", typeof(decimal));
+            dtHistorico.Columns.Add("Estado", typeof(string));
+            dtHistorico.Columns.Add("Desconto (%)", typeof(decimal));
+
+            var encs = DadosDemonstracao.ObterEncomendas().Where(e => e.ID_Cliente == idClienteSelecionado);
+            foreach (var e in encs)
+            {
+                dtHistorico.Rows.Add(e.Numero_Encomenda, e.Data_Encomenda, e.Valor_Total, e.Estado, e.Desconto_Global);
+            }
+            return;
+        }
+
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -341,6 +378,17 @@
 
     private string ObterProximoIdCliente()
     {
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            int maxDemo = 0;
+            foreach (var c in DadosDemonstracao.ObterClientes())
+            {
+                string numPart = c.ID_Cliente.Replace("CLI-", "").Trim();
+                if (int.TryParse(numPart, out int num) && num > maxDemo) maxDemo = num;
+            }
+            return $"CLI-{(maxDemo + 1):D3}";
+        }
+
         int maxNumero = 0;
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -383,6 +431,24 @@
             string.IsNullOrWhiteSpace(novoTelefone))
         {
             erroModal = "Por favor preencha todos os campos obrigatórios assinalados com *.";
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            DadosDemonstracao.AdicionarCliente(new DadosDemonstracao.ClienteDemo
+            {
+                ID_Cliente = novoIdCliente.Trim(),
+                Nome_Cliente = novoNome.Trim(),
+                NIF = novoNIF.Trim(),
+                Morada_Completa = novaMorada.Trim(),
+                Codigo_Postal = novoCodigoPostal.Trim(),
+                Cidade = novaCidade.Trim(),
+                Email = novoEmail.Trim(),
+                Telefone = novoTelefone.Trim()
+            });
+            mostrarModalNovoCliente = false;
+            Pesquisar();
             return;
         }
 

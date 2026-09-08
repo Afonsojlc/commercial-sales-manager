@@ -229,6 +229,19 @@
     private void CarregarTiposProduto()
     {
         tiposProduto.Clear();
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "CAB", Designacao = "Cabos & Condutores" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "DIS", Designacao = "Aparelhagem de Calha & Disjuntores" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "DIF", Designacao = "Diferenciais & Proteções" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "TUB", Designacao = "Tubos & Calhas Técnicas" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "ILU", Designacao = "Iluminação & LEDs" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "APA", Designacao = "Aparelhagem de Embutir" });
+            if (string.IsNullOrWhiteSpace(novoProdTipo)) novoProdTipo = "CAB";
+            return;
+        }
+
         using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -261,6 +274,21 @@
     {
         if(string.IsNullOrWhiteSpace(novoProdCodigo) || string.IsNullOrWhiteSpace(novoProdDescricao)) {
             novoProdErro = "Preencha os campos obrigatórios."; return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            DadosDemonstracao.AdicionarArtigo(new DadosDemonstracao.ArtigoDemo
+            {
+                Codigo = novoProdCodigo.Trim(),
+                Descricao = novoProdDescricao.Trim(),
+                PVP_Unidade = novoProdPreco,
+                Stock = novoProdStock,
+                ID_Tipo = novoProdTipo
+            });
+            mostrarModalNovo = false;
+            CarregarProdutos();
+            return;
         }
 
         using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
@@ -305,6 +333,23 @@
     private void CarregarProdutos()
     {
         produtos = new List<ProdutoDTO>();
+
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            var arts = DadosDemonstracao.ObterArtigos(termo);
+            foreach (var a in arts)
+            {
+                produtos.Add(new ProdutoDTO
+                {
+                    Codigo = a.Codigo,
+                    Descricao = a.Descricao,
+                    Preco = a.PVP_Unidade,
+                    Stock = a.Stock
+                });
+            }
+            return;
+        }
+
         using (Microsoft.Data.SqlClient.SqlConnection conn = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -354,6 +399,14 @@
             return;
         }
 
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            DadosDemonstracao.AtualizarStockArtigo(produtoUpdateCodigo, produtoUpdateQtd);
+            mostrarModalUpdate = false;
+            CarregarProdutos();
+            return;
+        }
+
         using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
         {
             try
@@ -387,6 +440,14 @@
 
     private void ExecutarApagar()
     {
+        if (!DatabaseConfig.ConexaoAtiva)
+        {
+            DadosDemonstracao.ApagarArtigo(produtoApagarCodigo);
+            mostrarModalDelete = false;
+            CarregarProdutos();
+            return;
+        }
+
         using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
         {
             try

@@ -37,7 +37,7 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │               Windows Forms Shell Host                      │
-│               (Form1.cs hosting BlazorWebView)              │
+│               (FormMenu.cs hosting BlazorWebView)           │
 ├─────────────────────────────────────────────────────────────┤
 │         Blazor WebView Components (HTML5 / Tailwind CSS)    │
 │  ├── Dashboard.razor       ├── Clientes.razor               │
@@ -268,9 +268,26 @@ dotnet build SoftwareVendas/SoftwareVendas.sln
 dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 ```
 
-### 5. Demo Test Credentials
-* **Quick PIN Login:** `1234` or `0000`
-* **Email Login:** `admin@comercial.pt` | Password: `admin`
+### 5. Access Credentials
+
+#### 🟢 Production Mode (Connected to Microsoft SQL Server)
+* **Commercial Director (Full Administrative Privileges):**
+  * Email: `jgcarvalho007@gmail.com` | Password: `Paredes10`
+  * Quick PIN: `1755`
+  * Seller: **José Carvalho** (Commission: `7.00%`)
+* **Sales Representative:**
+  * Email: `acsousalopes@gmail.com` | Password: `Paredes11`
+  * Quick PIN: `1514`
+  * Seller: **Antonia Lopes** (Commission: `2.00%`)
+
+#### 🟡 Offline Demonstration Sandbox Mode (No SQL Server Required)
+* Automatically activates whenever SQL Server is unreachable, or via the direct **"Entrar em Modo Demonstração (Sandbox)"** button on the Login screen.
+* **Demonstration Director Profile:**
+  * Representative: **Afonso Carvalho** (Marked with `DEMO` badge)
+  * Email: `afonso.carvalho@geral.pt` | Password: `demo` or `admin`
+  * Quick PIN: `1234` (or `0000`)
+  * Full administrative privileges to explore the system.
+  * In-memory isolated storage (`DadosDemonstracao.cs`): test orders, created customers, or stock adjustments are kept in memory and never alter the production SQL database.
 
 ---
 
@@ -278,19 +295,20 @@ dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 
 ```
 commercial-sales-manager/
-├── Estrutura_BD_Software_Vendas.sql     # SQL Server DDL/DML schema initialization script
+├── Estrutura_BD_Software_Vendas.sql     # SQL Server DDL schema initialization script
+├── Dados_Iniciais_Seed.sql              # Initial seed data script (materials, clients, sellers)
+├── Visualizar_Tabelas.sql               # Diagnostic queries for SQL Server tables
 ├── README.md                            # Comprehensive project documentation
 └── SoftwareVendas/
     ├── SoftwareVendas.sln               # Visual Studio 2022 Solution
     └── SoftwareVendas/
-        ├── Form1.cs                     # WinForms host window embedding BlazorWebView
+        ├── FormMenu.cs                  # WinForms host window embedding BlazorWebView
         ├── DatabaseConfig.cs            # Connection manager with instance auto-discovery
-        ├── Sessao.cs                    # Global session holder for authenticated seller
+        ├── Sessao.cs                    # Global session holder for authenticated seller & roles
         ├── ConfiguracaoEmpresa.cs       # Company settings profile manager (empresa_config.json)
         ├── DadosDemonstracao.cs         # Thread-safe in-memory mock repository for offline demo
         ├── Components/
-        │   ├── App.razor                # Root Blazor component
-        │   ├── Routes.razor             # Component route mappings
+        │   ├── App.razor                # Root Blazor component hosting Router and layout
         │   ├── Layout/
         │   │   └── MainLayout.razor     # Collapsible sidebar, top search, and status badges
         │   └── Pages/
@@ -299,9 +317,9 @@ commercial-sales-manager/
         │       ├── NovaVenda.razor      # Order entry screen with cascading discount logic
         │       ├── Encomendas.razor     # Orders register, statuses, and advanced filtering
         │       ├── DetalhesEncomenda.razor # Formal A4 order view for print and PDF
-        │       ├── Clientes.razor       # Customer portfolio management
+        │       ├── Clientes.razor       # Customer portfolio management (Director-restricted creation)
         │       ├── Produtos.razor       # Technical product catalog & stock controls
-        │       └── Definicoes.razor     # Corporate profile and database diagnostics
+        │       └── Definicoes.razor     # Company profile, user profile & sales team management
         └── wwwroot/
             ├── index.html               # Main HTML entrypoint with Tailwind typography
             └── css/                     # Custom corporate stylesheets and print media rules

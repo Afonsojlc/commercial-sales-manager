@@ -18,10 +18,13 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <button @onclick="AbrirModalNovoProduto" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>Novo Artigo</span>
-            </button>
+            @if (Sessao.IsDiretorOuAdmin)
+            {
+                <button @onclick="AbrirModalNovoProduto" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Novo Artigo</span>
+                </button>
+            }
         </div>
     </div>
 
@@ -41,7 +44,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-6">
                 @foreach (var p in produtos)
                 {
-                    <div @ondblclick="() => ConfirmarUpdate(p.Codigo, p.Descricao)" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer select-none group" title="Dê duplo clique para ajustar o stock">
+                    <div @ondblclick="() => { if (Sessao.IsDiretorOuAdmin) ConfirmarUpdate(p.Codigo, p.Descricao); }" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer select-none group" title="@(Sessao.IsDiretorOuAdmin ? "Dê duplo clique para ajustar o stock" : "Visualização de artigo")">
                         <div>
                             <div class="flex justify-between items-start mb-3">
                                 <span class="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
@@ -73,15 +76,18 @@
                                 <p class="text-xl font-black font-mono text-slate-900 tracking-tight">€ @p.Preco.ToString("N2")</p>
                             </div>
                             
-                            <!-- Actions -->
-                            <div class="flex items-center gap-1.5">
-                                <button @onclick="() => ConfirmarUpdate(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 transition" title="Ajustar Quantidade">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                </button>
-                                <button @onclick="() => ConfirmarApagar(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition" title="Eliminar Artigo">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
+                            <!-- Actions (Restricted to Director / Admin) -->
+                            @if (Sessao.IsDiretorOuAdmin)
+                            {
+                                <div class="flex items-center gap-1.5">
+                                    <button @onclick="() => ConfirmarUpdate(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 transition" title="Ajustar Quantidade">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    </button>
+                                    <button @onclick="() => ConfirmarApagar(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition" title="Eliminar Artigo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -347,13 +353,19 @@
 
     private void GuardarNovoProduto()
     {
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            novoProdErro = "Apenas administradores e diretores comerciais têm permissão para criar artigos.";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(novoProdCodigo) || string.IsNullOrWhiteSpace(novoProdDescricao))
         {
             novoProdErro = "Preencha os campos obrigatórios.";
             return;
         }
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             DadosDemonstracao.AdicionarArtigo(new DadosDemonstracao.ArtigoDemo
             {
@@ -400,6 +412,7 @@
     #region Inventory Adjustments
     private void ConfirmarUpdate(string codigo, string nome)
     {
+        if (!Sessao.IsDiretorOuAdmin) return;
         produtoUpdateCodigo = codigo;
         produtoUpdateNome = nome;
         produtoUpdateQtd = 0;
@@ -413,13 +426,19 @@
 
     private void ExecutarUpdate()
     {
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            mostrarModalUpdate = false;
+            return;
+        }
+
         if (produtoUpdateQtd == 0)
         {
             mostrarModalUpdate = false;
             return;
         }
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             DadosDemonstracao.AtualizarStockArtigo(produtoUpdateCodigo, produtoUpdateQtd);
             mostrarModalUpdate = false;
@@ -450,6 +469,7 @@
     #region Product Deletion
     private void ConfirmarApagar(string codigo, string nome)
     {
+        if (!Sessao.IsDiretorOuAdmin) return;
         produtoApagarCodigo = codigo;
         produtoApagarNome = nome;
         mostrarModalDelete = true;
@@ -462,7 +482,13 @@
 
     private void ExecutarApagar()
     {
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            mostrarModalDelete = false;
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             DadosDemonstracao.ApagarArtigo(produtoApagarCodigo);
             mostrarModalDelete = false;

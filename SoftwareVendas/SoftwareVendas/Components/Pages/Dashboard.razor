@@ -518,7 +518,7 @@
         totalEncomendasMes = 0;
         vendasRecentes.Clear();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var encs = DadosDemonstracao.ObterEncomendas();
             if (filtroPeriodoDashboard == "hoje")
@@ -549,6 +549,7 @@
                     Comissao = e.Estado == "CANCELADA" ? 0m : e.Valor_Total * taxa
                 });
             }
+            StateHasChanged();
             return;
         }
 
@@ -570,6 +571,10 @@
             filtroData = "AND CAST(E.Data_Encomenda AS DATE) BETWEEN @dI AND @dF";
             periodoDescricaoDashboard = $"{dashboardDataInicio:dd/MM/yyyy} até {dashboardDataFim:dd/MM/yyyy}";
         }
+        else
+        {
+            filtroData = ""; // Todo o histórico (sem restrição de data)
+        }
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -577,13 +582,13 @@
             {
                 con.Open();
                 
-                int isDiretor = (Sessao.Cargo == "Diretor Comercial" || Sessao.Cargo == "Administrador" || Sessao.ID_Vendedor == 1) ? 1 : 0;
+                int isDiretor = Sessao.IsDiretorOuAdmin ? 1 : 0;
 
                 // 1. Period sales and commissions (excluding canceled orders)
                 string queryVendas = $@"
                     SELECT SUM(E.Valor_Total) as Total_Vendas, COUNT(E.Numero_Encomenda) as Num_Vendas
                     FROM Encomenda E
-                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) 
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) 
                       AND ISNULL(E.Estado, '') <> 'CANCELADA' {filtroData}";
 
                 using (SqlCommand cmd = new SqlCommand(queryVendas, con))
@@ -628,7 +633,7 @@
                         ISNULL(E.Valor_Total, 0) AS Valor_Total
                     FROM Encomenda E
                     LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) {filtroData}
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) {filtroData}
                     ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
 
                 decimal taxaComissao = Sessao.PercentagemComissao / 100m;
@@ -662,8 +667,12 @@
                         }
                     }
                 }
+                StateHasChanged();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Erro ao carregar Dashboard: " + ex.Message);
+            }
         }
     }
     #endregion
@@ -716,7 +725,7 @@
         relatorioTotalComissao = 0;
         relatorioTotalQtd = 0;
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var encs = DadosDemonstracao.ObterEncomendas();
             if (periodoSelecionado == "hoje")
@@ -749,6 +758,7 @@
                     Comissao = com
                 });
             }
+            StateHasChanged();
             return;
         }
 
@@ -781,7 +791,7 @@
             try
             {
                 con.Open();
-                int isDiretor = (Sessao.Cargo == "Diretor Comercial" || Sessao.Cargo == "Administrador" || Sessao.ID_Vendedor == 1) ? 1 : 0;
+                int isDiretor = Sessao.IsDiretorOuAdmin ? 1 : 0;
                 string query = $@"
                     SELECT 
                         E.Numero_Encomenda,
@@ -791,7 +801,7 @@
                         ISNULL(E.Valor_Total, 0) AS Valor_Total
                     FROM Encomenda E
                     LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) {filtroData}
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) {filtroData}
                     ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
 
                 decimal taxaComissao = Sessao.PercentagemComissao / 100m;

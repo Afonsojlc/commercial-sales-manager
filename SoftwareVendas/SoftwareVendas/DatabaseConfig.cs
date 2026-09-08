@@ -48,12 +48,18 @@ namespace SoftwareVendas
 
         private static readonly string[] ServidoresCandidatos = new[]
         {
-            @"(localdb)\MSSQLLocalDB",
             @"DESKTOP-P0S20G1\SQLEXPRESS",
             @"localhost\SQLEXPRESS",
             @".\SQLEXPRESS",
+            @"(localdb)\MSSQLLocalDB",
             @"localhost"
         };
+
+        public static void ForcarRedetecao()
+        {
+            _instanciaDetectada = false;
+            DetectarMelhorInstancia();
+        }
 
         #endregion
 

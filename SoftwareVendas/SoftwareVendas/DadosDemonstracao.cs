@@ -67,6 +67,19 @@ namespace SoftwareVendas
             public List<LinhaDemo> Linhas { get; set; } = new List<LinhaDemo>();
         }
 
+        public class VendedorDemo
+        {
+            public int ID_Vendedor { get; set; }
+            public string Nome { get; set; } = "";
+            public string Cargo { get; set; } = "Vendedor";
+            public string PIN { get; set; } = "1234";
+            public string Email { get; set; } = "";
+            public string Senha { get; set; } = "";
+            public string Telemovel { get; set; } = "";
+            public decimal Percentagem_Comissao { get; set; } = 5.0m;
+            public bool Ativo { get; set; } = true;
+        }
+
         #endregion
 
         #region In-Memory Storage
@@ -74,6 +87,7 @@ namespace SoftwareVendas
         private static readonly List<ClienteDemo> _clientes = new List<ClienteDemo>();
         private static readonly List<ArtigoDemo> _artigos = new List<ArtigoDemo>();
         private static readonly List<EncomendaDemo> _encomendas = new List<EncomendaDemo>();
+        private static readonly List<VendedorDemo> _vendedores = new List<VendedorDemo>();
         private static int _proximoNumeroEncomenda = 1005;
         private static bool _inicializado = false;
 
@@ -191,9 +205,16 @@ namespace SoftwareVendas
                     new LinhaDemo { LinhaNum = 1, Codigo = "CAB-002", Descricao = "Cabo H07V-U 2.5mm² Azul (Rolo 100m)", Quantidade = 4, PrecoUnitario = 38.90m, DescontoTexto = "15", PrecoComDesconto = 33.06m, TaxaIva = 23m }
                 }
             };
-            enc4.Valor_Total = Math.Round(enc4.Linhas.Sum(l => l.TotalLinha), 2);
-
             _encomendas.AddRange(new[] { enc1, enc2, enc3, enc4 });
+
+            // Seed sellers (matching real business profiles + demo administrator)
+            _vendedores.AddRange(new[]
+            {
+                new VendedorDemo { ID_Vendedor = 999, Nome = "Afonso Carvalho", Cargo = "DEMO (Diretor Comercial)", PIN = "1234", Email = "afonso.carvalho@geral.pt", Senha = "demo", Telemovel = "912345678", Percentagem_Comissao = 5.00m, Ativo = true },
+                new VendedorDemo { ID_Vendedor = 7, Nome = "José Carvalho", Cargo = "Director Comercial", PIN = "1755", Email = "jgcarvalho007@gmail.com", Senha = "Paredes10", Telemovel = "919000000", Percentagem_Comissao = 7.00m, Ativo = true },
+                new VendedorDemo { ID_Vendedor = 5, Nome = "Antonia Lopes", Cargo = "Vendedora de Obras Feitas", PIN = "1514", Email = "acsousalopes@gmail.com", Senha = "Paredes11", Telemovel = "918000000", Percentagem_Comissao = 2.00m, Ativo = true }
+            });
+
             _inicializado = true;
         }
 
@@ -358,6 +379,41 @@ namespace SoftwareVendas
 
             _encomendas.Insert(0, novaEnc);
             return numero;
+        }
+
+        #endregion
+
+        #region Seller Operations
+
+        public static List<VendedorDemo> ObterVendedores()
+        {
+            return _vendedores.ToList();
+        }
+
+        public static void SalvarVendedor(VendedorDemo vendedor)
+        {
+            if (vendedor.ID_Vendedor <= 0)
+            {
+                vendedor.ID_Vendedor = _vendedores.Count > 0 ? _vendedores.Max(v => v.ID_Vendedor) + 1 : 1;
+                _vendedores.Add(vendedor);
+            }
+            else
+            {
+                int idx = _vendedores.FindIndex(v => v.ID_Vendedor == vendedor.ID_Vendedor);
+                if (idx >= 0)
+                {
+                    _vendedores[idx] = vendedor;
+                }
+                else
+                {
+                    _vendedores.Add(vendedor);
+                }
+            }
+        }
+
+        public static void ApagarVendedor(int id)
+        {
+            _vendedores.RemoveAll(v => v.ID_Vendedor == id);
         }
 
         #endregion

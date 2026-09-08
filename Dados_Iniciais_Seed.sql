@@ -59,14 +59,14 @@ IF NOT EXISTS (SELECT * FROM Clientes WHERE ID_Cliente = 'CLI-003')
     VALUES ('CLI-003', 'Volt & Watt Engenharia e Automação', '504567890', 'Rua das Oliveiras, 88', '4400-240', 'Vila Nova de Gaia', 'projetos@voltwatt.pt', '227654321');
 GO
 
--- 4. Inserir Vendedores (Admin / Diretor Comercial e Vendedor)
-IF NOT EXISTS (SELECT * FROM Vendedores WHERE PIN = '1234')
+-- 4. Inserir Vendedores Reais (Director Comercial e Vendedora)
+IF NOT EXISTS (SELECT * FROM Vendedores WHERE Email = 'jgcarvalho007@gmail.com' OR PIN = '1755')
     INSERT INTO Vendedores (Cargo, Nome, PIN, Email, Senha, Telemovel, Percentagem_Comissao, Ativo)
-    VALUES ('Diretor Comercial', 'Afonso Carvalho (Diretor Comercial)', '1234', 'admin@comercial.pt', 'admin', '912345678', 5.00, 1);
+    VALUES ('Director Comercial', 'José Carvalho', '1755', 'jgcarvalho007@gmail.com', 'Paredes10', '919000000', 7.00, 1);
 
-IF NOT EXISTS (SELECT * FROM Vendedores WHERE PIN = '1111')
+IF NOT EXISTS (SELECT * FROM Vendedores WHERE Email = 'acsousalopes@gmail.com' OR PIN = '1514')
     INSERT INTO Vendedores (Cargo, Nome, PIN, Email, Senha, Telemovel, Percentagem_Comissao, Ativo)
-    VALUES ('Vendedor', 'João Silva', '1111', 'joao.silva@comercial.pt', 'vendedor', '934567890', 3.50, 1);
+    VALUES ('Vendedora de Obras Feitas', 'Antonia Lopes', '1514', 'acsousalopes@gmail.com', 'Paredes11', '918000000', 2.00, 1);
 GO
 
 -- 5. Inserir Encomenda Exemplo

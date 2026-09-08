@@ -91,21 +91,29 @@
         <div class="p-4 border-t border-slate-800 bg-[#0B1120] space-y-2">
             <!-- SQL Server Status -->
             <div class="flex items-center justify-between text-xs text-slate-400 px-2">
-                @if (DatabaseConfig.ConexaoAtiva)
+                @if (Sessao.IsDemo)
+                {
+                    <span class="flex items-center gap-2" title="A funcionar com dados de demonstração em memória (Sandbox)">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse"></span>
+                        <span class="text-amber-400 font-bold">Modo Demonstração</span>
+                    </span>
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">DEMO</span>
+                }
+                else if (DatabaseConfig.ConexaoAtiva)
                 {
                     <span class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
                         <span class="text-emerald-400 font-medium">SQL Server Online</span>
                     </span>
-                    <span class="font-mono text-[10px] text-slate-500">BD Conectada</span>
+                    <span class="font-mono text-[10px] text-slate-500">Produção</span>
                 }
                 else
                 {
-                    <span class="flex items-center gap-2" title="A funcionar com dados de demonstração em memória">
-                        <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)] animate-pulse"></span>
-                        <span class="text-amber-400 font-medium">Modo Demonstração</span>
+                    <span class="flex items-center gap-2" title="Sem ligação ao SQL Server">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span class="text-rose-400 font-medium">SQL Offline</span>
                     </span>
-                    <span class="font-mono text-[10px] text-amber-500/80">Offline</span>
+                    <span class="font-mono text-[10px] text-rose-500/80">Desconectado</span>
                 }
             </div>
 
@@ -149,17 +157,51 @@
                 
                 <!-- Profile Pill -->
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
-                        @(string.IsNullOrEmpty(Sessao.Nome) ? "A" : Sessao.Nome.Substring(0, 1).ToUpper())
-                    </div>
-                    <div class="text-left leading-tight">
-                        <div class="text-sm font-bold text-slate-800">@Sessao.Nome</div>
-                        <div class="text-xs text-blue-600 font-medium">@Sessao.Cargo (@Sessao.PercentagemComissao.ToString("N1")% comissão)</div>
-                    </div>
+                    @if (Sessao.IsDemo)
+                    {
+                        <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-sm ring-2 ring-amber-400/50">
+                            DEMO
+                        </div>
+                        <div class="text-left leading-tight">
+                            <div class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>@Sessao.Nome</span>
+                                <span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[9px] uppercase tracking-wider">DEMO</span>
+                            </div>
+                            <div class="text-xs text-amber-700 font-medium">Acesso de Demonstração (Sandbox)</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                            @(string.IsNullOrEmpty(Sessao.Nome) ? "V" : Sessao.Nome.Substring(0, 1).ToUpper())
+                        </div>
+                        <div class="text-left leading-tight">
+                            <div class="text-sm font-bold text-slate-800">@Sessao.Nome</div>
+                            <div class="text-xs text-blue-600 font-medium">@Sessao.Cargo (@Sessao.PercentagemComissao.ToString("N1")% comissão)</div>
+                        </div>
+                    }
                 </div>
             </div>
         </header>
         
+        @if (Sessao.IsDemo)
+        {
+            <!-- Demo Alert Strip -->
+            <div class="bg-amber-50 border-b border-amber-200 px-6 py-2 flex flex-wrap items-center justify-between text-xs text-amber-900 no-print gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-slate-950 uppercase tracking-wide">
+                        Modo Demonstração Ativo
+                    </span>
+                    <span class="text-amber-800">
+                        Sessão em Sandbox local (Afonso Carvalho). Todas as alterações de clientes, produtos e encomendas ficam em memória e <strong>não são gravadas na base de dados real</strong>.
+                    </span>
+                </div>
+                <div class="font-mono text-[11px] text-amber-700">
+                    afonso.carvalho@geral.pt
+                </div>
+            </div>
+        }
+
         <!-- Main Workspace Area -->
         <main class="flex-1 overflow-y-auto bg-[#F8FAFC]">
             @Body

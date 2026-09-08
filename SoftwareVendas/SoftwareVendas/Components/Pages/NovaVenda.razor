@@ -1,4 +1,5 @@
 @page "/novavenda"
+@page "/novavenda/{IdEditar:int}"
 @using System.Data
 @using Microsoft.Data.SqlClient
 @inject NavigationManager NavManager
@@ -231,6 +232,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public int? IdEditar { get; set; }
+
     [SupplyParameterFromQuery]
     public string? editar { get; set; }
 
@@ -280,11 +284,28 @@
     private decimal totalIva => linhas.Sum(l => (l.PrecoFinalCalculado * (l.TaxaIva / 100m)) * l.Quantidade);
     private decimal totalFinal => (subtotal + totalIva) - descontoGlobal;
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
-        if (!string.IsNullOrWhiteSpace(editar) && int.TryParse(editar, out int idEnc))
+        int idParaCarregar = IdEditar ?? 0;
+        if (idParaCarregar == 0 && !string.IsNullOrWhiteSpace(editar) && int.TryParse(editar, out int qId))
         {
-            CarregarDadosEdicao(idEnc);
+            idParaCarregar = qId;
+        }
+
+        if (idParaCarregar > 0 && (!modoEdicao || idEncomendaEditar != idParaCarregar))
+        {
+            CarregarDadosEdicao(idParaCarregar);
+        }
+        else if (idParaCarregar == 0 && modoEdicao)
+        {
+            modoEdicao = false;
+            idEncomendaEditar = 0;
+            clienteSelecionado = null;
+            linhas.Clear();
+            descontoGlobal = 0;
+            _pesquisaCliente = "";
+            _pesquisaProduto = "";
+            mensagemAviso = "";
         }
     }
 

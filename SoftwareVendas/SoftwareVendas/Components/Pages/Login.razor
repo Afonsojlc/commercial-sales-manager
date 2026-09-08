@@ -4,34 +4,30 @@
 @using Microsoft.Data.SqlClient
 @using SoftwareVendas
 
-<div class="min-h-screen ambient-bg flex items-center justify-center p-4 select-none">
-    <div class="max-w-md w-full glass-panel rounded-[32px] shadow-floating-card p-8 sm:p-9 relative overflow-hidden border border-white/10">
+<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4 select-none">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden border border-slate-200">
         
-        <!-- Ambient Subtle Spotlight -->
-        <div class="absolute -right-12 -top-12 w-40 h-40 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
         <!-- Brand Header -->
-        <div class="text-center mb-8 relative">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-obsidian-900 border border-blue-500/30 text-blue-400 shadow-glow-cobalt mb-4">
-                <span class="font-extrabold font-mono text-sm tracking-tighter text-blue-400">AJLC</span>
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white font-black text-base shadow-md mb-4 tracking-wider">
+                AJLC
             </div>
-            <h1 class="text-2xl font-bold tracking-tight text-white">AJLC Soluctions</h1>
-            <p class="text-xs text-slate-400 mt-1">Gestão Comercial &bull; Distribuição de Material Elétrico</p>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900">@ConfiguracaoEmpresa.NomeEmpresa</h1>
+            <p class="text-xs text-slate-500 mt-1 font-medium">@ConfiguracaoEmpresa.Subtitulo</p>
         </div>
 
-        <div class="space-y-5 relative">
+        <div class="space-y-4">
             <!-- Email Login Section -->
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">E-mail Comercial</label>
-                <input @bind="email" type="email" class="w-full h-11 px-4 rounded-2xl glass-input text-sm text-slate-100 placeholder-slate-500" placeholder="admin@comercial.pt" />
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">E-mail Comercial</label>
+                <input @bind="email" type="email" class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="admin@comercial.pt" />
             </div>
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Senha de Acesso</label>
-                <input @bind="senha" type="password" class="w-full h-11 px-4 rounded-2xl glass-input text-sm text-slate-100 placeholder-slate-500" placeholder="••••••••" />
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Senha de Acesso</label>
+                <input @bind="senha" type="password" class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="••••••••" />
             </div>
             
-            <button @onclick="LoginEmail" class="w-full h-11 rounded-2xl btn-primary text-sm font-bold flex items-center justify-center gap-2">
+            <button @onclick="LoginEmail" class="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2">
                 <span>Entrar no Sistema</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </button>
@@ -39,33 +35,33 @@
             <!-- Divider -->
             <div class="relative my-4">
                 <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-white/10"></div>
+                    <div class="w-full border-t border-slate-200"></div>
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="px-3 bg-obsidian-900 text-slate-500 rounded-full font-mono">OU ACESSO EM MOBILIDADE</span>
+                    <span class="px-3 bg-white text-slate-400 font-bold uppercase text-[10px]">OU ACESSO RÁPIDO COM PIN</span>
                 </div>
             </div>
 
             <!-- PIN Login Section -->
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 text-center">PIN Rápido (4 Dígitos)</label>
-                <input @bind="pin" type="password" maxlength="4" class="w-full h-12 px-4 rounded-2xl glass-input text-center tracking-[0.6em] text-xl font-mono text-blue-400 placeholder-slate-600" placeholder="••••" />
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 text-center">PIN Rápido (4 Dígitos)</label>
+                <input @bind="pin" type="password" maxlength="4" class="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-300 text-center tracking-[0.6em] text-2xl font-mono text-blue-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="••••" />
             </div>
             
-            <button @onclick="LoginPin" class="w-full h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 transition font-semibold text-xs flex items-center justify-center gap-2">
-                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <button @onclick="LoginPin" class="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                 <span>Validar PIN de Vendedor</span>
             </button>
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="p-3 rounded-2xl bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs text-center font-medium">
+                <div class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs text-center font-semibold">
                     @errorMessage
                 </div>
             }
 
-            <div class="text-center pt-2">
-                <span class="text-[11px] text-slate-500 font-mono">AJLC Soluctions &bull; Sistema de Gestão Comercial</span>
+            <div class="text-center pt-3 border-t border-slate-100">
+                <span class="text-[11px] text-slate-400 font-medium">@ConfiguracaoEmpresa.NomeEmpresa &bull; Sistema de Gestão Comercial</span>
             </div>
         </div>
     </div>

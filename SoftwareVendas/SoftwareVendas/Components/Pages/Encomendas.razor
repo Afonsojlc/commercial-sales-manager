@@ -1,25 +1,32 @@
 @page "/encomendas"
 @using System.Data
+@using System.Text
 @using Microsoft.Data.SqlClient
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
-<div class="p-4 sm:p-6 space-y-6 max-w-[1720px] mx-auto w-full">
+<div class="p-6 sm:p-8 space-y-6 max-w-[1720px] mx-auto w-full min-h-full bg-slate-50">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
             <div class="flex items-center gap-3">
-                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Registo de Encomendas</h1>
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium tracking-wide bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20">
-                    AJLC // ENCOMENDAS
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Registo de Encomendas</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Histórico Comercial
                 </span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">
-                Histórico completo de notas de encomenda, estados de expedição e faturação comercial.
+            <p class="text-xs text-slate-500 mt-1">
+                Histórico de notas de encomenda, estados de expedição e faturação. Dê <strong>duplo clique</strong> numa linha para abrir a nota.
             </p>
         </div>
 
         <div class="flex items-center gap-3">
-            <button @onclick="NovaVenda" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-glow-cobalt flex items-center gap-2 transition-all">
+            <button @onclick="ExportarExcel" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 shadow-sm transition flex items-center gap-2" title="Exportar tabela para Excel (.csv compatível com pt-PT)">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Exportar Excel</span>
+            </button>
+
+            <button @onclick="NovaVenda" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Nova Encomenda</span>
             </button>
@@ -28,113 +35,116 @@
 
     @if (!string.IsNullOrEmpty(mensagemErro))
     {
-        <div class="bg-rose-500/10 text-rose-300 p-4 rounded-2xl border border-rose-500/30 text-xs flex items-center gap-2">
-            <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="bg-rose-50 text-rose-700 p-4 rounded-xl border border-rose-200 text-xs flex items-center gap-2">
+            <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>@mensagemErro</span>
         </div>
     }
 
     <!-- Filtros -->
-    <div class="rounded-3xl glass-panel p-4 sm:p-5 shadow-floating-card flex flex-wrap items-center gap-3">
-        <div class="flex-1 min-w-[240px] relative">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
+        <div class="flex-1 min-w-[260px] relative">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input type="text" @bind="filtro" @bind:event="oninput" @onkeyup="Pesquisar" placeholder="Pesquisar por Nº Venda, Cliente, Vendedor, Estado..." class="w-full pl-10 pr-4 py-2 glass-input rounded-2xl text-xs text-white placeholder-slate-500" />
+            <input type="text" @bind="filtro" @bind:event="oninput" @onkeyup="Pesquisar" placeholder="Pesquisar por Nº Encomenda, Cliente, Vendedor, Estado..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" />
         </div>
-        <div class="flex items-center gap-2 bg-obsidian-950/80 p-1 rounded-2xl border border-white/10 text-xs">
+        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
             <div class="flex items-center gap-1.5 px-2">
-                <span class="text-slate-400 font-mono text-[11px]">De:</span>
-                <input type="date" @bind="dataInicio" class="glass-input rounded-xl px-2 py-1 text-xs text-slate-200 font-mono" />
+                <span class="text-slate-500 font-semibold text-[11px]">De:</span>
+                <input type="date" @bind="dataInicio" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-700 font-mono focus:outline-none" />
             </div>
             <div class="flex items-center gap-1.5 px-2">
-                <span class="text-slate-400 font-mono text-[11px]">Até:</span>
-                <input type="date" @bind="dataFim" class="glass-input rounded-xl px-2 py-1 text-xs text-slate-200 font-mono" />
+                <span class="text-slate-500 font-semibold text-[11px]">Até:</span>
+                <input type="date" @bind="dataFim" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-700 font-mono focus:outline-none" />
             </div>
         </div>
-        <button @onclick="Pesquisar" class="px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-xs font-semibold transition flex items-center gap-1.5">
+        <button @onclick="Pesquisar" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
             <span>Filtrar</span>
         </button>
     </div>
 
     <!-- Tabela -->
-    <div class="rounded-3xl glass-panel p-6 shadow-floating-card overflow-hidden">
-        <div class="flex justify-between items-center pb-4 mb-2 border-b border-white/10">
-            <h2 class="text-base font-bold text-white tracking-tight">Listagem Geral de Pedidos</h2>
-            <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-medium bg-white/5 text-slate-400 border border-white/5">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Listagem Geral de Pedidos</h2>
+                <span class="text-xs text-slate-400 font-normal">&bull; Duplo clique abre os detalhes</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                 @(dtEncomendas?.Rows.Count ?? 0) encomenda(s)
             </span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                    <tr class="text-[11px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/5">
-                        <th class="py-3.5 px-4 font-semibold">Nº Venda</th>
-                        <th class="py-3.5 px-4 font-semibold">Data Venda</th>
-                        <th class="py-3.5 px-4 font-semibold">Cliente</th>
-                        <th class="py-3.5 px-4 font-semibold">Vendedor</th>
-                        <th class="py-3.5 px-4 font-semibold text-right">Total Venda</th>
-                        <th class="py-3.5 px-4 font-semibold text-center">Estado</th>
-                        <th class="py-3.5 px-4 font-semibold text-center">Ações</th>
+                    <tr class="bg-slate-50 text-[11px] uppercase font-bold text-slate-600 border-b border-slate-200">
+                        <th class="py-3 px-4">Nº Encomenda</th>
+                        <th class="py-3 px-4">Data</th>
+                        <th class="py-3 px-4">Cliente</th>
+                        <th class="py-3 px-4">Vendedor</th>
+                        <th class="py-3 px-4 text-right">Total</th>
+                        <th class="py-3 px-4 text-center">Estado</th>
+                        <th class="py-3 px-4 text-center">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/[0.03] text-sm">
+                <tbody class="divide-y divide-slate-100 text-slate-700">
                     @if (dtEncomendas != null && dtEncomendas.Rows.Count > 0)
                     {
                         @foreach (System.Data.DataRowView row in dtEncomendas.DefaultView)
                         {
                             var idVenda = row["Nº Venda"].ToString();
-                            <tr class="group hover:bg-white/[0.04] transition-colors duration-200">
-                                <td class="py-4 px-4 font-mono font-bold text-white group-hover:text-cobalt-400 transition-colors">
+                            <tr @ondblclick="() => VerDetalhes(idVenda!)" class="hover:bg-blue-50/60 cursor-pointer transition-colors group select-none" title="Dê duplo clique para abrir a encomenda #@idVenda">
+                                <td class="py-3.5 px-4 font-mono font-bold text-slate-900 group-hover:text-blue-700">
                                     #@row["Nº Venda"]
                                 </td>
-                                <td class="py-4 px-4 text-xs font-mono text-slate-400">
+                                <td class="py-3.5 px-4 font-mono text-slate-600">
                                     @Convert.ToDateTime(row["Data Venda"]).ToString("dd/MM/yyyy")
                                 </td>
-                                <td class="py-4 px-4 text-sm font-semibold text-slate-100">
+                                <td class="py-3.5 px-4 font-semibold text-slate-900">
                                     @row["Cliente"]
                                 </td>
-                                <td class="py-4 px-4 text-xs text-slate-300">
+                                <td class="py-3.5 px-4 text-slate-600">
                                     @row["Vendedor"]
                                 </td>
-                                <td class="py-4 px-4 text-right font-mono font-bold text-white text-base">
+                                <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-sm">
                                     € @Convert.ToDecimal(row["Total Venda"]).ToString("N2")
                                 </td>
-                                <td class="py-4 px-4 text-center">
+                                <td class="py-3.5 px-4 text-center">
                                     @if (row["Estado"].ToString() == "FECHADA")
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                             FECHADA
                                         </span>
                                     }
                                     else if (row["Estado"].ToString() == "PENDENTE")
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                             PENDENTE
                                         </span>
                                     }
                                     else if (row["Estado"].ToString() == "CANCELADA")
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                             CANCELADA
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-white/5 text-slate-300 border border-white/10">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                                             @row["Estado"]
                                         </span>
                                     }
                                 </td>
-                                <td class="py-4 px-4 text-center space-x-2 whitespace-nowrap">
-                                    <button @onclick="() => VerDetalhes(idVenda!)" class="px-3 py-1.5 rounded-xl bg-cobalt-500/10 hover:bg-cobalt-500/20 text-cobalt-400 border border-cobalt-500/20 font-semibold text-xs transition inline-flex items-center gap-1.5">
+                                <td class="py-3.5 px-4 text-center space-x-1.5 whitespace-nowrap">
+                                    <button @onclick="() => VerDetalhes(idVenda!)" @onclick:stopPropagation="true" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs transition inline-flex items-center gap-1" title="Ver / Imprimir">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                         <span>Detalhes</span>
                                     </button>
-                                    <button @onclick="() => EditarEncomenda(idVenda!)" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 font-semibold text-xs transition inline-flex items-center gap-1.5">
+                                    <button @onclick="() => EditarEncomenda(idVenda!)" @onclick:stopPropagation="true" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold text-xs transition inline-flex items-center gap-1" title="Modificar Linhas">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         <span>Editar</span>
                                     </button>
@@ -145,7 +155,7 @@
                     else if (dtEncomendas != null && dtEncomendas.Rows.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-12 text-slate-500 text-xs font-mono">
+                            <td colspan="7" class="text-center py-12 text-slate-400 text-xs font-mono">
                                 Nenhuma encomenda encontrada com os filtros selecionados.
                             </td>
                         </tr>
@@ -239,5 +249,40 @@
     private void EditarEncomenda(string id)
     {
         NavManager.NavigateTo($"/novavenda/{id}");
+    }
+
+    private async Task ExportarExcel()
+    {
+        if (dtEncomendas == null || dtEncomendas.Rows.Count == 0) return;
+
+        var sb = new StringBuilder();
+        // Cabeçalho CSV compatível com Excel pt-PT (separador ';')
+        sb.AppendLine("Nº Encomenda;Data Encomenda;Cliente;Vendedor;Total Venda (€);Estado");
+
+        foreach (DataRowView row in dtEncomendas.DefaultView)
+        {
+            string ne = row["Nº Venda"].ToString() ?? "";
+            string data = Convert.ToDateTime(row["Data Venda"]).ToString("dd/MM/yyyy");
+            string cliente = EscapeCsv(row["Cliente"].ToString() ?? "");
+            string vendedor = EscapeCsv(row["Vendedor"].ToString() ?? "");
+            decimal total = Convert.ToDecimal(row["Total Venda"]);
+            string estado = EscapeCsv(row["Estado"].ToString() ?? "");
+
+            sb.AppendLine($"{ne};{data};{cliente};{vendedor};{total.ToString("F2")};{estado}");
+        }
+
+        string nomeFicheiro = $"Encomendas_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+        await JS.InvokeVoidAsync("downloadFileFromText", nomeFicheiro, sb.ToString());
+    }
+
+    private string EscapeCsv(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        if (text.Contains(";") || text.Contains("\"") || text.Contains("\n") || text.Contains("\r"))
+        {
+            string escaped = text.Replace("\"", "\"\"");
+            return "\"" + escaped + "\"";
+        }
+        return text;
     }
 }

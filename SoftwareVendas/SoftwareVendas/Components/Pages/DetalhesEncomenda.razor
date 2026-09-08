@@ -1,6 +1,7 @@
 @page "/encomendas/{IdEncomenda}"
 @using System.Data
 @using Microsoft.Data.SqlClient
+@using SoftwareVendas
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 
@@ -29,29 +30,29 @@
     }
 </style>
 
-<div class="p-8 h-full overflow-auto">
+<div class="p-6 sm:p-8 min-h-full bg-slate-50">
     <!-- Top Action Bar (hidden in print) -->
-    <div class="flex justify-between items-center mb-8 no-print">
-        <button @onclick="Voltar" class="text-gray-600 hover:text-gray-900 flex items-center font-medium transition">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 max-w-5xl mx-auto no-print">
+        <button @onclick="Voltar" class="text-slate-600 hover:text-slate-900 flex items-center font-semibold text-sm transition">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Voltar às Encomendas
         </button>
 
-        <div class="flex items-center space-x-3">
-            <button @onclick="ModificarEncomenda" class="bg-[#F59E0B] hover:bg-amber-600 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        <div class="flex flex-wrap items-center gap-2.5">
+            <button @onclick="ModificarEncomenda" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Modificar Encomenda
             </button>
 
-            <button @onclick="Imprimir" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded border border-gray-300 transition flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Imprimir Nota de Encomenda
+            <button @onclick="Imprimir" class="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-300 shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Imprimir Nota de Encomenda (A4)
             </button>
 
             @if (estadoOriginal != estadoSelecionado)
             {
-                <button @onclick="GuardarEstado" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <button @onclick="GuardarEstado" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     Gravar Novo Estado
                 </button>
             }
@@ -60,44 +61,45 @@
 
     @if (carregando)
     {
-        <div class="flex justify-center items-center h-64 text-gray-400">
-            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            A carregar dados da encomenda...
+        <div class="flex justify-center items-center h-64 text-slate-400">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span class="text-sm font-medium">A carregar dados da encomenda...</span>
         </div>
     }
     else
     {
-        <!-- Documento Oficial / Nota de Encomenda Printable Layout -->
-        <div id="printArea" class="bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-5xl mx-auto">
+        <!-- Documento Oficial / Nota de Encomenda Printable Layout (High Fidelity A4) -->
+        <div id="printArea" class="bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto text-slate-800">
             
             <!-- 1. Document Header -->
-            <div class="border-b-2 border-[#2C3E50] pb-4 mb-6">
+            <div class="border-b-2 border-slate-800 pb-4 mb-5">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h1 class="text-3xl font-black text-[#2B3347] tracking-wider uppercase">NOTA DE ENCOMENDA</h1>
-                        <p class="text-sm font-medium text-gray-500 mt-1">Gestão Comercial & Distribuição de Material Elétrico</p>
+                        <h1 class="text-3xl font-black text-slate-900 tracking-wider uppercase">NOTA DE ENCOMENDA</h1>
+                        <p class="text-xs font-medium text-slate-600 mt-1">@ConfiguracaoEmpresa.Subtitulo</p>
                     </div>
                     <div class="text-right">
-                        <h2 class="text-xl font-bold text-[#3F6CD8]">AJLC Soluctions</h2>
-                        <p class="text-xs text-gray-500">Comercial: <strong>@(string.IsNullOrEmpty(vendedorNome) ? Sessao.Nome : vendedorNome)</strong></p>
+                        <h2 class="text-xl font-bold text-blue-700">@ConfiguracaoEmpresa.NomeEmpresa</h2>
+                        <p class="text-xs text-slate-500">NIF: @ConfiguracaoEmpresa.NIF &bull; Tel: @ConfiguracaoEmpresa.Telefone</p>
+                        <p class="text-xs text-slate-500">Comercial: <strong>@(string.IsNullOrEmpty(vendedorNome) ? (string.IsNullOrEmpty(Sessao.Nome) ? "Afonso Carvalho (Diretor Comercial)" : Sessao.Nome) : vendedorNome)</strong></p>
                     </div>
                 </div>
             </div>
 
             <!-- 2. Meta Info Strip -->
-            <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-100 flex justify-between items-center text-sm">
+            <div class="bg-slate-50 rounded-xl p-3.5 mb-5 border border-slate-200 flex justify-between items-center text-xs">
                 <div>
-                    <span class="text-gray-500">Encomenda Nº:</span>
-                    <strong class="text-gray-900 ml-1 text-base">#@IdEncomenda</strong>
+                    <span class="text-slate-500 uppercase font-semibold">Encomenda Nº:</span>
+                    <strong class="text-slate-900 ml-1.5 text-sm font-mono">#@IdEncomenda</strong>
                 </div>
                 <div>
-                    <span class="text-gray-500">Data:</span>
-                    <strong class="text-gray-900 ml-1">@dataEncomenda.ToString("dd/MM/yyyy")</strong>
+                    <span class="text-slate-500 uppercase font-semibold">Data:</span>
+                    <strong class="text-slate-900 ml-1.5 font-mono">@dataEncomenda.ToString("dd/MM/yyyy")</strong>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-gray-500">Estado:</span>
+                    <span class="text-slate-500 uppercase font-semibold">Estado:</span>
                     <div class="no-print inline-block">
-                        <select @bind="estadoSelecionado" class="border border-gray-300 rounded px-2.5 py-1 text-xs font-bold focus:ring-blue-500 bg-white">
+                        <select @bind="estadoSelecionado" class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold focus:ring-2 focus:ring-blue-500 bg-white">
                             <option value="PENDENTE">PENDENTE</option>
                             <option value="FECHADA">FECHADA</option>
                             <option value="PAGA">PAGA</option>
@@ -106,59 +108,59 @@
                             <option value="CANCELADA">CANCELADA</option>
                         </select>
                     </div>
-                    <strong class="hidden print:inline text-gray-900">@estadoOriginal</strong>
+                    <strong class="hidden print:inline text-slate-900 font-bold">@estadoOriginal</strong>
                 </div>
             </div>
 
             <!-- 3. Client Details Box -->
-            <div class="border border-gray-200 rounded-lg p-5 mb-8">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">DADOS DO CLIENTE</h3>
-                <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="border border-slate-200 rounded-xl p-4 mb-6">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">DADOS DO CLIENTE</h3>
+                <div class="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                        <p class="text-gray-500 text-xs">Cliente</p>
-                        <p class="font-bold text-gray-800 text-base">@clienteNome</p>
+                        <p class="text-slate-500">Cliente</p>
+                        <p class="font-bold text-slate-900 text-sm">@clienteNome</p>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-xs">NIF</p>
-                        <p class="font-semibold text-gray-800">@clienteNIF</p>
+                        <p class="text-slate-500">NIF</p>
+                        <p class="font-bold text-slate-900 font-mono">@clienteNIF</p>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-xs">Email</p>
-                        <p class="text-gray-700">@(string.IsNullOrEmpty(clienteEmail) ? "Não especificado" : clienteEmail)</p>
+                        <p class="text-slate-500">Email</p>
+                        <p class="text-slate-700">@(string.IsNullOrEmpty(clienteEmail) ? "Não especificado" : clienteEmail)</p>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-xs">Telefone</p>
-                        <p class="text-gray-700">@(string.IsNullOrEmpty(clienteTelefone) ? "Não especificado" : clienteTelefone)</p>
+                        <p class="text-slate-500">Telefone</p>
+                        <p class="text-slate-700 font-mono">@(string.IsNullOrEmpty(clienteTelefone) ? "Não especificado" : clienteTelefone)</p>
                     </div>
                 </div>
             </div>
 
             <!-- 4. Products Table -->
-            <div class="mb-8">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">ARTIGOS ENCOMENDADOS</h3>
-                <table class="w-full text-left border-collapse border border-gray-200 rounded">
+            <div class="mb-6">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">ARTIGOS ENCOMENDADOS</h3>
+                <table class="w-full text-left border-collapse border border-slate-200 rounded-lg overflow-hidden text-xs">
                     <thead>
-                        <tr class="bg-gray-100 text-gray-700 text-xs uppercase font-bold border-b border-gray-200">
-                            <th class="py-3 px-4">Código</th>
-                            <th class="py-3 px-4">Descrição do Artigo</th>
-                            <th class="py-3 px-4 text-right">Qtd</th>
-                            <th class="py-3 px-4 text-right">Preço Unit.</th>
-                            <th class="py-3 px-4 text-center">Desc. (%)</th>
-                            <th class="py-3 px-4 text-right">IVA</th>
-                            <th class="py-3 px-4 text-right">Total</th>
+                        <tr class="bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px]">
+                            <th class="py-2.5 px-3">Código</th>
+                            <th class="py-2.5 px-3">Descrição do Artigo</th>
+                            <th class="py-2.5 px-3 text-right">Qtd</th>
+                            <th class="py-2.5 px-3 text-right">Preço Unit.</th>
+                            <th class="py-2.5 px-3 text-center">Desc. (%)</th>
+                            <th class="py-2.5 px-3 text-right">IVA</th>
+                            <th class="py-2.5 px-3 text-right">Total</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-200">
+                    <tbody class="divide-y divide-slate-200">
                         @foreach (var l in linhas)
                         {
-                            <tr class="hover:bg-gray-50">
-                                <td class="py-3 px-4 font-mono font-medium text-gray-900">@l.Codigo</td>
-                                <td class="py-3 px-4 text-gray-800">@l.Descricao</td>
-                                <td class="py-3 px-4 text-right font-semibold">@l.Qtd</td>
-                                <td class="py-3 px-4 text-right">€ @l.Preco.ToString("N2")</td>
-                                <td class="py-3 px-4 text-center font-medium text-blue-600">@(string.IsNullOrEmpty(l.DescontoTexto) ? "-" : l.DescontoTexto)</td>
-                                <td class="py-3 px-4 text-right text-gray-500">@l.Iva%</td>
-                                <td class="py-3 px-4 text-right font-bold text-gray-900">€ @l.Subtotal.ToString("N2")</td>
+                            <tr class="hover:bg-slate-50">
+                                <td class="py-2.5 px-3 font-mono font-semibold text-slate-900">@l.Codigo</td>
+                                <td class="py-2.5 px-3 text-slate-800 font-medium">@l.Descricao</td>
+                                <td class="py-2.5 px-3 text-right font-bold text-slate-900">@l.Qtd</td>
+                                <td class="py-2.5 px-3 text-right font-mono">€ @l.Preco.ToString("N2")</td>
+                                <td class="py-2.5 px-3 text-center font-semibold text-blue-600">@(string.IsNullOrEmpty(l.DescontoTexto) ? "-" : l.DescontoTexto)</td>
+                                <td class="py-2.5 px-3 text-right text-slate-500">@l.Iva%</td>
+                                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">€ @l.Subtotal.ToString("N2")</td>
                             </tr>
                         }
                     </tbody>
@@ -166,40 +168,40 @@
             </div>
 
             <!-- 5. Totals Section -->
-            <div class="flex justify-end mb-12">
-                <div class="w-72 space-y-2 text-sm">
-                    <div class="flex justify-between text-gray-600">
+            <div class="flex justify-end mb-10">
+                <div class="w-80 space-y-2 text-xs">
+                    <div class="flex justify-between text-slate-600">
                         <span>Subtotal (c/ IVA):</span>
-                        <span class="font-medium">€ @((linhas.Count > 0 ? linhas.Sum(l => l.Subtotal) : valorTotal + descontoGlobal).ToString("N2"))</span>
+                        <span class="font-mono font-medium">€ @((linhas.Count > 0 ? linhas.Sum(l => l.Subtotal) : valorTotal + descontoGlobal).ToString("N2"))</span>
                     </div>
                     @if (descontoGlobal > 0)
                     {
-                        <div class="flex justify-between text-red-600">
+                        <div class="flex justify-between text-rose-600">
                             <span>Desconto Global:</span>
-                            <span class="font-medium">- € @descontoGlobal.ToString("N2")</span>
+                            <span class="font-mono font-bold">- € @descontoGlobal.ToString("N2")</span>
                         </div>
                     }
-                    <div class="flex justify-between text-xl font-black text-[#2B3347] border-t-2 border-gray-800 pt-3 mt-2">
+                    <div class="flex justify-between text-lg font-black text-slate-900 border-t-2 border-slate-800 pt-3 mt-2">
                         <span>TOTAL A PAGAR:</span>
-                        <span class="text-[#3F6CD8]">€ @valorTotal.ToString("N2")</span>
+                        <span class="text-blue-700 font-mono text-xl">€ @valorTotal.ToString("N2")</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 6. Dual Signatures Section (Matching FormDetalhesEncomenda) -->
-            <div class="mt-16 pt-6 border-t border-gray-200">
-                <div class="grid grid-cols-2 gap-16 text-center text-xs text-gray-500">
+            <!-- 6. Dual Signatures Section (Exact match with reference) -->
+            <div class="mt-14 pt-6 border-t border-slate-200">
+                <div class="grid grid-cols-2 gap-16 text-center text-xs text-slate-500">
                     <div>
-                        <div class="border-b-2 border-gray-400 pb-1 mb-2"></div>
-                        <p class="font-semibold text-gray-700">Assinatura do Cliente / Carimbo</p>
+                        <div class="border-b-2 border-slate-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-slate-700">Assinatura do Cliente / Carimbo</p>
                     </div>
                     <div>
-                        <div class="border-b-2 border-gray-400 pb-1 mb-2"></div>
-                        <p class="font-semibold text-gray-700">O Comercial / Responsável de Vendas</p>
+                        <div class="border-b-2 border-slate-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-slate-700">O Comercial / Responsável de Vendas</p>
                     </div>
                 </div>
-                <div class="text-center text-[10px] text-gray-400 mt-8">
-                    Documento processado por computador • AJLC Soluctions
+                <div class="text-center text-[11px] text-slate-400 mt-8">
+                    Documento processado por computador &bull; @ConfiguracaoEmpresa.NomeEmpresa
                 </div>
             </div>
         </div>

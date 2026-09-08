@@ -126,7 +126,7 @@
                     WHERE E.Data_Encomenda BETWEEN @dataI AND @dataF
                       AND (@filtro = '' OR 
                            C.Nome_Cliente LIKE @filtroBusca OR 
-                           E.Numero_Encomenda LIKE @filtroBusca OR 
+                           CAST(E.Numero_Encomenda AS VARCHAR) LIKE @filtroBusca OR 
                            V.Nome_Utilizador LIKE @filtroBusca OR 
                            E.Estado LIKE @filtroBusca)
                     ORDER BY E.Numero_Encomenda DESC";
@@ -161,5 +161,6 @@
         NavManager.NavigateTo($"/encomendas/{id}");
     }
 }
+
 
 

@@ -190,8 +190,8 @@
     
     // Cliente
     private string pesquisaCliente = "";
-    private List<dynamic> clientesResultados = new List<dynamic>();
-    private dynamic? clienteSelecionado = null;
+    private List<ClienteSearchResult> clientesResultados = new List<ClienteSearchResult>();
+    private ClienteSearchResult? clienteSelecionado = null;
 
     // Novo Artigo
     private string novoArtigoCodigo = "";
@@ -251,7 +251,7 @@
                     {
                         while (rd.Read())
                         {
-                            clientesResultados.Add(new {
+                            clientesResultados.Add(new ClienteSearchResult {
                                 ID_Cliente = Convert.ToInt32(rd["ID_Cliente"]),
                                 Nome_Cliente = rd["Nome_Cliente"].ToString(),
                                 NIF = rd["NIF"].ToString(),
@@ -268,14 +268,14 @@
         }
     }
 
-    private void SelecionarCliente(dynamic c)
+    private void SelecionarCliente(ClienteSearchResult c)
     {
         clienteSelecionado = c;
         clientesResultados.Clear();
         pesquisaCliente = "";
     }
 
-        private List<dynamic> produtosResultados = new List<dynamic>();
+        private List<ProdutoSearchResult> produtosResultados = new List<ProdutoSearchResult>();
 
     private void BuscarProdutoCodigo(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
@@ -298,7 +298,7 @@
                     {
                         while (rd.Read())
                         {
-                            produtosResultados.Add(new {
+                            produtosResultados.Add(new ProdutoSearchResult {
                                 Codigo = rd["Codigo"].ToString()!,
                                 Descricao = rd["Descricao"].ToString()!,
                                 PVP_Unidade = Convert.ToDecimal(rd["PVP_Unidade"]),
@@ -315,7 +315,7 @@
         }
     }
 
-    private void SelecionarProduto(dynamic p)
+    private void SelecionarProduto(ProdutoSearchResult p)
     {
         novoArtigoCodigo = p.Codigo;
         novoArtigoDescricao = p.Descricao;
@@ -446,7 +446,17 @@
         public decimal PrecoFinalCalculado { get; set; }
         public decimal TotalLinha => Quantidade * PrecoFinalCalculado * (1 + TaxaIva / 100m);
     }
+
+    public class ClienteSearchResult {
+        public int ID_Cliente { get; set; }
+        public string Nome_Cliente { get; set; } = "";
+        public string NIF { get; set; } = "";
+        public string Morada_Completa { get; set; } = "";
+    }
+    public class ProdutoSearchResult {
+        public string Codigo { get; set; } = "";
+        public string Descricao { get; set; } = "";
+        public decimal PVP_Unidade { get; set; }
+        public decimal Taxa_IVA { get; set; }
+    }
 }
-
-
-

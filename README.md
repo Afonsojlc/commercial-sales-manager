@@ -9,32 +9,35 @@
 [![IDE Visual Studio 2022](https://img.shields.io/badge/IDE-Visual_Studio_2022-C8A2C8?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> Sistema Desktop Corporativo de **Sales Force Automation (SFA)** e Gestão de Encomendas B2B desenvolvido para otimizar o fluxo operacional de uma Direção Comercial no setor de distribuição técnica e material elétrico.
+> Enterprise Desktop **Sales Force Automation (SFA)** and B2B Order Management System engineered to streamline the daily operational workflow of Commercial Directors in technical distribution and electrical equipment industries.
+
+> [!NOTE]
+> **User Interface Localization:** While this technical documentation is in English, the application's user interface is localized in **European Portuguese (pt-PT)** to align directly with B2B commercial practices and regulatory terminology in Portugal.
 
 ---
 
-## 📖 Visão Geral & Contexto
+## 📖 Overview & Business Context
 
-Nas operações comerciais de distribuição B2B, grande parte dos registos de encomendas e acordos de preços ainda é realizada com recurso a blocos de papel químico (*notas de encomenda manuscritas*), cálculos manuais de descontos em cascata e posterior transcrição para o software de faturação central.
+In traditional B2B commercial distribution, a significant portion of sales transactions and contractual pricing agreements are still drafted manually: paper order pads (*carbon copy forms*), manual calculation of cascading tiered discounts, and delayed transcription into central ERP/billing systems.
 
-O **Commercial Sales Manager** digitaliza e automatiza integralmente este ciclo de trabalho:
-* **Identificação Imediata de Clientes:** Pesquisa preditiva por NIF, Razão Social, Telefone ou Localidade.
-* **Catálogo Técnico & Stock em Tempo Real:** Consulta de artigos com indicação de inventário disponível e reposição imediata.
-* **Motor de Desconto B2B em Cascata:** Suporte a expressões comerciais compostas (ex: `50+10`, `40+5+2`), amplamente utilizadas pelos fabricantes de material elétrico.
-* **Emissão e Impressão de Notas de Encomenda A4:** Layout corporativo padronizado pronto para impressão física ou arquivo em PDF.
-* **Acompanhamento de Comissões e Vendas:** Painel executivo com métricas financeiras consolidadas por período e exportação para Excel (CSV).
-* **Operação Híbrida Inteligente:** Conectividade nativa com Microsoft SQL Server e transição transparente para modo offline/demonstração quando fora de rede.
+**Commercial Sales Manager** digitizes and automates this end-to-end sales lifecycle:
+* **Instant Customer Identification:** Predictive lookup by Tax Identification Number (NIF), Company Name, Phone, or City.
+* **Technical Catalog & Real-Time Stock:** Live inventory verification with direct stock adjustment capabilities.
+* **Tiered Cascading Discount Engine:** Native support for B2B chained discount formulas (e.g., `50+10`, `40+5+2`), widely used by electrical material manufacturers.
+* **Corporate A4 Order Forms:** Automated generation of formal order notes ready for physical printing or digital PDF archival.
+* **Commission & Performance Tracking:** Executive dashboard delivering consolidated financial KPIs per period and instant CSV/Excel export.
+* **Intelligent Hybrid Operation:** Native high-performance connectivity with Microsoft SQL Server and seamless automatic fallback to an offline demonstration mode when off-network.
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+## 🏗️ System Architecture
 
-A aplicação adota uma arquitetura moderna **Desktop Híbrida (.NET 8 + Blazor WebView)**:
+The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor WebView)**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │               Windows Forms Shell Host                      │
-│               (Form1.cs com BlazorWebView)                  │
+│               (Form1.cs hosting BlazorWebView)              │
 ├─────────────────────────────────────────────────────────────┤
 │         Blazor WebView Components (HTML5 / Tailwind CSS)    │
 │  ├── Dashboard.razor       ├── Clientes.razor               │
@@ -43,123 +46,122 @@ A aplicação adota uma arquitetura moderna **Desktop Híbrida (.NET 8 + Blazor 
 │  └── DetalhesEncomenda.razor                                │
 ├─────────────────────────────────────────────────────────────┤
 │                    C# Business Logic Layer                  │
-│  ├── Sessao.cs (Autenticação e Comissões)                   │
-│  ├── ConfiguracaoEmpresa.cs (Perfil da Empresa em JSON)     │
-│  └── DatabaseConfig.cs (Deteção e Conectividade SQL)        │
+│  ├── Sessao.cs (User Authentication & Commission Terms)     │
+│  ├── ConfiguracaoEmpresa.cs (JSON Company Profile Store)    │
+│  └── DatabaseConfig.cs (SQL Discovery & Connectivity)       │
 ├──────────────────────────────┬──────────────────────────────┤
-│    Modo Online (Produção)    │   Modo Offline (Demonstração)│
+│    Online Mode (Production)  │   Offline Mode (Demo Mock)   │
 │    Microsoft.Data.SqlClient  │   DadosDemonstracao.cs       │
-│    Microsoft SQL Server      │   Armazenamento em Memória   │
-│    Base: Software_Vendas_Pai │   Catálogo Elétrico Mock     │
+│    Microsoft SQL Server      │   Thread-Safe In-Memory Repo │
+│    DB: Software_Vendas_Pai   │   Seed Electrical Catalog    │
 └──────────────────────────────┴──────────────────────────────┘
 ```
 
-### Destaques da Arquitetura:
-1. **Host Nativo Windows Forms:** Executável leve sem sobrecarga de servidores web locais, garantindo desempenho instantâneo de arranque.
-2. **Componentes Blazor Reativos:** Interface fluida, sem recarregamentos bruscos de janela, desenhada com o ecossistema utilitário do Tailwind CSS.
-3. **Isolamento de Estado:** Sessão do vendedor, parametrizações da empresa e dados transacionais desacoplados da camada visual.
+### Architectural Highlights:
+1. **Lightweight Native WinForms Shell:** Boots instantly without the memory footprint of local web servers or Electron runtimes.
+2. **Reactive Blazor UI:** Single-page navigation styled with Tailwind CSS utility classes, providing fluid transitions and responsive layouts.
+3. **Decoupled Business Logic:** Seller session state, corporate profiles, and database abstraction layers remain decoupled from the visual layer.
 
 ---
 
-## ✨ Funcionalidades Principais
+## ✨ Key Features
 
-### ⚡ Autenticação Comercial Ergonómica
-* **Modo Dual de Acesso:**
-  * **PIN de 4 dígitos:** Concebido para postos móveis e ecrãs táteis, permitindo autenticação rápida entre visitas a clientes.
-  * **E-mail & Senha:** Método tradicional com suporte a múltiplos perfis (Vendedor, Diretor Comercial, Administrador).
-* **Gestão de Sessão Centralizada (`Sessao.cs`):** Retém em memória os dados do utilizador ativo, cargo e percentagem de comissão contratual.
+### ⚡ Ergonomic Dual Authentication
+* **Dual Login Options:**
+  * **Quick 4-digit PIN:** Optimized for touchscreens, field tablets, and high-frequency logins between client site visits.
+  * **Email & Password:** Standard corporate login supporting multiple user profiles (*Sales Representative*, *Commercial Director*, *Administrator*).
+* **Centralized Session State (`Sessao.cs`):** Retains active seller credentials, role permissions, and contractual commission rates in memory.
 
-### 📦 Catálogo de Artigos & Controlo de Stock
-* **Pesquisa Preditiva de Artigos:** Filtragem instantânea por código de referência ou descrição do material.
-* **Ajuste Rápido de Inventário:** Modal integrado para dar entrada ou baixa de unidades sem sair do ecrã de vendas.
-* **Criação de Artigos:** Suporte ao registo de novos produtos com categoria/família, PVP de tabela e IVA configurável.
+### 📦 Material Catalog & Dynamic Stock Management
+* **Predictive Product Search:** Real-time keyword filtering across item codes and commercial descriptions.
+* **Rapid Stock Adjustments:** Contextual modal allowing immediate stock replenishment or deduction directly from the catalog or sales screens.
+* **Item Registration:** Add new items with category/family assignments, base retail prices (PVP), and customizable VAT rates.
 
-### 🧮 Motor de Descontos Comerciais em Cascata
-No setor elétrico e da distribuição técnica, as tabelas de descontos de fabricantes funcionam por escalões sucessivos:
-$$\text{Preço Efetivo} = \text{PVP} \times (1 - d_1) \times (1 - d_2) \times \dots \times (1 - d_n)$$
+### 🧮 Compounding Cascading Discount Engine
+In electrical distribution and technical B2B trade, supplier discounts are commonly expressed in cascading tiers rather than single flat rates:
+$$\text{Effective Unit Price} = \text{PVP} \times (1 - d_1) \times (1 - d_2) \times \dots \times (1 - d_n)$$
 
-* **Expressões Suportadas:** `50+10`, `40+5+2.5`, ou percentagens padrão simples (`35%`).
-* **Desconto Global Extra:** Aplicação de desconto financeiro no fecho global da nota de encomenda.
-* **Cálculo Automático de IVA:** Incidência da taxa legal em vigor (23%) com cálculo exato de subtotal, imposto e valor final.
+* **Supported Notations:** Composed strings such as `50+10`, `40+5+2.5`, or flat percentages (`35%`).
+* **Global Order Discount:** Financial closing discount applied over the total transaction balance.
+* **Automatic VAT Computation:** Dynamic tax calculation (standard Portuguese 23% or custom rate) with transparent subtotal, tax amount, and final gross total.
 
-### 🛡️ Persistência ACID e Abate Atómico de Stock
-* Todas as encomendas geradas no modo SQL Server utilizam `SqlTransaction`.
-* Ao confirmar a venda:
-  1. Cria o cabeçalho na tabela `Encomenda`.
-  2. Insere as respetivas linhas em `Linha_Encomenda`.
-  3. Abate imediatamente as quantidades vendidas da tabela `Material` (`Stock = Stock - @Qtd`).
-* Ao cancelar ou eliminar uma encomenda, as quantidades são repostas integralmente em armazém.
-* Ao modificar uma encomenda existente, o sistema estorna o stock anterior e aplica a nova composição de artigos de forma atómica.
+### 🛡️ ACID Transactions & Atomic Inventory Abatement
+* In SQL Server mode, all finalized orders execute within an atomic `SqlTransaction`:
+  1. Creates the header record in `Encomenda`.
+  2. Inserts all associated detail lines into `Linha_Encomenda`.
+  3. Deducts ordered quantities immediately from `Material` inventory (`Stock = Stock - @Quantity`).
+* If any step encounters an exception, the entire transaction triggers a `Rollback()`, preventing orphan orders or inventory corruption.
+* **Stock Restoration on Edit/Cancel:** Editing an existing order restores previous stock quantities before applying the updated line adjustments atomically.
 
-### 📄 Nota de Encomenda Corporativa (Formato A4 / PDF)
-* Visualização detalhada de cada encomenda com renderização em layout oficial A4:
-  * Cabeçalho com dados da empresa (logótipo textual, NIF, morada, contactos).
-  * Ficha de identificação do cliente e comercial responsável.
-  * Tabela discriminada de artigos, quantidades, preços unitários, descontos aplicados e totais.
-  * Resumo fiscal (Subtotal s/ IVA, Descontos, Total IVA, Total a Pagar).
-  * Campo formal para carimbo e assinatura do cliente.
-* Ação de **Impressão Direta** compatível com qualquer impressora instalada ou exportação para **PDF**.
+### 📄 Corporate A4 Order Documents (Print & PDF)
+* High-fidelity order view rendered according to standard European A4 dimensions:
+  * Company header with customizable corporate identity (legal name, NIF, registered address, direct contacts).
+  * Customer dossier and assigned commercial representative.
+  * Itemized table with material codes, descriptions, quantities, base prices, cascading discounts, and line totals.
+  * Tax breakdown summary (Net Subtotal, Discounts, Total VAT, Total Payable).
+  * Formal stamp and signature confirmation blocks.
+* Direct **Print to Physical Printer** and one-click export to **Microsoft Print to PDF**.
 
-### 📊 Dashboard de Vendas & Relatório Executivo
-* **Métricas em Tempo Real:**
-  * Volume Faturado no Período (€)
-  * Comissões Acumuladas (€) calculadas dinamicamente com base na taxa contratual do vendedor
-  * Número total de clientes na carteira
-  * Quantidade de encomendas fechadas
-* **Filtros Temporais Rápidos:** Hoje, Este Mês, Este Ano, Intervalo Personalizado no Calendário ou Todo o Histórico.
-* **Relatório Executivo para Impressão:** Documento condensado A4 com discriminação de valores e médias por transação.
-* **Exportação para Excel (CSV):** Descarga imediata de dados para folhas de cálculo.
+### 📊 Performance Dashboard & Executive Reporting
+* **Real-Time Sales Metrics:**
+  * Total revenue billed over the active period (€).
+  * Cumulative earned sales commissions (€) computed dynamically from the authenticated user's contractual percentage.
+  * Active customer portfolio count.
+  * Volume of finalized orders.
+* **Flexible Temporal Filters:** Today, Current Month, Current Year, Custom Calendar Date Range, or All-Time.
+* **Printable Executive Summary:** Clean A4 report summarizing financial performance and average order value (AOV).
+* **Excel Export (CSV):** Instant CSV export formatted for analysis in Microsoft Excel or Google Sheets.
 
-### 🏢 Identidade Corporativa Configurável (`empresa_config.json`)
-* Painel de Definições para parametrizar em tempo real:
-  * Nome da Empresa, Subtítulo de Atividade, NIF, Morada, Código Postal, Telefone e E-mail.
-* As alterações têm reflexo imediato em todas as novas notas de encomenda e impressões sem necessidade de reiniciar o programa.
+### 🏢 Configurable Enterprise Profile (`empresa_config.json`)
+* Built-in Settings screen to manage:
+  * Legal Company Name, Business Subtitle, NIF, Address, Postal Code, Phone Number, and Email.
+* Changes persist to local JSON storage and immediately update headers on all newly generated order sheets and reports without restarting the application.
 
 ---
 
-## 🔄 Fluxo Operacional
+## 🔄 Operational Workflow
 
 ```mermaid
 flowchart TD
-    A([Arranque da Aplicação]) --> B[Login: PIN ou Email/Senha]
-    B --> C{Autenticação Válida?}
-    C -->|Sim| D[Dashboard Principal]
-    C -->|Não| B
+    A([Application Startup]) --> B[Login: PIN or Email/Password]
+    B --> C{Valid Credentials?}
+    C -->|Yes| D[Executive Dashboard]
+    C -->|No| B
 
-    D --> E[Nova Venda / Encomenda]
-    D --> F[Histórico de Encomendas]
-    D --> G[Gestão de Clientes]
-    D --> H[Catálogo de Produtos & Stock]
-    D --> I[Definições da Empresa & SQL]
+    D --> E[New Order Entry]
+    D --> F[Order History & Management]
+    D --> G[Customer Directory]
+    D --> H[Product Catalog & Stock]
+    D --> I[Company & Database Settings]
 
-    E --> E1[Pesquisar / Selecionar Cliente]
-    E1 --> E2[Inserir Artigos & Descontos ex: 50+10]
-    E2 --> E3[Aplicar Desconto Global & Confirmar]
-    E3 --> E4{Modo Conectado?}
-    E4 -->|SQL Server| E5[(Transação ACID: Gravação + Abate Stock)]
-    E4 -->|Offline Demo| E6[(Gravação In-Memory: DadosDemonstracao)]
-    E5 --> E7[Redirecionar para Nota de Encomenda]
+    E --> E1[Search & Select Customer]
+    E1 --> E2[Add Items with Tiered Discounts e.g., 50+10]
+    E2 --> E3[Apply Global Discount & Confirm]
+    E3 --> E4{Connection Mode?}
+    E4 -->|SQL Server| E5[(ACID SqlTransaction: Insert + Abate Stock)]
+    E4 -->|Offline Demo| E6[(In-Memory Repo: DadosDemonstracao)]
+    E5 --> E7[Redirect to A4 Order Sheet]
     E6 --> E7
 
-    F --> F1[Duplo Clique na Linha]
-    F1 --> F2[Visualizar Nota de Encomenda A4]
-    F2 --> F3[Imprimir / Guardar em PDF]
-    F2 --> F4[Modificar Encomenda ou Cancelar]
+    F --> F1[Double-Click Order Row]
+    F1 --> F2[View A4 Order Details]
+    F2 --> F3[Print / Export to PDF]
+    F2 --> F4[Modify Lines or Cancel Order]
 ```
 
 ---
 
-## 🗄️ Modelo de Dados Relacional (SQL Server)
+## 🗄️ Relational Database Model (SQL Server)
 
-O esquema relacional garante integridade referencial estrita e normalização em 3.ª Forma Normal (3NF):
+The database adheres strictly to Third Normal Form (3NF) with enforced foreign keys:
 
 ```mermaid
 erDiagram
-    VENDEDORES ||--o{ ENCOMENDA : "emite"
-    CLIENTES ||--o{ ENCOMENDA : "efetua"
-    ENCOMENDA ||--|{ LINHA_ENCOMENDA : "contém"
-    TIPO_PRODUTO ||--|{ MATERIAL : "categoriza"
-    MATERIAL ||--o{ LINHA_ENCOMENDA : "composto por"
+    VENDEDORES ||--o{ ENCOMENDA : "issues"
+    CLIENTES ||--o{ ENCOMENDA : "places"
+    ENCOMENDA ||--|{ LINHA_ENCOMENDA : "contains"
+    TIPO_PRODUTO ||--|{ MATERIAL : "categorizes"
+    MATERIAL ||--o{ LINHA_ENCOMENDA : "composed of"
 
     VENDEDORES {
         int ID_Vendedor PK "IDENTITY"
@@ -226,89 +228,89 @@ erDiagram
 
 ---
 
-## ⌨️ Ergonomia & Atalhos de Teclado
+## ⌨️ Ergonomics & Keyboard Shortcuts
 
-Desenvolvido para máxima velocidade operacional no registo de encomendas:
-* <kbd>Enter</kbd> no campo de Código/Descrição: adiciona o artigo diretamente à encomenda se houver correspondência exata.
-* <kbd>↑</kbd> / <kbd>↓</kbd> na lista de sugestões preditivas: navega entre os artigos encontrados.
-* <kbd>F2</kbd> ou clique no botão: foca instantaneamente a pesquisa de artigos.
-* **Duplo clique** em qualquer linha de Encomenda: abre a Nota de Encomenda correspondente.
-* **Duplo clique** em qualquer linha de Cliente: inicia imediatamente uma nova venda para esse cliente.
+Engineered for high-speed order entry without requiring constant mouse reliance:
+* <kbd>Enter</kbd> on Code/Description field: automatically adds the item if an exact match is detected.
+* <kbd>↑</kbd> / <kbd>↓</kbd> in autocomplete popup: smoothly navigates through suggested product matches.
+* <kbd>F2</kbd> (or dedicated button): focuses the product search input immediately.
+* **Double-click** on any Order row: opens the official A4 Order Form.
+* **Double-click** on any Customer row: instantly initiates a new order for that customer.
 
 ---
 
-## 🚀 Instalação & Execução
+## 🚀 Setup & Getting Started
 
-### Pré-requisitos
-* [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (versão 8.0 ou superior)
-* [Microsoft SQL Server](https://www.microsoft.com/sql-server/) (Developer, Express ou LocalDB)
-* [Visual Studio 2022](https://visualstudio.microsoft.com/) com suporte a *.NET Desktop Development* (ou VS Code com C# Dev Kit)
+### Prerequisites
+* [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (v8.0.x or higher)
+* [Microsoft SQL Server](https://www.microsoft.com/sql-server/) (Developer, Express, or LocalDB)
+* [Visual Studio 2022](https://visualstudio.microsoft.com/) with *.NET Desktop Development* workload (or VS Code with C# Dev Kit)
 
-### 1. Obter o Código Fonte
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/Afonsojlc/commercial-sales-manager.git
 cd commercial-sales-manager
 git checkout feature/new-ui-BlazorWebView
 ```
 
-### 2. Configurar a Base de Dados (Opcional para Demonstração)
-1. Abra o ficheiro [`Estrutura_BD_Software_Vendas.sql`](Estrutura_BD_Software_Vendas.sql) no SQL Server Management Studio (SSMS).
-2. Execute o script completo para criar a base `Software_Vendas_Pai`, tabelas e registos predefinidos.
-3. Se o SQL Server não estiver instalado ou não estiver em execução, a aplicação arranca automaticamente em **Modo Demonstração Offline**, permitindo testar todas as funcionalidades.
+### 2. Configure the Database (Optional for Demo Testing)
+1. Open [`Estrutura_BD_Software_Vendas.sql`](Estrutura_BD_Software_Vendas.sql) in SQL Server Management Studio (SSMS).
+2. Execute the script to create the `Software_Vendas_Pai` database, tables, relationships, and default seed records.
+3. If SQL Server is not running or unreachable, the application automatically boots into **Offline Demonstration Mode**, providing full in-memory functionality without errors.
 
-### 3. Compilar a Solução
+### 3. Build the Solution
 ```bash
 dotnet build SoftwareVendas/SoftwareVendas.sln
 ```
 
-### 4. Executar a Aplicação
+### 4. Run the Application
 ```bash
 dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 ```
 
-### 5. Credenciais de Teste / Acesso Rápido
-* **Acesso por PIN:** `1234` ou `0000`
-* **Acesso por E-mail:** `admin@comercial.pt` | Senha: `admin`
+### 5. Demo Test Credentials
+* **Quick PIN Login:** `1234` or `0000`
+* **Email Login:** `admin@comercial.pt` | Password: `admin`
 
 ---
 
-## 📁 Estrutura do Repositório
+## 📁 Repository Structure
 
 ```
 commercial-sales-manager/
-├── Estrutura_BD_Software_Vendas.sql     # Script DDL/DML da base de dados SQL Server
-├── README.md                            # Documentação técnica do projeto
+├── Estrutura_BD_Software_Vendas.sql     # SQL Server DDL/DML schema initialization script
+├── README.md                            # Comprehensive project documentation
 └── SoftwareVendas/
-    ├── SoftwareVendas.sln               # Solução Visual Studio 2022
+    ├── SoftwareVendas.sln               # Visual Studio 2022 Solution
     └── SoftwareVendas/
-        ├── Form1.cs                     # Formulário host WinForms com BlazorWebView
-        ├── DatabaseConfig.cs            # Configuração e teste de conectividade SQL
-        ├── Sessao.cs                    # Estado da sessão ativa do vendedor
-        ├── ConfiguracaoEmpresa.cs       # Gestão do perfil corporativo (empresa_config.json)
-        ├── DadosDemonstracao.cs         # Repositório de dados mock para modo offline
+        ├── Form1.cs                     # WinForms host window embedding BlazorWebView
+        ├── DatabaseConfig.cs            # Connection manager with instance auto-discovery
+        ├── Sessao.cs                    # Global session holder for authenticated seller
+        ├── ConfiguracaoEmpresa.cs       # Company settings profile manager (empresa_config.json)
+        ├── DadosDemonstracao.cs         # Thread-safe in-memory mock repository for offline demo
         ├── Components/
-        │   ├── App.razor                # Componente raiz do Blazor
-        │   ├── Routes.razor             # Mapeamento e roteamento de componentes
+        │   ├── App.razor                # Root Blazor component
+        │   ├── Routes.razor             # Component route mappings
         │   ├── Layout/
-        │   │   └── MainLayout.razor     # Sidebar responsiva, pesquisa de topo e badges
+        │   │   └── MainLayout.razor     # Collapsible sidebar, top search, and status badges
         │   └── Pages/
-        │       ├── Login.razor          # Ecrã de login (PIN e Email/Senha)
-        │       ├── Dashboard.razor      # KPIs, comissões, relatórios e exportações
-        │       ├── NovaVenda.razor      # Emissão de encomendas com descontos em cascata
-        │       ├── Encomendas.razor     # Histórico, estados e filtros de encomendas
-        │       ├── DetalhesEncomenda.razor # Layout A4 oficial para impressão/PDF
-        │       ├── Clientes.razor       # Gestão de carteira de clientes
-        │       ├── Produtos.razor       # Catálogo e gestão de inventário
-        │       └── Definicoes.razor     # Configurações de empresa e base de dados
+        │       ├── Login.razor          # Dual authentication screen (PIN & Email/Password)
+        │       ├── Dashboard.razor      # KPIs, commission metrics, reports, and CSV exports
+        │       ├── NovaVenda.razor      # Order entry screen with cascading discount logic
+        │       ├── Encomendas.razor     # Orders register, statuses, and advanced filtering
+        │       ├── DetalhesEncomenda.razor # Formal A4 order view for print and PDF
+        │       ├── Clientes.razor       # Customer portfolio management
+        │       ├── Produtos.razor       # Technical product catalog & stock controls
+        │       └── Definicoes.razor     # Corporate profile and database diagnostics
         └── wwwroot/
-            ├── index.html               # Ponto de entrada HTML com scripts Tailwind
-            └── css/                     # Estilos customizados adicionais
+            ├── index.html               # Main HTML entrypoint with Tailwind typography
+            └── css/                     # Custom corporate stylesheets and print media rules
 ```
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
 **Afonso Carvalho**  
 * GitHub: [@Afonsojlc](https://github.com/Afonsojlc)  
-* Estudante de Tecnologias de Programação de Sistemas de Informação (TPSI) — IPMAIA
+* Student in Information Systems Programming Technologies (*TPSI*) — IPMAIA

@@ -1,17 +1,63 @@
-﻿<!DOCTYPE html>
-<html lang="pt-pt">
+<!DOCTYPE html>
+<html lang="pt-pt" class="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AJLC Soluctions</title>
+    <title>AJLC Soluctions - Gestão Comercial</title>
     <base href="/" />
+    
+    <!-- Modern Geometric Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN & Theme Extension -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: {
+                            950: '#080B11',
+                            900: '#0E131F',
+                            850: '#141A29',
+                            800: '#1C253B',
+                            700: '#2A3754',
+                            600: '#3D4E75',
+                        },
+                        cobalt: {
+                            700: '#1D4ED8',
+                            600: '#2563EB',
+                            500: '#3B82F6',
+                            400: '#60A5FA',
+                            300: '#93C5FD',
+                        }
+                    },
+                    boxShadow: {
+                        'glow-cobalt': '0 0 20px -3px rgba(59, 130, 246, 0.35)',
+                        'glow-subtle': '0 0 15px -3px rgba(255, 255, 255, 0.08)',
+                        'floating-card': '0 16px 36px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.07)',
+                        'inner-glass': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
     <link href="css/app.css" rel="stylesheet" />
 </head>
-<body class="bg-[#F7F8FA] m-0 p-0 font-sans overflow-hidden">
+<body class="ambient-bg text-slate-100 font-sans m-0 p-0 overflow-hidden antialiased selection:bg-blue-600/30 selection:text-blue-200">
     <div id="app">
-        <div class="h-screen w-screen flex items-center justify-center bg-[#F7F8FA]">
-            <p class="text-gray-500 text-lg">A carregar interface moderna...</p>
+        <div class="h-screen w-screen flex flex-col items-center justify-center bg-[#080B11] text-blue-400 gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-obsidian-900 border border-blue-500/30 flex items-center justify-center shadow-glow-cobalt animate-pulse">
+                <svg class="w-6 h-6 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+            <p class="text-slate-400 font-mono text-xs tracking-wider uppercase">AJLC Soluctions &bull; A carregar...</p>
         </div>
     </div>
     <script src="_framework/blazor.webview.js"></script>

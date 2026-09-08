@@ -1,54 +1,72 @@
-﻿@page "/"
+@page "/"
 @layout Layout.EmptyLayout
 @inject NavigationManager NavManager
 @using Microsoft.Data.SqlClient
 @using SoftwareVendas
 
-<div class="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-[#3B4358] mb-2">AJLC Soluctions</h1>
-            <p class="text-gray-500">Bem-vindo! Por favor inicie sessão.</p>
+<div class="min-h-screen ambient-bg flex items-center justify-center p-4 select-none">
+    <div class="max-w-md w-full glass-panel rounded-[32px] shadow-floating-card p-8 sm:p-9 relative overflow-hidden border border-white/10">
+        
+        <!-- Ambient Subtle Spotlight -->
+        <div class="absolute -right-12 -top-12 w-40 h-40 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Brand Header -->
+        <div class="text-center mb-8 relative">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-obsidian-900 border border-blue-500/30 text-blue-400 shadow-glow-cobalt mb-4">
+                <span class="font-extrabold font-mono text-sm tracking-tighter text-blue-400">AJLC</span>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-white">AJLC Soluctions</h1>
+            <p class="text-xs text-slate-400 mt-1">Gestão Comercial &bull; Distribuição de Material Elétrico</p>
         </div>
 
-        <div class="space-y-6">
+        <div class="space-y-5 relative">
             <!-- Email Login Section -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                <input @bind="email" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="admin@comercial.pt" />
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">E-mail Comercial</label>
+                <input @bind="email" type="email" class="w-full h-11 px-4 rounded-2xl glass-input text-sm text-slate-100 placeholder-slate-500" placeholder="admin@comercial.pt" />
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                <input @bind="senha" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" />
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Senha de Acesso</label>
+                <input @bind="senha" type="password" class="w-full h-11 px-4 rounded-2xl glass-input text-sm text-slate-100 placeholder-slate-500" placeholder="••••••••" />
             </div>
-            <button @onclick="LoginEmail" class="w-full bg-[#3F6CD8] text-white py-2 px-4 rounded-md hover:bg-blue-700 transition font-semibold">
-                Entrar com Email
+            
+            <button @onclick="LoginEmail" class="w-full h-11 rounded-2xl btn-primary text-sm font-bold flex items-center justify-center gap-2">
+                <span>Entrar no Sistema</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </button>
 
-            <div class="relative">
+            <!-- Divider -->
+            <div class="relative my-4">
                 <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
+                    <div class="w-full border-t border-white/10"></div>
                 </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">OU</span>
+                <div class="relative flex justify-center text-xs">
+                    <span class="px-3 bg-obsidian-900 text-slate-500 rounded-full font-mono">OU ACESSO EM MOBILIDADE</span>
                 </div>
             </div>
 
             <!-- PIN Login Section -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">PIN Rápido</label>
-                <input @bind="pin" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-center tracking-widest text-lg" placeholder="••••" maxlength="4" />
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 text-center">PIN Rápido (4 Dígitos)</label>
+                <input @bind="pin" type="password" maxlength="4" class="w-full h-12 px-4 rounded-2xl glass-input text-center tracking-[0.6em] text-xl font-mono text-blue-400 placeholder-slate-600" placeholder="••••" />
             </div>
-            <button @onclick="LoginPin" class="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition font-semibold">
-                Entrar com PIN
+            
+            <button @onclick="LoginPin" class="w-full h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 transition font-semibold text-xs flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Validar PIN de Vendedor</span>
             </button>
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="bg-red-50 text-red-500 p-3 rounded text-sm text-center">
+                <div class="p-3 rounded-2xl bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs text-center font-medium">
                     @errorMessage
                 </div>
             }
+
+            <div class="text-center pt-2">
+                <span class="text-[11px] text-slate-500 font-mono">AJLC Soluctions &bull; Sistema de Gestão Comercial</span>
+            </div>
         </div>
     </div>
 </div>
@@ -61,16 +79,7 @@
 
     private void LoginEmail()
     {
-        if (email == "admin@comercial.pt" && senha == "admin")
-        {
-            Sessao.ID_Vendedor = 1;
-            Sessao.Nome = "Afonso Carvalho (Admin)";
-            Sessao.PercentagemComissao = 10;
-            Sessao.Cargo = "Administrador";
-            NavManager.NavigateTo("/dashboard");
-            return;
-        }
-        
+        errorMessage = "";
         try
         {
             using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
@@ -78,44 +87,45 @@
                 con.Open();
                 using (SqlCommand cmd = new SqlCommand("SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE Email = @e AND Senha = @s AND Ativo = 1", con))
                 {
-                    cmd.Parameters.AddWithValue("@e", email);
-                    cmd.Parameters.AddWithValue("@s", senha);
+                    cmd.Parameters.AddWithValue("@e", email.Trim());
+                    cmd.Parameters.AddWithValue("@s", senha.Trim());
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
                             Sessao.ID_Vendedor = Convert.ToInt32(reader["ID_Vendedor"]);
-                            Sessao.Nome = reader["Nome"].ToString();
+                            Sessao.Nome = reader["Nome"]?.ToString() ?? "Utilizador";
                             Sessao.PercentagemComissao = Convert.ToDecimal(reader["Percentagem_Comissao"]);
-                            Sessao.Cargo = reader["Cargo"].ToString();
+                            Sessao.Cargo = reader["Cargo"]?.ToString() ?? "Vendedor";
                             NavManager.NavigateTo("/dashboard");
-                        }
-                        else
-                        {
-                            errorMessage = "Credenciais incorretas.";
+                            return;
                         }
                     }
                 }
             }
+
+            if (email.Equals("admin@comercial.pt", StringComparison.OrdinalIgnoreCase) && senha == "admin")
+            {
+                EntrarComoAdminTeste();
+                return;
+            }
+
+            errorMessage = "Credenciais incorretas.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = "Erro de conexão: " + ex.Message;
+            if (email.Equals("admin@comercial.pt", StringComparison.OrdinalIgnoreCase) && senha == "admin")
+            {
+                EntrarComoAdminTeste();
+                return;
+            }
+            errorMessage = "Erro de conexão com o SQL Server.";
         }
     }
 
     private void LoginPin()
     {
-        if (pin == "1234" || pin == "0000")
-        {
-            Sessao.ID_Vendedor = 1;
-            Sessao.Nome = "Afonso Carvalho (Admin)";
-            Sessao.PercentagemComissao = 10;
-            Sessao.Cargo = "Administrador";
-            NavManager.NavigateTo("/dashboard");
-            return;
-        }
-
+        errorMessage = "";
         try
         {
             using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
@@ -123,28 +133,47 @@
                 con.Open();
                 using (SqlCommand cmd = new SqlCommand("SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo FROM Vendedores WHERE PIN = @p AND Ativo = 1", con))
                 {
-                    cmd.Parameters.AddWithValue("@p", pin);
+                    cmd.Parameters.AddWithValue("@p", pin.Trim());
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
                             Sessao.ID_Vendedor = Convert.ToInt32(reader["ID_Vendedor"]);
-                            Sessao.Nome = reader["Nome"].ToString();
+                            Sessao.Nome = reader["Nome"]?.ToString() ?? "Utilizador";
                             Sessao.PercentagemComissao = Convert.ToDecimal(reader["Percentagem_Comissao"]);
-                            Sessao.Cargo = reader["Cargo"].ToString();
+                            Sessao.Cargo = reader["Cargo"]?.ToString() ?? "Vendedor";
                             NavManager.NavigateTo("/dashboard");
-                        }
-                        else
-                        {
-                            errorMessage = "PIN incorreto.";
+                            return;
                         }
                     }
                 }
             }
+
+            if (pin == "1234" || pin == "0000")
+            {
+                EntrarComoAdminTeste();
+                return;
+            }
+
+            errorMessage = "PIN incorreto.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = "Erro de conexão: " + ex.Message;
+            if (pin == "1234" || pin == "0000")
+            {
+                EntrarComoAdminTeste();
+                return;
+            }
+            errorMessage = "Erro de conexão com o SQL Server.";
         }
+    }
+
+    private void EntrarComoAdminTeste()
+    {
+        Sessao.ID_Vendedor = 1;
+        Sessao.Nome = "Afonso Carvalho (Diretor Comercial)";
+        Sessao.PercentagemComissao = 5.00m;
+        Sessao.Cargo = "Diretor Comercial";
+        NavManager.NavigateTo("/dashboard");
     }
 }

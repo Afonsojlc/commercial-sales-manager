@@ -170,7 +170,7 @@
                 <div class="w-72 space-y-2 text-sm">
                     <div class="flex justify-between text-gray-600">
                         <span>Subtotal (c/ IVA):</span>
-                        <span class="font-medium">€ @valorTotal.ToString("N2")</span>
+                        <span class="font-medium">€ @((linhas.Count > 0 ? linhas.Sum(l => l.Subtotal) : valorTotal + descontoGlobal).ToString("N2"))</span>
                     </div>
                     @if (descontoGlobal > 0)
                     {
@@ -181,7 +181,7 @@
                     }
                     <div class="flex justify-between text-xl font-black text-[#2B3347] border-t-2 border-gray-800 pt-3 mt-2">
                         <span>TOTAL A PAGAR:</span>
-                        <span class="text-[#3F6CD8]">€ @((valorTotal - descontoGlobal).ToString("N2"))</span>
+                        <span class="text-[#3F6CD8]">€ @valorTotal.ToString("N2")</span>
                     </div>
                 </div>
             </div>
@@ -357,11 +357,14 @@
             get 
             {
                 if (string.IsNullOrWhiteSpace(DescontoTexto)) return Preco;
-                string textoLimpo = DescontoTexto.Replace("%", "").Replace(" ", "");
+                string textoLimpo = DescontoTexto.Replace("%", "").Replace(" ", "").Replace(",", ".");
                 decimal final = Preco;
                 foreach (var d in textoLimpo.Split('+'))
                 {
-                    if (decimal.TryParse(d, out decimal p)) final -= (final * (p / 100m));
+                    if (decimal.TryParse(d, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal p))
+                    {
+                        final -= (final * (p / 100m));
+                    }
                 }
                 return final;
             }

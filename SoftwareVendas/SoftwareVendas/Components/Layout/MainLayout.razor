@@ -1,94 +1,173 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Routing
 @using SoftwareVendas
 @inject NavigationManager NavManager
 
-<div class="flex h-screen w-full font-sans text-sm bg-white overflow-hidden">
+<div class="flex h-screen w-full font-sans text-sm ambient-bg p-4 sm:p-5 gap-5 overflow-hidden select-none">
     
-    <!-- Sidebar -->
-    <div class="w-60 bg-[#1D212E] flex flex-col text-gray-400 border-r border-gray-800 shrink-0">
-        <!-- Logo Area -->
-        <div class="h-14 flex items-center px-4 shrink-0">
-            <svg class="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-white text-lg font-semibold tracking-wide">AJLC Soluctions</span>
-        </div>
+    <!-- 1. Floating Pill-Shaped Left Sidebar -->
+    <aside class="w-20 rounded-[32px] glass-panel shadow-floating-card flex flex-col items-center justify-between py-6 px-3 shrink-0 z-30 transition-all duration-300">
         
-        <!-- Navigation Links -->
-        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="dashboard">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span>Dashboard</span>
-            </NavLink>
-            
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="encomendas">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                <span>Encomendas</span>
-            </NavLink>
-            
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="novavenda">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>Nova Venda</span>
-            </NavLink>
+        <!-- Top: Logo & System Brand Core -->
+        <div class="flex flex-col items-center gap-5 w-full">
+            <div class="relative group cursor-pointer" title="AJLC Soluctions - Gestão Comercial">
+                <div class="absolute -inset-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur-md opacity-60 group-hover:opacity-100 transition duration-300"></div>
+                <div class="relative w-12 h-12 rounded-2xl bg-obsidian-900 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                    <span class="font-black font-mono text-xs tracking-tighter text-blue-400">AJLC</span>
+                </div>
+            </div>
 
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="clientes">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span>Clientes</span>
-            </NavLink>
-            
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="produtos">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                <span>Produtos</span>
-            </NavLink>
-            
-            <NavLink class="flex items-center px-4 py-2 hover:bg-[#2A2F42] hover:text-white transition group border-l-2 border-transparent" ActiveClass="bg-[#2A2F42] text-white border-blue-500" href="definicoes">
-                <svg class="w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span>Definições</span>
-            </NavLink>
-        </nav>
+            <div class="w-8 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+
+            <!-- Navigation Links Stack -->
+            <nav class="flex flex-col gap-2.5 w-full items-center">
+                <!-- Dashboard -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="dashboard">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9" rx="2"></rect>
+                        <rect x="14" y="3" width="7" height="5" rx="2"></rect>
+                        <rect x="14" y="12" width="7" height="9" rx="2"></rect>
+                        <rect x="3" y="16" width="7" height="5" rx="2"></rect>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Dashboard
+                    </span>
+                </NavLink>
+                
+                <!-- Encomendas -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="encomendas">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Encomendas
+                    </span>
+                </NavLink>
+                
+                <!-- Nova Venda -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="novavenda">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Nova Venda
+                    </span>
+                </NavLink>
+
+                <!-- Clientes -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="clientes">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Carteira de Clientes
+                    </span>
+                </NavLink>
+                
+                <!-- Produtos -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="produtos">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Catálogo de Materiais
+                    </span>
+                </NavLink>
+                
+                <!-- Definições -->
+                <NavLink class="relative group p-3 rounded-2xl text-slate-400 hover:text-blue-300 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex items-center justify-center" ActiveClass="bg-blue-600/20 border-blue-500/40 text-blue-300 shadow-glow-cobalt" href="definicoes">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                        Definições & BD
+                    </span>
+                </NavLink>
+            </nav>
+        </div>
         
-        <!-- Bottom User Menu -->
-        <div class="p-4 border-t border-gray-800">
-            <NavLink class="flex items-center text-gray-400 hover:text-white transition" href="/" Match="NavLinkMatch.All">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Sair
+        <!-- Bottom: SQL Status & Logout -->
+        <div class="flex flex-col items-center gap-3 w-full">
+            <!-- SQL Server Status Indicator -->
+            <div class="relative group cursor-pointer p-1 text-emerald-400" title="Microsoft SQL Server: Conectado">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                </span>
+                <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-mono text-emerald-300 rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                    SQL Server Conectado
+                </span>
+            </div>
+
+            <div class="w-8 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+
+            <!-- Sair -->
+            <NavLink class="relative group p-2.5 rounded-2xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all flex items-center justify-center" href="/" Match="NavLinkMatch.All">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="absolute left-16 px-3 py-1.5 bg-obsidian-900 border border-white/10 text-xs font-medium rounded-lg shadow-xl text-rose-300 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                    Terminar Sessão
+                </span>
             </NavLink>
         </div>
-    </div>
+    </aside>
     
-    <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col min-w-0">
-        <!-- Top Header (Flowlu Style) -->
-        <header class="h-14 bg-[#1A1D27] flex items-center justify-between px-4 text-white shrink-0 shadow-md z-10">
-            <!-- Left Header: Global Search -->
-            <div class="flex items-center flex-1">
+    <!-- 2. Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 h-full gap-5 overflow-hidden">
+        
+        <!-- Top Floating Pill Header -->
+        <header class="h-18 min-h-[4.5rem] rounded-[28px] glass-panel px-6 sm:px-8 flex items-center justify-between shadow-floating-card gap-4 shrink-0 z-20">
+            <!-- Left Header: Title & Division -->
+            <div class="flex items-center gap-3">
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    AJLC Soluctions
+                </h1>
+                <span class="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono tracking-wide bg-blue-500/10 text-blue-300 border border-blue-500/25">
+                    GESTÃO COMERCIAL
+                </span>
+            </div>
+            
+            <!-- Center Header: Global Search -->
+            <div class="flex-1 max-w-lg mx-2">
                 <div class="relative flex items-center">
-                    <svg class="w-4 h-4 text-gray-500 absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" @bind="termoBuscaGlobal" @onkeyup="ExecutarBuscaGlobal" placeholder="Search" class="bg-[#2A2F42] text-sm text-gray-300 placeholder-gray-500 rounded-full pl-9 pr-4 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 w-64 transition-all" />
+                    <div class="absolute left-3.5 pointer-events-none text-blue-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <input type="text" @bind="termoBuscaGlobal" @onkeyup="ExecutarBuscaGlobal" placeholder="Pesquisar Encomenda, Cliente, NIF..." class="w-full h-11 pl-10 pr-16 rounded-full glass-input text-xs sm:text-sm text-slate-100 placeholder-slate-400 font-normal focus:outline-none" />
+                    <div class="absolute right-3 flex items-center pointer-events-none">
+                        <kbd class="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white/10 border border-white/10 rounded">Enter</kbd>
+                    </div>
                 </div>
             </div>
             
-            <!-- Center Header: Day & Event -->
-            <div class="flex items-center space-x-4 flex-1 justify-center">
-                <div class="flex flex-col items-center justify-center leading-none text-center">
-                    <span class="text-xs text-gray-400">@DateTime.Now.ToString("ddd")</span>
-                    <span class="text-xl font-bold">@DateTime.Now.ToString("dd")</span>
+            <!-- Right Header: Day & Executive Profile Capsule -->
+            <div class="flex items-center gap-3">
+                <div class="hidden lg:flex items-center bg-obsidian-900/80 border border-white/10 rounded-full px-3.5 py-1.5 text-xs text-slate-300 gap-2">
+                    <span class="font-bold text-blue-300">@DateTime.Now.ToString("dd MMM yyyy")</span>
+                    <span class="text-slate-500">&bull;</span>
+                    <span class="font-mono text-slate-400">@DateTime.Now.ToString("HH:mm")</span>
                 </div>
-                <div class="flex flex-col text-xs">
-                    <span class="font-bold text-gray-200">@Sessao.Nome</span>
-                    <span class="text-gray-400">@Sessao.Cargo &bull; @DateTime.Now.ToString("HH:mm")</span>
-                </div>
-            </div>
-            
-            <!-- Right Header: Profile -->
-            <div class="flex items-center space-x-4 flex-1 justify-end">
-                <div class="w-8 h-8 bg-blue-600 rounded-full border-2 border-gray-600 flex items-center justify-center text-sm font-bold text-white shadow-inner cursor-pointer">
-                    @(Sessao.Nome.Length > 0 ? Sessao.Nome.Substring(0, 1).ToUpper() : "A")
+                
+                <!-- Profile Pill -->
+                <div class="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-obsidian-900/80 border border-white/10">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 flex items-center justify-center text-xs font-bold text-white shadow-glow-cobalt">
+                        @(Sessao.Nome.Length > 0 ? Sessao.Nome.Substring(0, 1).ToUpper() : "A")
+                    </div>
+                    <div class="hidden sm:block text-left pr-1">
+                        <div class="text-xs font-semibold text-white leading-tight">@Sessao.Nome</div>
+                        <div class="text-[10px] text-blue-300/80 font-mono">@Sessao.Cargo (@Sessao.PercentagemComissao.ToString("N1")%)</div>
+                    </div>
                 </div>
             </div>
         </header>
         
         <!-- Main Workspace Area -->
-        <main class="flex-1 overflow-auto bg-[#F7F8FA] relative">
+        <main class="flex-1 overflow-y-auto rounded-[28px] relative">
             @Body
         </main>
     </div>

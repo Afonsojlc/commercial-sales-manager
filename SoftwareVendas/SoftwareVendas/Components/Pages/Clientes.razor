@@ -2,80 +2,97 @@
 @using System.Data
 @using Microsoft.Data.SqlClient
 
-<div class="p-8 flex flex-col h-full overflow-hidden">
+<div class="p-4 sm:p-6 space-y-6 max-w-[1720px] mx-auto w-full">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6 shrink-0">
-        <h1 class="text-3xl font-bold text-gray-800">Gestão de Clientes</h1>
-        <button @onclick="AbrirModalNovoCliente" class="bg-[#3F6CD8] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Novo Cliente
-        </button>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Gestão de Clientes</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium tracking-wide bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20">
+                    AJLC // CLIENTES
+                </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+                Consulta de contas ativas, histórico de compras e ficha cadastral de clientes.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button @onclick="AbrirModalNovoCliente" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-glow-cobalt flex items-center gap-2 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span>Novo Cliente</span>
+            </button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(mensagemAviso))
     {
-        <div class="p-3 mb-4 rounded border text-sm shrink-0 @(mensagemAviso.Contains("sucesso") ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-700 border-red-200")">
-            @mensagemAviso
+        <div class="p-4 rounded-2xl text-xs font-medium border flex items-center gap-2 @(mensagemAviso.Contains("sucesso") ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>@mensagemAviso</span>
         </div>
     }
 
     <!-- Filtros -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center space-x-4 mb-6 shrink-0">
-        <select @bind="filtro" class="border border-gray-300 rounded px-3 py-2 w-48 focus:ring-blue-500 focus:border-blue-500">
-            <option value="Nome">Nome</option>
-            <option value="NIF">NIF</option>
-            <option value="Email">Email</option>
-            <option value="Localidade">Localidade</option>
-            <option value="Morada">Morada</option>
+    <div class="rounded-3xl glass-panel p-4 sm:p-5 shadow-floating-card flex flex-wrap items-center gap-3">
+        <select @bind="filtro" class="glass-input rounded-2xl px-3 py-2 text-xs text-slate-200 w-44">
+            <option value="Nome">Filtrar por Nome</option>
+            <option value="NIF">Filtrar por NIF</option>
+            <option value="Email">Filtrar por Email</option>
+            <option value="Localidade">Filtrar por Cidade</option>
+            <option value="Morada">Filtrar por Morada</option>
         </select>
         
-        <input @bind="termo" @bind:event="oninput" @onkeyup="Pesquisar" type="text" placeholder="Pesquisar cliente..." class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
+        <input @bind="termo" @bind:event="oninput" @onkeyup="Pesquisar" type="text" placeholder="Pesquisar cliente por nome, NIF ou localidade..." class="flex-1 glass-input rounded-2xl px-4 py-2 text-xs text-white placeholder-slate-500" />
         
-        <button @onclick="Pesquisar" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">
-            Pesquisar
+        <button @onclick="Pesquisar" class="px-5 py-2 rounded-2xl bg-cobalt-600 hover:bg-cobalt-500 text-white text-xs font-bold shadow-glow-cobalt transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span>Pesquisar</span>
         </button>
     </div>
 
-    <div class="flex-1 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6 overflow-hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Lista de Clientes -->
-        <div class="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-            <div class="bg-[#2B3347] text-white px-4 py-3 font-semibold flex justify-between items-center">
-                <span>Listagem de Clientes</span>
-                <span class="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-normal">@(dtClientes?.Rows.Count ?? 0) clientes</span>
+        <div class="lg:col-span-2 rounded-3xl glass-panel p-6 shadow-floating-card flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center pb-4 mb-2 border-b border-white/10">
+                <h2 class="text-base font-bold text-white tracking-tight">Listagem de Contas</h2>
+                <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-medium bg-white/5 text-slate-400 border border-white/5">
+                    @(dtClientes?.Rows.Count ?? 0) clientes
+                </span>
             </div>
-            <div class="flex-1 overflow-auto">
+            <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">ID</th>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">Nome</th>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">NIF</th>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">Email</th>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">Telefone</th>
-                            <th class="px-4 py-2 border-b font-medium text-gray-600">Localidade</th>
+                    <thead>
+                        <tr class="text-[11px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/5">
+                            <th class="py-3 px-3 font-semibold">ID</th>
+                            <th class="py-3 px-3 font-semibold">Nome</th>
+                            <th class="py-3 px-3 font-semibold">NIF</th>
+                            <th class="py-3 px-3 font-semibold">Email</th>
+                            <th class="py-3 px-3 font-semibold">Telefone</th>
+                            <th class="py-3 px-3 font-semibold">Localidade</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-white/[0.03] text-xs">
                         @if (dtClientes != null && dtClientes.Rows.Count > 0)
                         {
                             @foreach (DataRow row in dtClientes.Rows)
                             {
                                 string id = row["ID_Cliente"].ToString()!;
                                 bool isSelected = (id == idClienteSelecionado);
-                                <tr class="border-b hover:bg-blue-50 cursor-pointer @(isSelected ? "bg-blue-100" : "")" @onclick="() => SelecionarCliente(id)">
-                                    <td class="px-4 py-3 text-sm font-semibold text-gray-700">@row["ID_Cliente"]</td>
-                                    <td class="px-4 py-3 text-sm font-medium text-gray-900">@row["Nome_Cliente"]</td>
-                                    <td class="px-4 py-3 text-sm">@row["NIF"]</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">@row["Email"]</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">@row["Telefone"]</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">@row["Cidade"]</td>
+                                <tr class="hover:bg-white/[0.04] cursor-pointer transition-colors @(isSelected ? "bg-cobalt-500/15 border-l-2 border-cobalt-400" : "")" @onclick="() => SelecionarCliente(id)">
+                                    <td class="py-3.5 px-3 font-mono font-bold text-slate-400">@row["ID_Cliente"]</td>
+                                    <td class="py-3.5 px-3 font-semibold text-white">@row["Nome_Cliente"]</td>
+                                    <td class="py-3.5 px-3 font-mono text-cobalt-400">@row["NIF"]</td>
+                                    <td class="py-3.5 px-3 text-slate-300">@row["Email"]</td>
+                                    <td class="py-3.5 px-3 font-mono text-slate-300">@row["Telefone"]</td>
+                                    <td class="py-3.5 px-3 text-slate-300">@row["Cidade"]</td>
                                 </tr>
                             }
                         }
                         else
                         {
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-gray-400">Nenhum cliente encontrado.</td>
+                                <td colspan="6" class="text-center py-10 text-slate-500 font-mono">Nenhum cliente encontrado.</td>
                             </tr>
                         }
                     </tbody>
@@ -84,34 +101,45 @@
         </div>
 
         <!-- Histórico do Cliente -->
-        <div class="w-full md:w-1/3 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-            <div class="bg-[#2B3347] text-white px-4 py-3 font-semibold">Histórico de Compras</div>
-            <div class="flex-1 overflow-auto p-4">
+        <div class="rounded-3xl glass-panel p-6 shadow-floating-card flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
+                <h2 class="text-base font-bold text-white tracking-tight">Histórico de Compras</h2>
+                @if (!string.IsNullOrEmpty(idClienteSelecionado))
+                {
+                    <span class="text-[10px] font-mono text-cobalt-400 bg-cobalt-500/10 px-2 py-0.5 rounded-full border border-cobalt-500/20">
+                        CLIENTE #@idClienteSelecionado
+                    </span>
+                }
+            </div>
+            <div class="overflow-y-auto space-y-3 max-h-[600px]">
                 @if (string.IsNullOrEmpty(idClienteSelecionado))
                 {
-                    <p class="text-gray-400 text-center mt-10">Selecione um cliente para ver o histórico.</p>
+                    <div class="text-center py-16 text-slate-500 text-xs font-mono">
+                        <svg class="w-8 h-8 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                        Selecione um cliente na tabela à esquerda para carregar o histórico de encomendas.
+                    </div>
                 }
                 else if (dtHistorico != null && dtHistorico.Rows.Count > 0)
                 {
-                    <div class="space-y-4">
-                        @foreach (DataRow row in dtHistorico.Rows)
-                        {
-                            <div class="border border-gray-200 rounded p-3 flex justify-between items-center shadow-sm hover:shadow transition">
-                                <div>
-                                    <p class="font-semibold text-gray-800">Venda #@row["Nº Venda"]</p>
-                                    <p class="text-xs text-gray-500">@Convert.ToDateTime(row["Data"]).ToString("dd/MM/yyyy")</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-bold text-[#3F6CD8]">€ @Convert.ToDecimal(row["Total (€)"]).ToString("N2")</p>
-                                    <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-800">@row["Estado"]</span>
-                                </div>
+                    @foreach (DataRow row in dtHistorico.Rows)
+                    {
+                        <div class="bg-obsidian-950/80 p-3.5 rounded-2xl border border-white/10 hover:border-cobalt-500/30 transition flex justify-between items-center text-xs">
+                            <div>
+                                <p class="font-bold font-mono text-white">Venda #@row["Nº Venda"]</p>
+                                <p class="text-[11px] font-mono text-slate-400 mt-0.5">@Convert.ToDateTime(row["Data"]).ToString("dd/MM/yyyy")</p>
                             </div>
-                        }
-                    </div>
+                            <div class="text-right">
+                                <p class="font-bold font-mono text-cobalt-400 text-sm">€ @Convert.ToDecimal(row["Total (€)"]).ToString("N2")</p>
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    @row["Estado"]
+                                </span>
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {
-                    <p class="text-gray-400 text-center mt-10">Sem encomendas registadas para este cliente.</p>
+                    <p class="text-slate-500 text-center py-16 text-xs font-mono">Sem encomendas registadas para este cliente.</p>
                 }
             </div>
         </div>
@@ -120,60 +148,60 @@
     <!-- Modal Novo Cliente -->
     @if (mostrarModalNovoCliente)
     {
-        <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h2 class="text-xl font-bold text-[#2B3347]">Registar Novo Cliente</h2>
-                    <button @onclick="FecharModalNovoCliente" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+        <div class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="glass-panel-glow border-cobalt-500/30 rounded-3xl max-w-2xl w-full p-7 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-5">
+                    <h2 class="text-lg font-bold text-white tracking-tight">Registar Novo Cliente</h2>
+                    <button @onclick="FecharModalNovoCliente" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
                 </div>
 
                 @if (!string.IsNullOrEmpty(erroModal))
                 {
-                    <div class="p-3 mb-4 rounded bg-red-50 text-red-700 border border-red-200 text-sm">
+                    <div class="p-3 mb-4 rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs font-mono">
                         @erroModal
                     </div>
                 }
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">ID Cliente *</label>
-                        <input type="text" @bind="novoIdCliente" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 font-mono bg-gray-50" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">NIF *</label>
-                        <input type="text" @bind="novoNIF" placeholder="Ex: 501234567" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nome do Cliente / Empresa *</label>
-                        <input type="text" @bind="novoNome" placeholder="Ex: ElectroLuz Lda" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">ID Cliente *</label>
+                        <input type="text" @bind="novoIdCliente" class="w-full glass-input rounded-xl px-3 py-2 font-mono text-white" />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Email *</label>
-                        <input type="email" @bind="novoEmail" placeholder="contacto@empresa.pt" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">NIF *</label>
+                        <input type="text" @bind="novoNIF" placeholder="Ex: 501234567" class="w-full glass-input rounded-xl px-3 py-2 font-mono text-white" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Nome do Cliente / Razão Social *</label>
+                        <input type="text" @bind="novoNome" placeholder="Ex: ElectroLuz Lda" class="w-full glass-input rounded-xl px-3 py-2 text-white" />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Telefone *</label>
-                        <input type="text" @bind="novoTelefone" placeholder="Ex: 210123456" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Morada Completa *</label>
-                        <input type="text" @bind="novaMorada" placeholder="Rua, Número, Andar..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Email Comercial *</label>
+                        <input type="email" @bind="novoEmail" placeholder="contacto@empresa.pt" class="w-full glass-input rounded-xl px-3 py-2 text-white" />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Código Postal</label>
-                        <input type="text" @bind="novoCodigoPostal" placeholder="Ex: 4000-001" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Telefone / Telemóvel *</label>
+                        <input type="text" @bind="novoTelefone" placeholder="Ex: 210123456" class="w-full glass-input rounded-xl px-3 py-2 font-mono text-white" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Morada Completa *</label>
+                        <input type="text" @bind="novaMorada" placeholder="Rua, Número, Andar..." class="w-full glass-input rounded-xl px-3 py-2 text-white" />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Cidade / Localidade</label>
-                        <input type="text" @bind="novaCidade" placeholder="Ex: Porto" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500" />
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Código Postal</label>
+                        <input type="text" @bind="novoCodigoPostal" placeholder="Ex: 4000-001" class="w-full glass-input rounded-xl px-3 py-2 font-mono text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-mono uppercase tracking-wider text-slate-400 mb-1">Cidade / Localidade</label>
+                        <input type="text" @bind="novaCidade" placeholder="Ex: Porto" class="w-full glass-input rounded-xl px-3 py-2 text-white" />
                     </div>
                 </div>
 
-                <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
-                    <button @onclick="FecharModalNovoCliente" class="px-4 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 font-medium text-sm transition">
+                <div class="mt-6 pt-4 border-t border-white/10 flex justify-end gap-3">
+                    <button @onclick="FecharModalNovoCliente" class="px-4 py-2 text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl transition">
                         Cancelar
                     </button>
-                    <button @onclick="GravarNovoCliente" class="px-5 py-2 bg-[#3F6CD8] hover:bg-blue-700 text-white rounded font-medium text-sm shadow transition">
+                    <button @onclick="GravarNovoCliente" class="px-5 py-2 bg-cobalt-600 hover:bg-cobalt-500 text-white rounded-xl font-bold text-xs shadow-glow-cobalt transition">
                         Guardar Cliente
                     </button>
                 </div>

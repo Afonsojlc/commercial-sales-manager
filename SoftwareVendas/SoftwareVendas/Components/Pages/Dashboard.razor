@@ -27,146 +27,236 @@
     }
 </style>
 
-<div class="p-8 h-full overflow-auto">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6 no-print">
+<div class="p-4 sm:p-6 space-y-6 max-w-[1720px] mx-auto w-full">
+    
+    <!-- 1. Executive Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 no-print">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Dashboard: Ganhos & Desempenho</h1>
-            <p class="text-xs text-gray-500 mt-1">
-                Comercial: <strong class="text-gray-700">@Sessao.Nome (@Sessao.Cargo)</strong> &bull; Taxa de Comissão: <strong class="text-blue-600">@Sessao.PercentagemComissao.ToString("N1")%</strong>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Dashboard: Ganhos & Desempenho</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium tracking-wide bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20">
+                    AJLC // PAINEL EXECUTIVO
+                </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+                Comercial: <strong class="text-slate-200">@Sessao.Nome (@Sessao.Cargo)</strong> &bull; Taxa de Comissão: <strong class="text-cobalt-400 font-mono">@Sessao.PercentagemComissao.ToString("N1")%</strong>
             </p>
         </div>
-        <div class="flex space-x-3">
-            <button @onclick="AbrirModalRelatorio" class="bg-[#3F6CD8] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center text-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Novo Relatório
+        
+        <div class="flex items-center gap-3">
+            <button @onclick="AbrirModalRelatorio" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-glow-cobalt transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Emitir Relatório Executivo</span>
             </button>
         </div>
     </div>
 
-    <!-- Dashboard Period & Calendar Filter Bar -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap items-center justify-between gap-4 no-print">
-        <div class="flex items-center space-x-3">
-            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrar Período:</span>
-            <select @bind="filtroPeriodoDashboard" @bind:after="OnMudarPeriodoDashboard" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white focus:ring-blue-500 font-medium text-gray-700">
-                <option value="mes">Este Mês</option>
-                <option value="hoje">Hoje</option>
-                <option value="ano">Este Ano</option>
-                <option value="tudo">Todo o Histórico</option>
-                <option value="calendario">Escolher no Calendário (Datas)</option>
-            </select>
+    <!-- 2. Dashboard Period Capsule Filter Bar -->
+    <div class="glass-panel p-4 sm:p-5 rounded-3xl shadow-floating-card flex flex-wrap items-center justify-between gap-4 no-print">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400 mr-1">Período:</span>
+            
+            <div class="flex flex-wrap items-center bg-obsidian-950/80 p-1 rounded-2xl border border-white/10 text-xs">
+                <button @onclick='() => SetFiltroPeriodo("mes")' class="px-3 py-1.5 rounded-xl transition-all font-medium @(filtroPeriodoDashboard == "mes" ? "bg-cobalt-600 text-white shadow-glow-cobalt" : "text-slate-400 hover:text-white")">
+                    Este Mês
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("hoje")' class="px-3 py-1.5 rounded-xl transition-all font-medium @(filtroPeriodoDashboard == "hoje" ? "bg-cobalt-600 text-white shadow-glow-cobalt" : "text-slate-400 hover:text-white")">
+                    Hoje
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("ano")' class="px-3 py-1.5 rounded-xl transition-all font-medium @(filtroPeriodoDashboard == "ano" ? "bg-cobalt-600 text-white shadow-glow-cobalt" : "text-slate-400 hover:text-white")">
+                    Este Ano
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("tudo")' class="px-3 py-1.5 rounded-xl transition-all font-medium @(filtroPeriodoDashboard == "tudo" ? "bg-cobalt-600 text-white shadow-glow-cobalt" : "text-slate-400 hover:text-white")">
+                    Todo o Histórico
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("calendario")' class="px-3 py-1.5 rounded-xl transition-all font-medium @(filtroPeriodoDashboard == "calendario" ? "bg-cobalt-600 text-white shadow-glow-cobalt" : "text-slate-400 hover:text-white")">
+                    Calendário
+                </button>
+            </div>
         </div>
 
         @if (filtroPeriodoDashboard == "calendario")
         {
-            <div class="flex items-center space-x-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <div class="flex items-center space-x-3 bg-obsidian-950/80 p-2 rounded-2xl border border-white/10">
                 <div class="flex items-center space-x-2">
-                    <span class="text-xs text-gray-500 font-medium">De:</span>
-                    <input type="date" @bind="dashboardDataInicio" class="border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-700 bg-white" />
+                    <span class="text-xs font-mono text-slate-400">De:</span>
+                    <input type="date" @bind="dashboardDataInicio" class="glass-input rounded-xl px-2.5 py-1 text-xs text-slate-100 font-mono" />
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-xs text-gray-500 font-medium">Até:</span>
-                    <input type="date" @bind="dashboardDataFim" class="border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-700 bg-white" />
+                    <span class="text-xs font-mono text-slate-400">Até:</span>
+                    <input type="date" @bind="dashboardDataFim" class="glass-input rounded-xl px-2.5 py-1 text-xs text-slate-100 font-mono" />
                 </div>
-                <button @onclick="CarregarDashboard" class="bg-[#3F6CD8] hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold shadow transition">
+                <button @onclick="CarregarDashboard" class="bg-cobalt-600 hover:bg-cobalt-500 text-white px-3 py-1 rounded-xl text-xs font-bold shadow-glow-cobalt transition-all">
                     Filtrar
                 </button>
             </div>
         }
 
-        <div class="text-xs text-gray-500">
-            A apresentar dados de: <strong class="text-gray-800">@periodoDescricaoDashboard</strong>
+        <div class="text-xs font-mono text-slate-400 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+            Dados de: <strong class="text-cobalt-400 font-semibold">@periodoDescricaoDashboard</strong>
         </div>
     </div>
 
-    <!-- Metrics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 no-print">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Faturado no Período</p>
-                <h3 class="text-2xl font-black text-gray-800 mt-1">€ @totalVendasMes.ToString("N2")</h3>
-                <span class="text-xs text-green-600 font-medium mt-1 inline-block">Vendas consolidadas</span>
+    <!-- 3. Floating Futuristic KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 no-print">
+        
+        <!-- Metric 1: Faturado no Período -->
+        <div class="group relative rounded-3xl glass-panel p-6 shadow-floating-card hover:border-cobalt-500/40 transition-all duration-300 overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-24 h-24 bg-cobalt-500/10 rounded-full blur-2xl group-hover:bg-cobalt-500/20 transition-all duration-500"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Faturado no Período</span>
+                <span class="p-2 rounded-2xl bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </span>
             </div>
-            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#3F6CD8]">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="flex items-baseline gap-2 mb-1">
+                <h3 class="text-2xl lg:text-3xl font-extrabold font-mono text-white tracking-tight">€ @totalVendasMes.ToString("N2")</h3>
+            </div>
+            <p class="text-xs text-emerald-400 mb-4 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Vendas comerciais consolidadas
+            </p>
+            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-cobalt-500 to-indigo-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" style="width: 85%;"></div>
             </div>
         </div>
         
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Comissão a Receber</p>
-                <h3 class="text-2xl font-black text-amber-600 mt-1">€ @totalComissao.ToString("N2")</h3>
-                <span class="text-xs text-gray-400 font-medium mt-1 inline-block">@Sessao.PercentagemComissao.ToString("N1")% sobre vendas</span>
+        <!-- Metric 2: Comissão a Receber -->
+        <div class="group relative rounded-3xl glass-panel p-6 shadow-floating-card hover:border-cobalt-500/40 transition-all duration-300 overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-24 h-24 bg-cobalt-500/15 rounded-full blur-2xl group-hover:bg-cobalt-500/25 transition-all duration-500"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Comissão a Receber</span>
+                <span class="p-2 rounded-2xl bg-cobalt-500/15 text-cobalt-300 border border-cobalt-500/30">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9h6"/></svg>
+                </span>
             </div>
-            <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <div class="flex items-baseline gap-2 mb-1">
+                <h3 class="text-2xl lg:text-3xl font-extrabold font-mono text-cobalt-400 tracking-tight drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    € @totalComissao.ToString("N2")
+                </h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">
+                Taxa de <span class="text-cobalt-400 font-mono">@Sessao.PercentagemComissao.ToString("N1")%</span> sobre vendas
+            </p>
+            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" style="width: 78%;"></div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Total de Clientes</p>
-                <h3 class="text-2xl font-black text-gray-800 mt-1">@totalClientes</h3>
-                <span class="text-xs text-blue-600 font-medium mt-1 inline-block">Registados na base de dados</span>
+        <!-- Metric 3: Total de Clientes -->
+        <div class="group relative rounded-3xl glass-panel p-6 shadow-floating-card hover:border-white/20 transition-all duration-300 overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Clientes</span>
+                <span class="p-2 rounded-2xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </span>
             </div>
-            <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <div class="flex items-baseline gap-2 mb-1">
+                <h3 class="text-2xl lg:text-3xl font-extrabold font-mono text-white tracking-tight">@totalClientes</h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">Registados na base SQL Server</p>
+            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: 90%;"></div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Encomendas no Período</p>
-                <h3 class="text-2xl font-black text-gray-800 mt-1">@totalEncomendasMes</h3>
-                <span class="text-xs text-gray-400 font-medium mt-1 inline-block">Volume de pedidos</span>
+        <!-- Metric 4: Encomendas no Período -->
+        <div class="group relative rounded-3xl glass-panel p-6 shadow-floating-card hover:border-white/20 transition-all duration-300 overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Encomendas no Período</span>
+                <span class="p-2 rounded-2xl bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </span>
             </div>
-            <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            <div class="flex items-baseline gap-2 mb-1">
+                <h3 class="text-2xl lg:text-3xl font-extrabold font-mono text-white tracking-tight">@totalEncomendasMes</h3>
+            </div>
+            <p class="text-xs text-amber-400 mb-4">Volume total de pedidos emitidos</p>
+            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style="width: 72%;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Tabela de Vendas e Desempenho -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden no-print">
-        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-[#2B3347] text-white">
-            <h2 class="font-bold text-base">Histórico de Vendas & Comissões (@periodoDescricaoDashboard)</h2>
-            <span class="text-xs bg-white/10 px-3 py-1 rounded-full">@(vendasRecentes.Count) registo(s)</span>
+    <!-- 4. Borderless Modern Data Table -->
+    <div class="rounded-3xl glass-panel p-6 sm:p-7 shadow-floating-card no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/10">
+            <div>
+                <h2 class="text-lg font-bold text-white tracking-tight">Histórico de Vendas & Comissões</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Intervalo ativo: <span class="text-cobalt-400 font-mono">@periodoDescricaoDashboard</span></p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-medium bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20 self-start sm:self-auto">
+                @(vendasRecentes.Count) registo(s) sincronizados
+            </span>
         </div>
-        <div class="overflow-auto max-h-96">
+
+        <div class="overflow-x-auto mt-4">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider sticky top-0 border-b">
-                    <tr>
-                        <th class="px-6 py-3">Nº Venda</th>
-                        <th class="px-6 py-3">Data</th>
-                        <th class="px-6 py-3">Cliente</th>
-                        <th class="px-6 py-3">Estado</th>
-                        <th class="px-6 py-3 text-right">Valor Total</th>
-                        <th class="px-6 py-3 text-right">Comissão (@Sessao.PercentagemComissao.ToString("N0")%)</th>
+                <thead>
+                    <tr class="text-[11px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/5">
+                        <th class="py-3.5 px-4 font-semibold">Nº Venda</th>
+                        <th class="py-3.5 px-4 font-semibold">Data</th>
+                        <th class="py-3.5 px-4 font-semibold">Cliente</th>
+                        <th class="py-3.5 px-4 font-semibold text-center">Estado</th>
+                        <th class="py-3.5 px-4 font-semibold text-right">Valor Total</th>
+                        <th class="py-3.5 px-4 font-semibold text-right">Comissão (@Sessao.PercentagemComissao.ToString("N0")%)</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
+                <tbody class="divide-y divide-white/[0.03] text-sm">
                     @if (vendasRecentes.Count > 0)
                     {
                         @foreach (var v in vendasRecentes)
                         {
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-3 font-semibold text-gray-900">#@v.NE</td>
-                                <td class="px-6 py-3 text-gray-600">@v.Data.ToString("dd/MM/yyyy")</td>
-                                <td class="px-6 py-3 font-medium text-gray-800">@v.Cliente</td>
-                                <td class="px-6 py-3">
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold @(v.Estado == "FECHADA" ? "bg-green-100 text-green-800" : (v.Estado == "CANCELADA" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"))">
-                                        @v.Estado
-                                    </span>
+                            <tr class="group hover:bg-white/[0.04] transition-colors duration-200 cursor-pointer">
+                                <td class="py-4 px-4 font-mono font-bold text-white group-hover:text-cobalt-400 transition-colors">
+                                    #@v.NE
                                 </td>
-                                <td class="px-6 py-3 text-right font-bold text-gray-900">€ @v.ValorTotal.ToString("N2")</td>
-                                <td class="px-6 py-3 text-right font-bold text-amber-600">€ @v.Comissao.ToString("N2")</td>
+                                <td class="py-4 px-4 text-xs font-mono text-slate-400">
+                                    @v.Data.ToString("dd/MM/yyyy")
+                                </td>
+                                <td class="py-4 px-4 font-semibold text-slate-100">
+                                    @v.Cliente
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    @if (v.Estado == "FECHADA")
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                            FECHADA
+                                        </span>
+                                    }
+                                    else if (v.Estado == "CANCELADA")
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                                            CANCELADA
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                            @v.Estado
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-4 px-4 text-right font-mono font-bold text-white text-base">
+                                    € @v.ValorTotal.ToString("N2")
+                                </td>
+                                <td class="py-4 px-4 text-right font-mono font-bold text-emerald-400">
+                                    + € @v.Comissao.ToString("N2")
+                                </td>
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-gray-400">Sem registo de vendas para o período selecionado.</td>
+                            <td colspan="6" class="py-8 text-center text-slate-400 text-xs font-mono">
+                                Sem registo de vendas para o período selecionado.
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -174,24 +264,24 @@
         </div>
     </div>
 
-    <!-- Modal Novo Relatório -->
+    <!-- 5. Modal Novo Relatório Executivo -->
     @if (mostrarModalRelatorio)
     {
-        <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[95vh] overflow-y-auto">
-                <div class="flex justify-between items-center border-b pb-4 mb-6 no-print">
+        <div class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="rounded-3xl glass-panel-glow max-w-4xl w-full p-7 max-h-[95vh] overflow-y-auto shadow-2xl border border-cobalt-500/30">
+                <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-6 no-print">
                     <div>
-                        <h2 class="text-2xl font-bold text-[#2B3347]">Gerar Relatório de Desempenho</h2>
-                        <p class="text-xs text-gray-500">Selecione o intervalo de tempo para pré-visualizar e imprimir o relatório executivo.</p>
+                        <h2 class="text-xl font-bold text-white tracking-tight">Gerar Relatório de Desempenho</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Selecione o intervalo de tempo para pré-visualizar e imprimir o relatório executivo.</p>
                     </div>
-                    <button @onclick="FecharModalRelatorio" class="text-gray-400 hover:text-gray-600 text-3xl font-light">&times;</button>
+                    <button @onclick="FecharModalRelatorio" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all text-xl leading-none">&times;</button>
                 </div>
 
                 <!-- Filtros do Relatório (no-print) -->
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
+                <div class="bg-obsidian-950/70 p-4 rounded-2xl border border-white/10 mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
                     <div class="flex items-center space-x-3">
-                        <label class="block text-xs font-semibold text-gray-600">Período:</label>
-                        <select @bind="periodoSelecionado" @bind:after="OnMudarPeriodoRelatorio" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white focus:ring-blue-500 font-medium text-gray-700">
+                        <label class="block text-xs font-mono text-slate-400">Período:</label>
+                        <select @bind="periodoSelecionado" @bind:after="OnMudarPeriodoRelatorio" class="glass-input rounded-xl px-3 py-1.5 text-xs text-slate-200 font-medium">
                             <option value="mes">Este Mês</option>
                             <option value="hoje">Hoje</option>
                             <option value="ano">Este Ano</option>
@@ -202,31 +292,31 @@
 
                     @if (periodoSelecionado == "calendario")
                     {
-                        <div class="flex items-center space-x-3 bg-white p-2 rounded-lg border border-gray-200">
+                        <div class="flex items-center space-x-3 bg-obsidian-900 p-2 rounded-xl border border-white/10">
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs text-gray-500 font-medium">De:</span>
-                                <input type="date" @bind="relatorioDataInicio" class="border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-700 bg-white" />
+                                <span class="text-xs text-slate-400">De:</span>
+                                <input type="date" @bind="relatorioDataInicio" class="glass-input rounded-xl px-2.5 py-1 text-xs text-slate-200" />
                             </div>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs text-gray-500 font-medium">Até:</span>
-                                <input type="date" @bind="relatorioDataFim" class="border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-700 bg-white" />
+                                <span class="text-xs text-slate-400">Até:</span>
+                                <input type="date" @bind="relatorioDataFim" class="glass-input rounded-xl px-2.5 py-1 text-xs text-slate-200" />
                             </div>
-                            <button @onclick="GerarRelatorio" class="bg-[#3F6CD8] hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold shadow transition">
+                            <button @onclick="GerarRelatorio" class="bg-cobalt-600 hover:bg-cobalt-500 text-white px-3 py-1 rounded-xl text-xs font-bold shadow-glow-cobalt transition">
                                 Filtrar Relatório
                             </button>
                         </div>
                     }
 
                     <div class="flex space-x-3">
-                        <button @onclick="ImprimirRelatorio" class="bg-[#3F6CD8] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center text-sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                            Imprimir Relatório
+                        <button @onclick="ImprimirRelatorio" class="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-glow-cobalt flex items-center gap-2 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            <span>Imprimir Relatório (PDF)</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Documento Formal do Relatório (Printable Area) -->
-                <div id="printableReport" class="p-4 border rounded-xl border-gray-200 bg-white">
+                <!-- Documento Formal do Relatório (Printable Area - high contrast for paper print) -->
+                <div id="printableReport" class="p-6 border rounded-2xl border-gray-200 bg-white text-gray-900">
                     <!-- Cabeçalho Oficial -->
                     <div class="border-b-2 border-gray-800 pb-4 mb-6">
                         <div class="flex justify-between items-start">
@@ -321,7 +411,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end no-print">
-                    <button @onclick="FecharModalRelatorio" class="px-5 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-medium text-sm transition">
+                    <button @onclick="FecharModalRelatorio" class="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold transition">
                         Fechar
                     </button>
                 </div>
@@ -357,6 +447,12 @@
 
     protected override void OnInitialized()
     {
+        OnMudarPeriodoDashboard();
+    }
+
+    private void SetFiltroPeriodo(string periodo)
+    {
+        filtroPeriodoDashboard = periodo;
         OnMudarPeriodoDashboard();
     }
 
@@ -418,15 +514,19 @@
             {
                 con.Open();
                 
-                // 1. Vendas e Comissões do Período
+                int isDiretor = (Sessao.Cargo == "Diretor Comercial" || Sessao.Cargo == "Administrador" || Sessao.ID_Vendedor == 1) ? 1 : 0;
+
+                // 1. Vendas e Comissões do Período (Excluindo Encomendas Canceladas)
                 string queryVendas = $@"
                     SELECT SUM(E.Valor_Total) as Total_Vendas, COUNT(E.Numero_Encomenda) as Num_Vendas
                     FROM Encomenda E
-                    WHERE (E.ID_Vendedor = @id OR @id = 1) {filtroData}";
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) 
+                      AND ISNULL(E.Estado, '') <> 'CANCELADA' {filtroData}";
 
                 using (SqlCommand cmd = new SqlCommand(queryVendas, con))
                 {
                     cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmd.Parameters.AddWithValue("@isDiretor", isDiretor);
                     if (filtroPeriodoDashboard == "calendario")
                     {
                         cmd.Parameters.AddWithValue("@dI", dashboardDataInicio.Date);
@@ -465,13 +565,14 @@
                         ISNULL(E.Valor_Total, 0) AS Valor_Total
                     FROM Encomenda E
                     LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                    WHERE (E.ID_Vendedor = @id OR @id = 1) {filtroData}
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) {filtroData}
                     ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
 
                 decimal taxaComissao = Sessao.PercentagemComissao / 100m;
                 using (SqlCommand cmdG = new SqlCommand(queryGrid, con))
                 {
                     cmdG.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmdG.Parameters.AddWithValue("@isDiretor", isDiretor);
                     if (filtroPeriodoDashboard == "calendario")
                     {
                         cmdG.Parameters.AddWithValue("@dI", dashboardDataInicio.Date);
@@ -483,14 +584,17 @@
                         while (rdG.Read())
                         {
                             decimal val = Convert.ToDecimal(rdG["Valor_Total"]);
+                            string estado = rdG["Estado"]?.ToString() ?? "Pendente";
+                            decimal com = estado == "CANCELADA" ? 0m : val * taxaComissao;
+
                             vendasRecentes.Add(new VendaGanhosModel
                             {
                                 NE = Convert.ToInt32(rdG["Numero_Encomenda"]),
                                 Data = rdG["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rdG["Data_Encomenda"]) : DateTime.MinValue,
                                 Cliente = rdG["Nome_Cliente"]?.ToString() ?? "N/A",
-                                Estado = rdG["Estado"]?.ToString() ?? "Pendente",
+                                Estado = estado,
                                 ValorTotal = val,
-                                Comissao = val * taxaComissao
+                                Comissao = com
                             });
                         }
                     }
@@ -573,6 +677,7 @@
             try
             {
                 con.Open();
+                int isDiretor = (Sessao.Cargo == "Diretor Comercial" || Sessao.Cargo == "Administrador" || Sessao.ID_Vendedor == 1) ? 1 : 0;
                 string query = $@"
                     SELECT 
                         E.Numero_Encomenda,
@@ -582,13 +687,14 @@
                         ISNULL(E.Valor_Total, 0) AS Valor_Total
                     FROM Encomenda E
                     LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
-                    WHERE (E.ID_Vendedor = @id OR @id = 1) {filtroData}
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1) {filtroData}
                     ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
 
                 decimal taxaComissao = Sessao.PercentagemComissao / 100m;
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmd.Parameters.AddWithValue("@isDiretor", isDiretor);
                     if (periodoSelecionado == "calendario")
                     {
                         cmd.Parameters.AddWithValue("@rdI", relatorioDataInicio.Date);
@@ -600,18 +706,22 @@
                         while (rd.Read())
                         {
                             decimal val = Convert.ToDecimal(rd["Valor_Total"]);
-                            decimal com = val * taxaComissao;
+                            string estado = rd["Estado"]?.ToString() ?? "Pendente";
+                            decimal com = estado == "CANCELADA" ? 0m : val * taxaComissao;
 
-                            relatorioTotalFaturado += val;
-                            relatorioTotalComissao += com;
-                            relatorioTotalQtd++;
+                            if (estado != "CANCELADA")
+                            {
+                                relatorioTotalFaturado += val;
+                                relatorioTotalComissao += com;
+                                relatorioTotalQtd++;
+                            }
 
                             relatorioLinhas.Add(new VendaGanhosModel
                             {
                                 NE = Convert.ToInt32(rd["Numero_Encomenda"]),
                                 Data = rd["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rd["Data_Encomenda"]) : DateTime.MinValue,
                                 Cliente = rd["Nome_Cliente"]?.ToString() ?? "N/A",
-                                Estado = rd["Estado"]?.ToString() ?? "Pendente",
+                                Estado = estado,
                                 ValorTotal = val,
                                 Comissao = com
                             });

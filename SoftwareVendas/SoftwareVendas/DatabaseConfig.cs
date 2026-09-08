@@ -11,7 +11,7 @@ namespace SoftwareVendas
         #region Connection State & Settings
 
         private static string _connectionString =
-            @"Server=(localdb)\MSSQLLocalDB;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
+            @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=CommercialSalesDB;Trusted_Connection=True;TrustServerCertificate=True;";
 
         private static bool _instanciaDetectada = false;
         private static bool _conexaoAtiva = false;
@@ -55,6 +55,12 @@ namespace SoftwareVendas
             @"localhost"
         };
 
+        private static readonly string[] BancosCandidatos = new[]
+        {
+            "CommercialSalesDB",
+            "Software_Vendas_Pai"
+        };
+
         public static void ForcarRedetecao()
         {
             _instanciaDetectada = false;
@@ -66,27 +72,30 @@ namespace SoftwareVendas
         #region Auto-Discovery & Connectivity Checks
 
         /// <summary>
-        /// Attempts to connect to known SQL Server instances and selects the first active one.
+        /// Attempts to connect to known SQL Server instances and databases, prioritizing CommercialSalesDB.
         /// </summary>
         public static void DetectarMelhorInstancia()
         {
-            foreach (string servidor in ServidoresCandidatos)
+            foreach (string banco in BancosCandidatos)
             {
-                string connStr = $"Server={servidor};Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;Connection Timeout=2;";
-                try
+                foreach (string servidor in ServidoresCandidatos)
                 {
-                    using (SqlConnection con = new SqlConnection(connStr))
+                    string connStr = $"Server={servidor};Database={banco};Trusted_Connection=True;TrustServerCertificate=True;Connection Timeout=2;";
+                    try
                     {
-                        con.Open();
-                        _connectionString = connStr;
-                        _instanciaDetectada = true;
-                        _conexaoAtiva = true;
-                        return;
+                        using (SqlConnection con = new SqlConnection(connStr))
+                        {
+                            con.Open();
+                            _connectionString = connStr;
+                            _instanciaDetectada = true;
+                            _conexaoAtiva = true;
+                            return;
+                        }
                     }
-                }
-                catch
-                {
-                    // Continue scanning candidate instances
+                    catch
+                    {
+                        // Continue scanning candidate instances
+                    }
                 }
             }
 

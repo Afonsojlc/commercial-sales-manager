@@ -50,10 +50,10 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 │  ├── ConfiguracaoEmpresa.cs (JSON Company Profile Store)    │
 │  └── DatabaseConfig.cs (SQL Discovery & Connectivity)       │
 ├──────────────────────────────┬──────────────────────────────┤
-│    Online Mode (Production)  │   Offline Mode (Demo Mock)   │
+│    Online Mode (Production)  │   Offline Mode (Demo Sandbox)│
 │    Microsoft.Data.SqlClient  │   DadosDemonstracao.cs       │
 │    Microsoft SQL Server      │   Thread-Safe In-Memory Repo │
-│    DB: Software_Vendas_Pai   │   Seed Electrical Catalog    │
+│    DB: CommercialSalesDB     │   Seed Electrical Catalog    │
 └──────────────────────────────┴──────────────────────────────┘
 ```
 
@@ -155,6 +155,11 @@ flowchart TD
 
 The database adheres strictly to Third Normal Form (3NF) with enforced foreign keys:
 
+> [!TIP]
+> **Architectural Diagrams:**
+> * 🖼️ [Conceptual Entity-Relationship Diagram (PNG)](docs/er-diagram.png)
+> * 📄 [Relational Model Specification (PDF)](docs/relational-model.pdf)
+
 ```mermaid
 erDiagram
     VENDEDORES ||--o{ ENCOMENDA : "issues"
@@ -254,9 +259,10 @@ git checkout feature/new-ui-BlazorWebView
 ```
 
 ### 2. Configure the Database (Optional for Demo Testing)
-1. Open [`Estrutura_BD_Software_Vendas.sql`](Estrutura_BD_Software_Vendas.sql) in SQL Server Management Studio (SSMS).
-2. Execute the script to create the `Software_Vendas_Pai` database, tables, relationships, and default seed records.
-3. If SQL Server is not running or unreachable, the application automatically boots into **Offline Demonstration Mode**, providing full in-memory functionality without errors.
+1. Open [`database_schema.sql`](database/database_schema.sql) in SQL Server Management Studio (SSMS) or Azure Data Studio and execute it to create the `CommercialSalesDB` database and tables.
+2. Execute [`database_seed.sql`](database/database_seed.sql) to populate synthetic demonstration material catalog items, clients, and commercial users.
+3. Run [`verify_database.sql`](database/verify_database.sql) to verify table structure and record counts.
+4. If SQL Server is not running or unreachable, the application automatically boots into **Offline Demonstration Mode**, providing full in-memory functionality without errors.
 
 ### 3. Build the Solution
 ```bash
@@ -272,13 +278,13 @@ dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 
 #### 🟢 Production Mode (Connected to Microsoft SQL Server)
 * **Commercial Director (Full Administrative Privileges):**
-  * Email: `jgcarvalho007@gmail.com` | Password: `Paredes10`
+  * Email: `carlos.silva@eletrodist.pt` | Password: `Paredes10`
   * Quick PIN: `1755`
-  * Seller: **José Carvalho** (Commission: `7.00%`)
+  * Seller: **Carlos Silva** (Commission: `7.00%`)
 * **Sales Representative:**
-  * Email: `acsousalopes@gmail.com` | Password: `Paredes11`
+  * Email: `mariana.santos@eletrodist.pt` | Password: `Paredes11`
   * Quick PIN: `1514`
-  * Seller: **Antonia Lopes** (Commission: `2.00%`)
+  * Seller: **Mariana Santos** (Commission: `2.00%`)
 
 #### 🟡 Offline Demonstration Sandbox Mode (No SQL Server Required)
 * Automatically activates whenever SQL Server is unreachable, or via the direct **"Entrar em Modo Demonstração (Sandbox)"** button on the Login screen.
@@ -295,9 +301,13 @@ dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 
 ```
 commercial-sales-manager/
-├── Estrutura_BD_Software_Vendas.sql     # SQL Server DDL schema initialization script
-├── Dados_Iniciais_Seed.sql              # Initial seed data script (materials, clients, sellers)
-├── Visualizar_Tabelas.sql               # Diagnostic queries for SQL Server tables
+├── database/                            # SQL Server database scripts
+│   ├── database_schema.sql              # DDL schema initialization script
+│   ├── database_seed.sql                # Synthetic seed data script (materials, clients, sellers)
+│   └── verify_database.sql              # Diagnostic queries for SQL Server tables
+├── docs/                                # Technical & architectural documentation
+│   ├── er-diagram.png                   # Conceptual Entity-Relationship diagram
+│   └── relational-model.pdf             # Relational data model specification
 ├── README.md                            # Comprehensive project documentation
 └── SoftwareVendas/
     ├── SoftwareVendas.sln               # Visual Studio 2022 Solution

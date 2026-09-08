@@ -200,7 +200,7 @@
         mensagemErro = "";
         dtEncomendas = new DataTable();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             dtEncomendas.Columns.Add("Nº Venda", typeof(int));
             dtEncomendas.Columns.Add("Data Venda", typeof(DateTime));

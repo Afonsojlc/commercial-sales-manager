@@ -264,7 +264,7 @@
         dtHistorico = null;
         dtClientes = new DataTable();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             dtClientes.Columns.Add("ID_Cliente", typeof(string));
             dtClientes.Columns.Add("Nome_Cliente", typeof(string));
@@ -329,7 +329,7 @@
     {
         dtHistorico = new DataTable();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             dtHistorico.Columns.Add("Nº Venda", typeof(int));
             dtHistorico.Columns.Add("Data", typeof(DateTime));
@@ -391,7 +391,7 @@
 
     private string ObterProximoIdCliente()
     {
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             int maxDemo = 0;
             foreach (var c in DadosDemonstracao.ObterClientes())
@@ -453,7 +453,7 @@
             return;
         }
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             DadosDemonstracao.AdicionarCliente(new DadosDemonstracao.ClienteDemo
             {

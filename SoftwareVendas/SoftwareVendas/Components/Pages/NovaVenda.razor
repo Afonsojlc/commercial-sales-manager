@@ -450,7 +450,7 @@
 
     private void CarregarClientePorId(string id)
     {
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var cDemo = DadosDemonstracao.ObterClientePorId(id);
             if (cDemo != null)
@@ -496,7 +496,7 @@
 
     private void CarregarDadosEdicao(int id)
     {
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var encDemo = DadosDemonstracao.ObterEncomendaPorId(id);
             if (encDemo != null)
@@ -647,7 +647,7 @@
         mensagemAviso = "";
         if (string.IsNullOrWhiteSpace(termo)) return;
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var demoList = DadosDemonstracao.ObterClientes(termo);
             foreach (var c in demoList)
@@ -723,7 +723,7 @@
         mensagemAviso = "";
         if (string.IsNullOrWhiteSpace(termo)) return;
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var demoList = DadosDemonstracao.ObterArtigos(termo);
             foreach (var p in demoList)
@@ -892,7 +892,7 @@
             return;
         }
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var cDemo = new DadosDemonstracao.ClienteDemo
             {

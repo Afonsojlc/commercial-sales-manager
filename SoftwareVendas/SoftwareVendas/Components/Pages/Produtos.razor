@@ -236,7 +236,7 @@
     {
         tiposProduto.Clear();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "CAB", Designacao = "Cabos & Condutores" });
             tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "DIS", Designacao = "Aparelhagem de Calha & Disjuntores" });
@@ -283,7 +283,7 @@
     {
         produtos = new List<ProdutoDTO>();
 
-        if (!DatabaseConfig.ConexaoAtiva)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             var arts = DadosDemonstracao.ObterArtigos(termo);
             foreach (var a in arts)

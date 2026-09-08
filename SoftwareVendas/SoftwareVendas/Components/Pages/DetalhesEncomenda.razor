@@ -243,7 +243,7 @@
         carregando = true;
         linhas.Clear();
 
-        if (!DatabaseConfig.ConexaoAtiva && int.TryParse(IdEncomenda, out int numEnc))
+        if ((!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo) && int.TryParse(IdEncomenda, out int numEnc))
         {
             var encDemo = DadosDemonstracao.ObterEncomendaPorId(numEnc);
             if (encDemo != null)
@@ -361,7 +361,7 @@
 
     private void GuardarEstado()
     {
-        if (!DatabaseConfig.ConexaoAtiva && int.TryParse(IdEncomenda, out int numEnc))
+        if ((!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo) && int.TryParse(IdEncomenda, out int numEnc))
         {
             DadosDemonstracao.AtualizarEstadoEncomenda(numEnc, estadoSelecionado);
             estadoOriginal = estadoSelecionado;

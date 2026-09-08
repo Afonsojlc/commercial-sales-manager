@@ -207,12 +207,12 @@ namespace SoftwareVendas
             };
             _encomendas.AddRange(new[] { enc1, enc2, enc3, enc4 });
 
-            // Seed sellers (matching real business profiles + demo administrator)
+            // Seed sellers (fictional model commercial team + demo administrator)
             _vendedores.AddRange(new[]
             {
                 new VendedorDemo { ID_Vendedor = 999, Nome = "Afonso Carvalho", Cargo = "DEMO (Diretor Comercial)", PIN = "1234", Email = "afonso.carvalho@geral.pt", Senha = "demo", Telemovel = "912345678", Percentagem_Comissao = 5.00m, Ativo = true },
-                new VendedorDemo { ID_Vendedor = 7, Nome = "José Carvalho", Cargo = "Director Comercial", PIN = "1755", Email = "jgcarvalho007@gmail.com", Senha = "Paredes10", Telemovel = "919000000", Percentagem_Comissao = 7.00m, Ativo = true },
-                new VendedorDemo { ID_Vendedor = 5, Nome = "Antonia Lopes", Cargo = "Vendedora de Obras Feitas", PIN = "1514", Email = "acsousalopes@gmail.com", Senha = "Paredes11", Telemovel = "918000000", Percentagem_Comissao = 2.00m, Ativo = true }
+                new VendedorDemo { ID_Vendedor = 101, Nome = "Carlos Silva", Cargo = "Director Comercial", PIN = "1755", Email = "carlos.silva@eletrodist.pt", Senha = "demo", Telemovel = "910000001", Percentagem_Comissao = 7.00m, Ativo = true },
+                new VendedorDemo { ID_Vendedor = 102, Nome = "Mariana Santos", Cargo = "Comercial de Vendas", PIN = "1514", Email = "mariana.santos@eletrodist.pt", Senha = "demo", Telemovel = "910000002", Percentagem_Comissao = 2.00m, Ativo = true }
             });
 
             _inicializado = true;

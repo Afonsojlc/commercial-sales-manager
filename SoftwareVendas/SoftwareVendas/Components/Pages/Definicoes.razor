@@ -688,7 +688,7 @@
             return;
         }
 
-        if (Sessao.IsDemo)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             Sessao.Nome = meuNome.Trim();
             Sessao.Email = meuEmail.Trim();
@@ -759,7 +759,7 @@
     {
         listaVendedores.Clear();
 
-        if (Sessao.IsDemo)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             listaVendedores = DadosDemonstracao.ObterVendedores();
             return;
@@ -861,7 +861,7 @@
             vendedorEdicao.Cargo = "Vendedor";
         }
 
-        if (Sessao.IsDemo)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             DadosDemonstracao.SalvarVendedor(vendedorEdicao);
 
@@ -964,7 +964,7 @@
 
         bool novoEstado = !v.Ativo;
 
-        if (Sessao.IsDemo)
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
         {
             v.Ativo = novoEstado;
             DadosDemonstracao.SalvarVendedor(v);

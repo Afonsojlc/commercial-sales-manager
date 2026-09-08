@@ -1,17 +1,24 @@
-﻿@page "/encomendas"
+@page "/encomendas"
 @using System.Data
 @using Microsoft.Data.SqlClient
-@using SoftwareVendas
 @inject NavigationManager NavManager
 
-<div class="p-8 h-full flex flex-col">
-    <div class="flex justify-between items-center mb-6">
+<div class="p-8 flex flex-col h-full overflow-hidden">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6 shrink-0">
         <h1 class="text-3xl font-bold text-gray-800">Encomendas</h1>
-        <button @onclick="NovaVenda" class="bg-[#3F6CD8] text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition flex items-center font-semibold">
+        <button @onclick="NovaVenda" class="bg-[#3F6CD8] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Nova Encomenda
         </button>
     </div>
+
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="bg-red-50 text-red-700 p-3 mb-4 rounded border border-red-200 text-sm">
+            @mensagemErro
+        </div>
+    }
 
     <!-- Filtros -->
     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6 flex space-x-4 shrink-0">
@@ -38,21 +45,23 @@
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Nº Venda</th>
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Data Venda</th>
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Cliente</th>
+                    <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Vendedor</th>
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b text-right">Total Venda</th>
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b">Estado</th>
                     <th class="px-6 py-3 font-semibold text-gray-600 text-sm border-b text-center">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                @if (dtEncomendas != null)
+                @if (dtEncomendas != null && dtEncomendas.Rows.Count > 0)
                 {
                     @foreach (System.Data.DataRowView row in dtEncomendas.DefaultView)
                     {
                         var idVenda = row["Nº Venda"].ToString();
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition group">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">@row["Nº Venda"]</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">#@row["Nº Venda"]</td>
                             <td class="px-6 py-4 text-sm text-gray-500">@Convert.ToDateTime(row["Data Venda"]).ToString("dd/MM/yyyy")</td>
-                            <td class="px-6 py-4 text-sm text-gray-800">@row["Cliente"]</td>
+                            <td class="px-6 py-4 text-sm text-gray-800 font-medium">@row["Cliente"]</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">@row["Vendedor"]</td>
                             <td class="px-6 py-4 text-sm text-right font-bold text-gray-800">€ @Convert.ToDecimal(row["Total Venda"]).ToString("N2")</td>
                             <td class="px-6 py-4 text-sm">
                                 @if(row["Estado"].ToString() == "FECHADA")
@@ -72,14 +81,22 @@
                                     <span class="bg-gray-100 text-gray-800 py-1 px-3 rounded-full text-xs font-semibold">@row["Estado"]</span>
                                 }
                             </td>
-                            <td class="px-6 py-4 text-sm text-center opacity-0 group-hover:opacity-100 transition">
-                                <button @onclick="() => VerDetalhes(idVenda!)" class="text-blue-500 hover:text-blue-700 font-semibold flex items-center justify-center">
+                            <td class="px-6 py-4 text-sm text-center">
+                                <button @onclick="() => VerDetalhes(idVenda!)" class="text-blue-600 hover:text-blue-800 font-semibold text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition inline-flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     Detalhes
                                 </button>
                             </td>
                         </tr>
                     }
+                }
+                else if (dtEncomendas != null && dtEncomendas.Rows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-12 text-gray-400">
+                            Nenhuma encomenda encontrada com os filtros selecionados.
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>
@@ -94,6 +111,7 @@
     private DateTime dataInicio = DateTime.Now.AddYears(-10);
     private DateTime dataFim = DateTime.Now.AddDays(1);
     private DataTable? dtEncomendas;
+    private string mensagemErro = "";
 
     protected override void OnInitialized()
     {
@@ -106,6 +124,7 @@
 
     private void CarregarDados()
     {
+        mensagemErro = "";
         dtEncomendas = new DataTable();
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -116,18 +135,18 @@
                     SELECT 
                         E.Numero_Encomenda as 'Nº Venda',
                         E.Data_Encomenda as 'Data Venda',
-                        C.Nome_Cliente as 'Cliente',
-                        V.Nome_Utilizador as 'Vendedor',
+                        ISNULL(C.Nome_Cliente, 'Cliente Não Identificado') as 'Cliente',
+                        ISNULL(V.Nome, 'Geral') as 'Vendedor',
                         E.Valor_Total as 'Total Venda',
                         E.Estado as 'Estado'
                     FROM Encomenda E
-                    INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
                     LEFT JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
                     WHERE E.Data_Encomenda BETWEEN @dataI AND @dataF
                       AND (@filtro = '' OR 
                            C.Nome_Cliente LIKE @filtroBusca OR 
                            CAST(E.Numero_Encomenda AS VARCHAR) LIKE @filtroBusca OR 
-                           V.Nome_Utilizador LIKE @filtroBusca OR 
+                           V.Nome LIKE @filtroBusca OR 
                            E.Estado LIKE @filtroBusca)
                     ORDER BY E.Numero_Encomenda DESC";
 
@@ -135,14 +154,17 @@
                 {
                     cmd.Parameters.AddWithValue("@dataI", dataInicio);
                     cmd.Parameters.AddWithValue("@dataF", dataFim);
-                    cmd.Parameters.AddWithValue("@filtro", filtro);
-                    cmd.Parameters.AddWithValue("@filtroBusca", "%" + filtro + "%");
+                    cmd.Parameters.AddWithValue("@filtro", filtro.Trim());
+                    cmd.Parameters.AddWithValue("@filtroBusca", "%" + filtro.Trim() + "%");
                     
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
                     da.Fill(dtEncomendas);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                mensagemErro = "Erro ao carregar encomendas: " + ex.Message;
+            }
         }
     }
 
@@ -161,6 +183,3 @@
         NavManager.NavigateTo($"/encomendas/{id}");
     }
 }
-
-
-

@@ -1,9 +1,10 @@
-﻿@page "/novavenda"
-@using Microsoft.Data.SqlClient
-@using SoftwareVendas
+@page "/novavenda"
 @using System.Data
+@using Microsoft.Data.SqlClient
+@inject NavigationManager NavManager
 
 <div class="p-8 h-full overflow-auto">
+    <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Nova Encomenda</h1>
         <button @onclick="FinalizarEncomenda" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition font-semibold">
@@ -13,7 +14,7 @@
 
     @if (!string.IsNullOrEmpty(mensagemAviso))
     {
-        <div class="bg-yellow-50 text-yellow-800 p-3 mb-6 rounded shadow-sm border border-yellow-200">
+        <div class="p-3 mb-6 rounded shadow-sm border @(mensagemAviso.Contains("sucesso") ? "bg-green-50 text-green-800 border-green-200" : "bg-yellow-50 text-yellow-800 border-yellow-200")">
             @mensagemAviso
         </div>
     }
@@ -24,31 +25,31 @@
             <!-- Dados do Cliente -->
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4">Dados do Cliente</h2>
-                <div class="flex space-x-4">
-                    <div class="flex-1">
-                        <label class="block text-sm text-gray-600 mb-1">Pesquisar Cliente (Nome ou NIF)</label>
-                        <div class="flex">
-                            <input type="text" @bind="pesquisaCliente" @bind:event="oninput" @onkeyup="PesquisarCliente" placeholder="NIF ou Nome..." class="flex-1 border border-gray-300 rounded-l px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                            <button @onclick="PesquisarClienteBtn" class="bg-gray-100 border border-l-0 border-gray-300 px-4 rounded-r text-gray-600 hover:bg-gray-200">
-                                Procurar
-                            </button>
-                        </div>
-                    </div>
-                </div>
                 
-                @if (clientesResultados != null && clientesResultados.Count > 0)
-                {
-                    <div class="mt-2 bg-white border border-gray-200 rounded shadow-sm max-h-40 overflow-y-auto">
-                        @foreach (var c in clientesResultados)
-                        {
-                            <div class="p-2 hover:bg-blue-50 cursor-pointer border-b" @onclick="() => SelecionarCliente(c)">
-                                <span class="font-bold text-sm">@c.Nome_Cliente</span> <span class="text-gray-500 text-xs">NIF: @c.NIF</span>
-                            </div>
-                        }
+                <div class="relative">
+                    <label class="block text-sm text-gray-600 mb-1">Pesquisar Cliente (Nome ou NIF)</label>
+                    <div class="flex">
+                        <input type="text" @bind="PesquisaCliente" @bind:event="oninput" placeholder="Escreva o NIF ou Nome do cliente..." autocomplete="off" class="flex-1 border border-gray-300 rounded px-4 py-2 focus:ring-blue-500 focus:border-blue-500" />
                     </div>
-                }
 
-                <!-- Dados Preenchidos Placeholder -->
+                    @if (clientesResultados != null && clientesResultados.Count > 0)
+                    {
+                        <div class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl max-h-56 overflow-y-auto">
+                            @foreach (var c in clientesResultados)
+                            {
+                                <div class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-0 transition" @onclick="() => SelecionarCliente(c)">
+                                    <div class="font-bold text-sm text-gray-800">@c.Nome_Cliente</div>
+                                    <div class="text-xs text-gray-500 flex justify-between mt-1">
+                                        <span>NIF: <strong>@c.NIF</strong></span>
+                                        <span>@c.Morada_Completa</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Dados Preenchidos -->
                 <div class="mt-4 bg-gray-50 p-4 rounded border border-gray-200 grid grid-cols-2 gap-4">
                     <div>
                         <p class="text-xs text-gray-500">Nome</p>
@@ -65,50 +66,57 @@
                 </div>
             </div>
 
-            <!-- Add Product -->
+            <!-- Adicionar Artigos -->
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4">Adicionar Produto</h2>
                 <div class="grid grid-cols-12 gap-4 items-end">
-                                          <div class="col-span-3 relative">
-                          <label class="block text-xs text-gray-600 mb-1">Artigo (Cód ou Nome)</label>
-                          <input type="text" @bind="novoArtigoCodigo" @bind:event="oninput" @onkeyup="BuscarProdutoCodigo" autocomplete="off" placeholder="Ex: PRD001" class="w-full border border-gray-300 rounded px-2 py-1 focus:ring-blue-500" />
-                          @if (produtosResultados != null && produtosResultados.Count > 0)
-                          {
-                              <div class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto">
-                                  @foreach (var p in produtosResultados)
-                                  {
-                                      <div class="p-2 hover:bg-blue-50 cursor-pointer border-b text-xs" @onclick="() => SelecionarProduto(p)">
-                                          <span class="font-bold">@p.Codigo</span> - <span>@p.Descricao</span>
-                                      </div>
-                                  }
-                              </div>
-                          }
-                      </div>
-                    <div class="col-span-4">
+                    <!-- Produto Search Autocomplete -->
+                    <div class="col-span-4 relative">
+                        <label class="block text-xs text-gray-600 mb-1">Artigo (Código ou Nome)</label>
+                        <input type="text" @bind="PesquisaProduto" @bind:event="oninput" autocomplete="off" placeholder="Pesquisar artigo..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-blue-500" />
+                        
+                        @if (produtosResultados != null && produtosResultados.Count > 0)
+                        {
+                            <div class="absolute z-50 left-0 w-80 mt-1 bg-white border border-gray-200 rounded shadow-xl max-h-56 overflow-y-auto">
+                                @foreach (var p in produtosResultados)
+                                {
+                                    <div class="p-2.5 hover:bg-blue-50 cursor-pointer border-b last:border-0 text-xs transition" @onclick="() => SelecionarProduto(p)">
+                                        <div class="flex justify-between font-bold text-gray-800">
+                                            <span>@p.Codigo</span>
+                                            <span class="text-blue-600">€ @p.PVP_Unidade.ToString("N2")</span>
+                                        </div>
+                                        <div class="text-gray-500 text-xs mt-0.5 truncate">@p.Descricao</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-span-3">
                         <label class="block text-xs text-gray-600 mb-1">Descrição</label>
-                        <input type="text" @bind="novoArtigoDescricao" readonly class="w-full border border-gray-300 rounded px-2 py-1 bg-gray-50 text-gray-500" />
+                        <input type="text" @bind="novoArtigoDescricao" readonly class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-gray-50 text-gray-600" />
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs text-gray-600 mb-1">Preço (€)</label>
-                        <input type="number" @bind="novoArtigoPreco" readonly class="w-full border border-gray-300 rounded px-2 py-1 bg-gray-50 text-gray-500" />
+                        <input type="number" @bind="novoArtigoPreco" readonly class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-gray-50 text-gray-600" />
                     </div>
-                                        <div class="col-span-1">
+                    <div class="col-span-1">
                         <label class="block text-xs text-gray-600 mb-1">Desc.(%)</label>
-                        <input type="text" @bind="novoArtigoDesconto" placeholder="Ex: 10+5" class="w-full border border-gray-300 rounded px-2 py-1" />
+                        <input type="text" @bind="novoArtigoDesconto" placeholder="10+5" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
                     </div>
                     <div class="col-span-1">
                         <label class="block text-xs text-gray-600 mb-1">Qtd</label>
-                        <input type="number" min="1" @bind="novoArtigoQtd" class="w-full border border-gray-300 rounded px-2 py-1" />
+                        <input type="number" min="1" @bind="novoArtigoQtd" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
                     </div>
-                    <div class="col-span-2">
-                        <button @onclick="AdicionarLinha" class="w-full bg-green-50 text-green-600 py-1 rounded hover:bg-green-100 font-semibold border border-green-200">
-                            Adicionar
+                    <div class="col-span-1">
+                        <button @onclick="AdicionarLinha" class="w-full bg-green-50 text-green-700 py-1.5 rounded hover:bg-green-100 font-semibold border border-green-200 text-sm">
+                            + Add
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Line Items -->
+            <!-- Line Items Table -->
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h2 class="text-lg font-semibold text-[#2B3347] border-b pb-2 mb-4">Linhas da Encomenda</h2>
                 <table class="w-full text-left border-collapse">
@@ -128,7 +136,7 @@
                         @if (linhas.Count == 0)
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-8 text-gray-400">Nenhum artigo adicionado.</td>
+                                <td colspan="8" class="text-center py-8 text-gray-400">Nenhum artigo adicionado.</td>
                             </tr>
                         }
                         else
@@ -136,15 +144,15 @@
                             @foreach (var linha in linhas)
                             {
                                 <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-2 text-sm">@linha.Codigo</td>
-                                    <td class="px-3 py-2 text-sm">@linha.Descricao</td>
-                                    <td class="px-3 py-2 text-sm text-right">@linha.Quantidade</td>
+                                    <td class="px-3 py-2 text-sm font-medium text-gray-800">@linha.Codigo</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">@linha.Descricao</td>
+                                    <td class="px-3 py-2 text-sm text-right font-semibold">@linha.Quantidade</td>
                                     <td class="px-3 py-2 text-sm text-right">€ @linha.PrecoUnitario.ToString("N2")</td>
-                                    <td class="px-3 py-2 text-sm text-center">@linha.DescontoTexto</td>
+                                    <td class="px-3 py-2 text-sm text-center text-blue-600 font-medium">@(string.IsNullOrEmpty(linha.DescontoTexto) ? "-" : linha.DescontoTexto)</td>
                                     <td class="px-3 py-2 text-sm text-right">@linha.TaxaIva%</td>
-                                    <td class="px-3 py-2 text-sm text-right font-semibold">€ @linha.TotalLinha.ToString("N2")</td>
+                                    <td class="px-3 py-2 text-sm text-right font-bold text-gray-800">€ @linha.TotalLinha.ToString("N2")</td>
                                     <td class="px-3 py-2 text-sm text-center">
-                                        <button @onclick="() => RemoverLinha(linha)" class="text-red-500 hover:bg-red-50 px-2 py-1 rounded">X</button>
+                                        <button @onclick="() => RemoverLinha(linha)" class="text-red-500 hover:bg-red-50 px-2 py-1 rounded">✕</button>
                                     </td>
                                 </tr>
                             }
@@ -189,15 +197,36 @@
     private string mensagemAviso = "";
     
     // Cliente
-    private string pesquisaCliente = "";
+    private string _pesquisaCliente = "";
+    private string PesquisaCliente
+    {
+        get => _pesquisaCliente;
+        set
+        {
+            _pesquisaCliente = value;
+            ExecutarPesquisaCliente(_pesquisaCliente);
+        }
+    }
     private List<ClienteSearchResult> clientesResultados = new List<ClienteSearchResult>();
     private ClienteSearchResult? clienteSelecionado = null;
 
     // Novo Artigo
+    private string _pesquisaProduto = "";
+    private string PesquisaProduto
+    {
+        get => _pesquisaProduto;
+        set
+        {
+            _pesquisaProduto = value;
+            ExecutarPesquisaProduto(_pesquisaProduto);
+        }
+    }
+    private List<ProdutoSearchResult> produtosResultados = new List<ProdutoSearchResult>();
     private string novoArtigoCodigo = "";
     private string novoArtigoDescricao = "";
     private decimal novoArtigoPreco = 0;
     private decimal novoArtigoIva = 23;
+    private string novoArtigoDesconto = "";
     private int novoArtigoQtd = 1;
 
     // Linhas
@@ -205,12 +234,9 @@
 
     // Totais
     private decimal descontoGlobal = 0;
-    
     private decimal subtotal => linhas.Sum(l => l.PrecoFinalCalculado * l.Quantidade);
     private decimal totalIva => linhas.Sum(l => (l.PrecoFinalCalculado * (l.TaxaIva / 100m)) * l.Quantidade);
     private decimal totalFinal => (subtotal + totalIva) - descontoGlobal;
-
-        private string novoArtigoDesconto = "";
 
     private decimal CalcularDescontoComposto(decimal precoOriginal, string textoDesconto)
     {
@@ -228,15 +254,11 @@
         return precoFinal;
     }
 
-    private void PesquisarCliente(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
-    {
-        PesquisarClienteBtn();
-    }
-
-    private void PesquisarClienteBtn()
+    private void ExecutarPesquisaCliente(string termo)
     {
         clientesResultados.Clear();
-        if (string.IsNullOrWhiteSpace(pesquisaCliente)) return;
+        mensagemAviso = "";
+        if (string.IsNullOrWhiteSpace(termo)) return;
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -246,16 +268,16 @@
                 string query = "SELECT ID_Cliente, Nome_Cliente, NIF, Morada_Completa FROM Clientes WHERE NIF LIKE @t OR Nome_Cliente LIKE @t";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@t", "%" + pesquisaCliente + "%");
+                    cmd.Parameters.AddWithValue("@t", "%" + termo.Trim() + "%");
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
                         while (rd.Read())
                         {
                             clientesResultados.Add(new ClienteSearchResult {
-                                ID_Cliente = Convert.ToInt32(rd["ID_Cliente"]),
-                                Nome_Cliente = rd["Nome_Cliente"].ToString(),
-                                NIF = rd["NIF"].ToString(),
-                                Morada_Completa = rd["Morada_Completa"].ToString()
+                                ID_Cliente = rd["ID_Cliente"]?.ToString() ?? "",
+                                Nome_Cliente = rd["Nome_Cliente"]?.ToString() ?? "",
+                                NIF = rd["NIF"]?.ToString() ?? "",
+                                Morada_Completa = rd["Morada_Completa"]?.ToString() ?? ""
                             });
                         }
                     }
@@ -272,17 +294,16 @@
     {
         clienteSelecionado = c;
         clientesResultados.Clear();
-        pesquisaCliente = "";
+        _pesquisaCliente = "";
     }
 
-        private List<ProdutoSearchResult> produtosResultados = new List<ProdutoSearchResult>();
-
-    private void BuscarProdutoCodigo(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private void ExecutarPesquisaProduto(string termo)
     {
         produtosResultados.Clear();
-        if (string.IsNullOrWhiteSpace(novoArtigoCodigo)) 
+        mensagemAviso = "";
+        if (string.IsNullOrWhiteSpace(termo))
         {
-            novoArtigoDescricao = ""; novoArtigoPreco = 0; novoArtigoIva = 23; return;
+            return;
         }
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
@@ -293,16 +314,16 @@
                 string query = "SELECT Codigo, Descricao, PVP_Unidade, Taxa_IVA FROM Material WHERE Codigo LIKE @cod OR Descricao LIKE @cod";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@cod", "%" + novoArtigoCodigo.Trim() + "%");
+                    cmd.Parameters.AddWithValue("@cod", "%" + termo.Trim() + "%");
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
                         while (rd.Read())
                         {
                             produtosResultados.Add(new ProdutoSearchResult {
-                                Codigo = rd["Codigo"].ToString()!,
-                                Descricao = rd["Descricao"].ToString()!,
-                                PVP_Unidade = Convert.ToDecimal(rd["PVP_Unidade"]),
-                                Taxa_IVA = Convert.ToDecimal(rd["Taxa_IVA"])
+                                Codigo = rd["Codigo"]?.ToString() ?? "",
+                                Descricao = rd["Descricao"]?.ToString() ?? "",
+                                PVP_Unidade = rd["PVP_Unidade"] != DBNull.Value ? Convert.ToDecimal(rd["PVP_Unidade"]) : 0m,
+                                Taxa_IVA = rd["Taxa_IVA"] != DBNull.Value ? Convert.ToDecimal(rd["Taxa_IVA"]) : 23m
                             });
                         }
                     }
@@ -321,6 +342,7 @@
         novoArtigoDescricao = p.Descricao;
         novoArtigoPreco = p.PVP_Unidade;
         novoArtigoIva = p.Taxa_IVA;
+        _pesquisaProduto = p.Codigo + " - " + p.Descricao;
         produtosResultados.Clear();
     }
 
@@ -328,7 +350,7 @@
     {
         if (string.IsNullOrWhiteSpace(novoArtigoCodigo) || novoArtigoPreco <= 0 || novoArtigoQtd <= 0) return;
 
-                linhas.Add(new LinhaEncomendaModel
+        linhas.Add(new LinhaEncomendaModel
         {
             Codigo = novoArtigoCodigo,
             Descricao = novoArtigoDescricao,
@@ -339,7 +361,12 @@
             PrecoFinalCalculado = CalcularDescontoComposto(novoArtigoPreco, novoArtigoDesconto)
         });
 
-        novoArtigoCodigo = ""; novoArtigoDescricao = ""; novoArtigoPreco = 0; novoArtigoQtd = 1; novoArtigoDesconto = "";
+        novoArtigoCodigo = "";
+        novoArtigoDescricao = "";
+        novoArtigoPreco = 0;
+        novoArtigoQtd = 1;
+        novoArtigoDesconto = "";
+        _pesquisaProduto = "";
     }
 
     private void RemoverLinha(LinhaEncomendaModel l)
@@ -393,7 +420,7 @@
                             INSERT INTO Linha_Encomenda 
                             (NE, Linha_Encomenda, Quantidade, Descricao, Preco, Desconto, Imposto, Codigo_Material, Desconto_Texto)
                             VALUES 
-                            (@ne, @numLinha, @qtd, @desc, @preco, 0, @iva, @codMat, '')";
+                            (@ne, @numLinha, @qtd, @desc, @preco, 0, @iva, @codMat, @descTxt)";
 
                         using (SqlCommand cmdLinha = new SqlCommand(queryLinha, con, transacao))
                         {
@@ -424,6 +451,8 @@
                     clienteSelecionado = null;
                     linhas.Clear();
                     descontoGlobal = 0;
+                    _pesquisaCliente = "";
+                    _pesquisaProduto = "";
                     mensagemAviso = "Encomenda #" + idEncomenda + " finalizada com sucesso!";
                 }
                 catch (Exception ex)
@@ -435,7 +464,7 @@
         }
     }
 
-            public class LinhaEncomendaModel
+    public class LinhaEncomendaModel
     {
         public string Codigo { get; set; } = "";
         public string Descricao { get; set; } = "";
@@ -447,13 +476,16 @@
         public decimal TotalLinha => Quantidade * PrecoFinalCalculado * (1 + TaxaIva / 100m);
     }
 
-    public class ClienteSearchResult {
-        public int ID_Cliente { get; set; }
+    public class ClienteSearchResult 
+    {
+        public string ID_Cliente { get; set; } = "";
         public string Nome_Cliente { get; set; } = "";
         public string NIF { get; set; } = "";
         public string Morada_Completa { get; set; } = "";
     }
-    public class ProdutoSearchResult {
+
+    public class ProdutoSearchResult 
+    {
         public string Codigo { get; set; } = "";
         public string Descricao { get; set; } = "";
         public decimal PVP_Unidade { get; set; }

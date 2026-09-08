@@ -6,16 +6,53 @@
 <div class="p-8 h-full overflow-auto">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Nova Encomenda</h1>
-        <button @onclick="FinalizarEncomenda" class="bg-[#3F6CD8] text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition font-semibold">
-            Finalizar Encomenda
-        </button>
+        <div>
+            <div class="flex items-center space-x-3">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    @(modoEdicao ? $"Modificar Encomenda #{idEncomendaEditar}" : "Nova Encomenda")
+                </h1>
+                @if (modoEdicao)
+                {
+                    <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">
+                        Modo de Edição
+                    </span>
+                }
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+                @(modoEdicao ? "Os artigos e descontos desta encomenda serão atualizados e o inventário (stock) reajustado automaticamente." : "Registo de nova nota de encomenda de venda.")
+            </p>
+        </div>
+
+        <div class="flex space-x-3">
+            @if (modoEdicao)
+            {
+                <button @onclick="CancelarEdicao" class="px-4 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition font-semibold text-sm">
+                    Cancelar
+                </button>
+                <button @onclick="FinalizarEncomenda" class="bg-[#F59E0B] hover:bg-amber-600 text-white px-6 py-2 rounded shadow transition font-semibold text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Guardar Alterações
+                </button>
+            }
+            else
+            {
+                <button @onclick="FinalizarEncomenda" class="bg-[#3F6CD8] hover:bg-blue-700 text-white px-6 py-2 rounded shadow transition font-semibold text-sm">
+                    Finalizar Encomenda
+                </button>
+            }
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(mensagemAviso))
     {
-        <div class="p-3 mb-6 rounded shadow-sm border @(mensagemAviso.Contains("sucesso") ? "bg-green-50 text-green-800 border-green-200" : "bg-yellow-50 text-yellow-800 border-yellow-200")">
-            @mensagemAviso
+        <div class="p-4 mb-6 rounded shadow-sm border flex justify-between items-center @(mensagemAviso.Contains("sucesso") ? "bg-green-50 text-green-800 border-green-200" : "bg-yellow-50 text-yellow-800 border-yellow-200")">
+            <div>@mensagemAviso</div>
+            @if (modoEdicao && mensagemAviso.Contains("sucesso"))
+            {
+                <button @onclick="VoltarDetalhes" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition">
+                    Ver Detalhes da Encomenda &rarr;
+                </button>
+            }
         </div>
     }
 
@@ -194,6 +231,11 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery]
+    public string? editar { get; set; }
+
+    private bool modoEdicao = false;
+    private int idEncomendaEditar = 0;
     private string mensagemAviso = "";
     
     // Cliente
@@ -237,6 +279,101 @@
     private decimal subtotal => linhas.Sum(l => l.PrecoFinalCalculado * l.Quantidade);
     private decimal totalIva => linhas.Sum(l => (l.PrecoFinalCalculado * (l.TaxaIva / 100m)) * l.Quantidade);
     private decimal totalFinal => (subtotal + totalIva) - descontoGlobal;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(editar) && int.TryParse(editar, out int idEnc))
+        {
+            CarregarDadosEdicao(idEnc);
+        }
+    }
+
+    private void CarregarDadosEdicao(int id)
+    {
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+
+                // 1. Cabeçalho e Cliente
+                string queryEnc = @"
+                    SELECT E.Numero_Encomenda, E.Desconto_Global,
+                           C.ID_Cliente, C.Nome_Cliente, C.NIF, C.Morada_Completa
+                    FROM Encomenda E
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    WHERE E.Numero_Encomenda = @id";
+
+                using (SqlCommand cmd = new SqlCommand(queryEnc, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        if (rd.Read())
+                        {
+                            modoEdicao = true;
+                            idEncomendaEditar = id;
+                            descontoGlobal = rd["Desconto_Global"] != DBNull.Value ? Convert.ToDecimal(rd["Desconto_Global"]) : 0m;
+
+                            if (rd["ID_Cliente"] != DBNull.Value)
+                            {
+                                clienteSelecionado = new ClienteSearchResult
+                                {
+                                    ID_Cliente = rd["ID_Cliente"].ToString()!,
+                                    Nome_Cliente = rd["Nome_Cliente"]?.ToString() ?? "",
+                                    NIF = rd["NIF"]?.ToString() ?? "",
+                                    Morada_Completa = rd["Morada_Completa"]?.ToString() ?? ""
+                                };
+                            }
+                        }
+                    }
+                }
+
+                // 2. Linhas da Encomenda
+                if (modoEdicao)
+                {
+                    linhas.Clear();
+                    string queryLinhas = @"
+                        SELECT Codigo_Material, Descricao, Quantidade, Preco, Imposto, Desconto_Texto
+                        FROM Linha_Encomenda
+                        WHERE NE = @id
+                        ORDER BY Linha_Encomenda ASC";
+
+                    using (SqlCommand cmdL = new SqlCommand(queryLinhas, con))
+                    {
+                        cmdL.Parameters.AddWithValue("@id", id);
+                        using (SqlDataReader rdL = cmdL.ExecuteReader())
+                        {
+                            while (rdL.Read())
+                            {
+                                string cod = rdL["Codigo_Material"]?.ToString() ?? "";
+                                string desc = rdL["Descricao"]?.ToString() ?? "";
+                                int qtd = Convert.ToInt32(rdL["Quantidade"]);
+                                decimal preco = Convert.ToDecimal(rdL["Preco"]);
+                                decimal iva = Convert.ToDecimal(rdL["Imposto"]);
+                                string descTxt = rdL["Desconto_Texto"]?.ToString() ?? "";
+
+                                linhas.Add(new LinhaEncomendaModel
+                                {
+                                    Codigo = cod,
+                                    Descricao = desc,
+                                    Quantidade = qtd,
+                                    PrecoUnitario = preco,
+                                    TaxaIva = iva,
+                                    DescontoTexto = descTxt,
+                                    PrecoFinalCalculado = CalcularDescontoComposto(preco, descTxt)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mensagemAviso = "Erro ao carregar dados para edição: " + ex.Message;
+            }
+        }
+    }
 
     private decimal CalcularDescontoComposto(decimal precoOriginal, string textoDesconto)
     {
@@ -301,10 +438,7 @@
     {
         produtosResultados.Clear();
         mensagemAviso = "";
-        if (string.IsNullOrWhiteSpace(termo))
-        {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(termo)) return;
 
         using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
         {
@@ -374,6 +508,23 @@
         linhas.Remove(l);
     }
 
+    private void CancelarEdicao()
+    {
+        if (modoEdicao)
+        {
+            NavManager.NavigateTo($"/encomendas/{idEncomendaEditar}");
+        }
+        else
+        {
+            NavManager.NavigateTo("/encomendas");
+        }
+    }
+
+    private void VoltarDetalhes()
+    {
+        NavManager.NavigateTo($"/encomendas/{idEncomendaEditar}");
+    }
+
     private void FinalizarEncomenda()
     {
         if (clienteSelecionado == null)
@@ -394,25 +545,69 @@
             {
                 try
                 {
-                    // 1. Inserir Cabeçalho
-                    string queryEnc = @"
-                        INSERT INTO Encomenda (Data_Encomenda, Valor_Total, Estado, ID_Cliente, Desconto_Global, ID_Vendedor) 
-                        VALUES (@data, @total, 'Fechada', @idCliente, @descGlobal, @idVend);
-                        SELECT SCOPE_IDENTITY();";
-
                     int idEncomenda = 0;
-                    using (SqlCommand cmdEnc = new SqlCommand(queryEnc, con, transacao))
-                    {
-                        cmdEnc.Parameters.AddWithValue("@data", DateTime.Now);
-                        cmdEnc.Parameters.AddWithValue("@total", totalFinal);
-                        cmdEnc.Parameters.AddWithValue("@idCliente", clienteSelecionado.ID_Cliente);
-                        cmdEnc.Parameters.AddWithValue("@descGlobal", descontoGlobal);
-                        cmdEnc.Parameters.AddWithValue("@idVend", Sessao.ID_Vendedor);
 
-                        idEncomenda = Convert.ToInt32(cmdEnc.ExecuteScalar());
+                    if (modoEdicao)
+                    {
+                        idEncomenda = idEncomendaEditar;
+
+                        // 1. Atualizar Cabeçalho
+                        string queryUpdate = @"
+                            UPDATE Encomenda 
+                            SET Valor_Total = @total, Desconto_Global = @descGlobal, ID_Cliente = @idCliente
+                            WHERE Numero_Encomenda = @id";
+
+                        using (SqlCommand cmdUpdate = new SqlCommand(queryUpdate, con, transacao))
+                        {
+                            cmdUpdate.Parameters.AddWithValue("@total", totalFinal);
+                            cmdUpdate.Parameters.AddWithValue("@descGlobal", descontoGlobal);
+                            cmdUpdate.Parameters.AddWithValue("@idCliente", clienteSelecionado.ID_Cliente);
+                            cmdUpdate.Parameters.AddWithValue("@id", idEncomenda);
+                            cmdUpdate.ExecuteNonQuery();
+                        }
+
+                        // 2. Reverter Stock das Linhas Antigas
+                        string queryReverterStock = @"
+                            UPDATE Material SET Stock = Stock + L.Quantidade
+                            FROM Material M 
+                            INNER JOIN Linha_Encomenda L ON M.Codigo = L.Codigo_Material
+                            WHERE L.NE = @id";
+
+                        using (SqlCommand cmdReverter = new SqlCommand(queryReverterStock, con, transacao))
+                        {
+                            cmdReverter.Parameters.AddWithValue("@id", idEncomenda);
+                            cmdReverter.ExecuteNonQuery();
+                        }
+
+                        // 3. Apagar Linhas Antigas
+                        string queryApagar = "DELETE FROM Linha_Encomenda WHERE NE = @id";
+                        using (SqlCommand cmdApagar = new SqlCommand(queryApagar, con, transacao))
+                        {
+                            cmdApagar.Parameters.AddWithValue("@id", idEncomenda);
+                            cmdApagar.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        // 1. Inserir Novo Cabeçalho
+                        string queryEnc = @"
+                            INSERT INTO Encomenda (Data_Encomenda, Valor_Total, Estado, ID_Cliente, Desconto_Global, ID_Vendedor) 
+                            VALUES (@data, @total, 'Fechada', @idCliente, @descGlobal, @idVend);
+                            SELECT SCOPE_IDENTITY();";
+
+                        using (SqlCommand cmdEnc = new SqlCommand(queryEnc, con, transacao))
+                        {
+                            cmdEnc.Parameters.AddWithValue("@data", DateTime.Now);
+                            cmdEnc.Parameters.AddWithValue("@total", totalFinal);
+                            cmdEnc.Parameters.AddWithValue("@idCliente", clienteSelecionado.ID_Cliente);
+                            cmdEnc.Parameters.AddWithValue("@descGlobal", descontoGlobal);
+                            cmdEnc.Parameters.AddWithValue("@idVend", Sessao.ID_Vendedor);
+
+                            idEncomenda = Convert.ToInt32(cmdEnc.ExecuteScalar());
+                        }
                     }
 
-                    // 2. Inserir Linhas
+                    // 4. Inserir Linhas
                     int linhaNum = 1;
                     foreach (var linha in linhas)
                     {
@@ -447,18 +642,24 @@
 
                     transacao.Commit();
                     
-                    // Reset View
-                    clienteSelecionado = null;
-                    linhas.Clear();
-                    descontoGlobal = 0;
-                    _pesquisaCliente = "";
-                    _pesquisaProduto = "";
-                    mensagemAviso = "Encomenda #" + idEncomenda + " finalizada com sucesso!";
+                    if (modoEdicao)
+                    {
+                        mensagemAviso = $"Encomenda #{idEncomenda} modificada com sucesso! O inventário (stock) foi reajustado.";
+                    }
+                    else
+                    {
+                        clienteSelecionado = null;
+                        linhas.Clear();
+                        descontoGlobal = 0;
+                        _pesquisaCliente = "";
+                        _pesquisaProduto = "";
+                        mensagemAviso = $"Encomenda #{idEncomenda} finalizada com sucesso!";
+                    }
                 }
                 catch (Exception ex)
                 {
                     transacao.Rollback();
-                    mensagemAviso = "Erro ao finalizar venda: " + ex.Message;
+                    mensagemAviso = "Erro ao processar venda: " + ex.Message;
                 }
             }
         }

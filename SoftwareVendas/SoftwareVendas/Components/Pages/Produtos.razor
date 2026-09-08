@@ -1,9 +1,9 @@
-﻿@page "/produtos"
+@page "/produtos"
 @using System.Data.SqlClient
 @using SoftwareVendas
 
 <div class="p-8 flex flex-col h-full">
-        <div class="flex justify-between items-center mb-6">
+    <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Catálogo de Produtos</h1>
         <button @onclick="AbrirModalNovoProduto" class="bg-[#3F6CD8] text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition flex items-center font-semibold">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -96,6 +96,7 @@
             </div>
         </div>
     }
+
     @if (mostrarModalNovo)
     {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -104,22 +105,24 @@
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Código *</label>
-                        <input type="text" @bind="novoProdCodigo" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
+                        <input type="text" @bind="novoProdCodigo" placeholder="Ex: MAT-010" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Categoria</label>
                         <select @bind="novoProdTipo" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500">
-                            <option value="1">Produto</option>
-                            <option value="2">Serviço</option>
+                            <option value="Material">Material</option>
+                            <option value="Equipamento">Equipamento</option>
+                            <option value="Acessórios">Acessórios</option>
+                            <option value="Geral">Geral</option>
                         </select>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm text-gray-600 mb-1">Descrição *</label>
-                        <input type="text" @bind="novoProdDescricao" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
+                        <input type="text" @bind="novoProdDescricao" placeholder="Descrição detalhada do artigo..." class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Preço (s/ IVA)</label>
-                        <input type="number" @bind="novoProdPreco" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
+                        <input type="number" @bind="novoProdPreco" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500" />
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Stock Inicial</label>
@@ -135,6 +138,7 @@
         </div>
     }
 </div>
+
 @code {
     private string termo = "";
     private List<ProdutoDTO>? produtos;
@@ -148,12 +152,12 @@
     private string produtoUpdateNome = "";
     private int produtoUpdateQtd = 0;
 
-        private bool mostrarModalNovo = false;
+    private bool mostrarModalNovo = false;
     private string novoProdCodigo = "";
     private string novoProdDescricao = "";
     private decimal novoProdPreco = 0;
     private int novoProdStock = 0;
-    private int novoProdTipo = 1;
+    private string novoProdTipo = "Material";
     private string novoProdErro = "";
 
     private void AbrirModalNovoProduto()
@@ -175,11 +179,14 @@
             try
             {
                 con.Open();
-                string q = "INSERT INTO Material (Codigo, Descricao, PVP_Unidade, Stock, Taxa_IVA, TipoID) VALUES (@c, @d, @p, @s, 23, @t)";
+                string q = @"
+                    INSERT INTO Material (Codigo, Descricao, PVP_Unidade, Stock, Taxa_IVA, ID_Tipo, Unidade_Venda) 
+                    VALUES (@c, @d, @p, @s, 23, @t, 'UN')";
+
                 using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(q, con))
                 {
-                    cmd.Parameters.AddWithValue("@c", novoProdCodigo);
-                    cmd.Parameters.AddWithValue("@d", novoProdDescricao);
+                    cmd.Parameters.AddWithValue("@c", novoProdCodigo.Trim());
+                    cmd.Parameters.AddWithValue("@d", novoProdDescricao.Trim());
                     cmd.Parameters.AddWithValue("@p", novoProdPreco);
                     cmd.Parameters.AddWithValue("@s", novoProdStock);
                     cmd.Parameters.AddWithValue("@t", novoProdTipo);
@@ -213,7 +220,7 @@
             try
             {
                 conn.Open();
-                string query = "SELECT TOP 20 Codigo, Descricao, PVP_Unidade, Stock FROM Material WHERE Codigo LIKE @Search OR Descricao LIKE @Search";
+                string query = "SELECT TOP 50 Codigo, Descricao, PVP_Unidade, Stock FROM Material WHERE Codigo LIKE @Search OR Descricao LIKE @Search";
                 using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Search", "%" + termo + "%");
@@ -308,5 +315,3 @@
         CarregarProdutos();
     }
 }
-
-

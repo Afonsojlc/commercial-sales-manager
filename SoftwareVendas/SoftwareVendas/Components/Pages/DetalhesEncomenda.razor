@@ -1,30 +1,60 @@
-﻿@page "/encomendas/{IdEncomenda}"
-@using Microsoft.Data.SqlClient
-@using SoftwareVendas
+@page "/encomendas/{IdEncomenda}"
 @using System.Data
+@using Microsoft.Data.SqlClient
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 
-<div class="p-8 h-full overflow-auto print:p-0 print:bg-white">
-    <!-- Header Controls (Hidden on Print) -->
-    <div class="flex justify-between items-center mb-6 print:hidden">
-        <div class="flex items-center space-x-4">
-            <button @onclick="Voltar" class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm border border-gray-100 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+<style>
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printArea, #printArea * {
+            visibility: visible;
+        }
+        #printArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 24px;
+            margin: 0;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="p-8 h-full overflow-auto">
+    <!-- Top Action Bar (hidden in print) -->
+    <div class="flex justify-between items-center mb-8 no-print">
+        <button @onclick="Voltar" class="text-gray-600 hover:text-gray-900 flex items-center font-medium transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Voltar às Encomendas
+        </button>
+
+        <div class="flex items-center space-x-3">
+            <button @onclick="ModificarEncomenda" class="bg-[#F59E0B] hover:bg-amber-600 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Modificar Encomenda
             </button>
-            <h1 class="text-3xl font-bold text-gray-800">Encomenda #@IdEncomenda</h1>
-        </div>
-        <div class="flex space-x-3">
-            @if (estadoSelecionado != estadoOriginal)
+
+            <button @onclick="Imprimir" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded border border-gray-300 transition flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Imprimir Nota de Encomenda
+            </button>
+
+            @if (estadoOriginal != estadoSelecionado)
             {
-                <button @onclick="GuardarEstado" class="bg-green-500 text-white px-4 py-2 rounded shadow hover:bg-green-600 transition font-semibold">
-                    Guardar Estado
+                <button @onclick="GuardarEstado" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded shadow transition flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Gravar Novo Estado
                 </button>
             }
-            <button @onclick="Imprimir" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 transition flex items-center font-semibold">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Exportar PDF
-            </button>
         </div>
     </div>
 
@@ -32,109 +62,145 @@
     {
         <div class="flex justify-center items-center h-64 text-gray-400">
             <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            A carregar dados...
+            A carregar dados da encomenda...
         </div>
     }
     else
     {
-        <!-- Fatura / Document Layout -->
-        <div id="printArea" class="bg-white p-10 rounded-lg shadow-sm border border-gray-100 max-w-5xl mx-auto print:shadow-none print:border-none print:p-0">
+        <!-- Documento Oficial / Nota de Encomenda Printable Layout -->
+        <div id="printArea" class="bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-5xl mx-auto">
             
-            <!-- Header (Printable) -->
-            <div class="flex justify-between items-start border-b-2 border-gray-800 pb-8 mb-8">
+            <!-- 1. Document Header -->
+            <div class="border-b-2 border-[#2C3E50] pb-4 mb-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-black text-[#2B3347] tracking-wider uppercase">NOTA DE ENCOMENDA</h1>
+                        <p class="text-sm font-medium text-gray-500 mt-1">Gestão Comercial & Distribuição de Material Elétrico</p>
+                    </div>
+                    <div class="text-right">
+                        <h2 class="text-xl font-bold text-[#3F6CD8]">AJLC Soluctions</h2>
+                        <p class="text-xs text-gray-500">Comercial: <strong>@(string.IsNullOrEmpty(vendedorNome) ? Sessao.Nome : vendedorNome)</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Meta Info Strip -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-100 flex justify-between items-center text-sm">
                 <div>
-                    <h2 class="text-4xl font-black text-[#2B3347] tracking-tight">NOTA DE ENCOMENDA</h2>
-                    <p class="text-gray-500 mt-2 font-medium">Nº @IdEncomenda &bull; @dataEncomenda.ToString("dd/MM/yyyy HH:mm")</p>
+                    <span class="text-gray-500">Encomenda Nº:</span>
+                    <strong class="text-gray-900 ml-1 text-base">#@IdEncomenda</strong>
                 </div>
-                <div class="text-right">
-                    <h3 class="text-xl font-bold text-gray-800">AJLC Soluctions</h3>
-                    <p class="text-sm text-gray-500">Comercial: @Sessao.Nome</p>
+                <div>
+                    <span class="text-gray-500">Data:</span>
+                    <strong class="text-gray-900 ml-1">@dataEncomenda.ToString("dd/MM/yyyy")</strong>
                 </div>
-            </div>
-
-            <!-- Entidades -->
-            <div class="flex justify-between mb-10">
-                <!-- Cliente -->
-                <div class="w-1/2">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Faturado a</p>
-                    <h3 class="text-lg font-bold text-gray-800">@clienteNome</h3>
-                    <p class="text-sm text-gray-600 mt-1"><strong>NIF:</strong> @clienteNIF</p>
-                    @if(!string.IsNullOrEmpty(clienteEmail)) { <p class="text-sm text-gray-600"><strong>Email:</strong> @clienteEmail</p> }
-                    @if(!string.IsNullOrEmpty(clienteTelefone)) { <p class="text-sm text-gray-600"><strong>Telefone:</strong> @clienteTelefone</p> }
-                </div>
-
-                <!-- Estado -->
-                <div class="w-1/3 text-right print:hidden">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Estado</p>
-                    <select @bind="estadoSelecionado" class="border border-gray-300 rounded px-3 py-2 w-full font-bold focus:ring-blue-500 focus:border-blue-500">
-                        <option value="PENDENTE">PENDENTE</option>
-                        <option value="PAGA">PAGA</option>
-                        <option value="FECHADA">FECHADA</option>
-                        <option value="DESPACHADO">DESPACHADO</option>
-                        <option value="A ENTREGAR">A ENTREGAR</option>
-                        <option value="CANCELADA">CANCELADA</option>
-                    </select>
-                </div>
-                <!-- Printable State -->
-                <div class="w-1/3 text-right hidden print:block">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Estado</p>
-                    <span class="text-lg font-bold text-gray-800">@estadoOriginal</span>
+                <div class="flex items-center space-x-2">
+                    <span class="text-gray-500">Estado:</span>
+                    <div class="no-print inline-block">
+                        <select @bind="estadoSelecionado" class="border border-gray-300 rounded px-2.5 py-1 text-xs font-bold focus:ring-blue-500 bg-white">
+                            <option value="PENDENTE">PENDENTE</option>
+                            <option value="FECHADA">FECHADA</option>
+                            <option value="PAGA">PAGA</option>
+                            <option value="DESPACHADO">DESPACHADO</option>
+                            <option value="A ENTREGAR">A ENTREGAR</option>
+                            <option value="CANCELADA">CANCELADA</option>
+                        </select>
+                    </div>
+                    <strong class="hidden print:inline text-gray-900">@estadoOriginal</strong>
                 </div>
             </div>
 
-            <!-- Tabela de Produtos -->
-            <table class="w-full text-left border-collapse mb-8">
-                <thead>
-                    <tr class="border-b-2 border-gray-300 text-gray-700">
-                        <th class="py-3 font-semibold text-sm">Código</th>
-                        <th class="py-3 font-semibold text-sm">Descrição do Artigo</th>
-                        <th class="py-3 font-semibold text-sm text-right">Qtd</th>
-                        <th class="py-3 font-semibold text-sm text-right">Preço Unit.</th>
-                        <th class="py-3 font-semibold text-sm text-center">Desc. (%)</th>
-                        <th class="py-3 font-semibold text-sm text-right">IVA</th>
-                        <th class="py-3 font-semibold text-sm text-right">Total</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-600">
-                    @foreach (var l in linhas)
-                    {
-                        <tr class="border-b border-gray-100">
-                            <td class="py-4 text-sm font-medium text-gray-800">@l.Codigo</td>
-                            <td class="py-4 text-sm">@l.Descricao</td>
-                            <td class="py-4 text-sm text-right font-medium">@l.Qtd</td>
-                            <td class="py-4 text-sm text-right">€ @l.Preco.ToString("N2")</td>
-                            <td class="py-4 text-sm text-center">@l.DescontoTexto</td>
-                            <td class="py-4 text-sm text-right">@l.Iva%</td>
-                            <td class="py-4 text-sm text-right font-bold text-gray-800">€ @l.Subtotal.ToString("N2")</td>
+            <!-- 3. Client Details Box -->
+            <div class="border border-gray-200 rounded-lg p-5 mb-8">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">DADOS DO CLIENTE</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-500 text-xs">Cliente</p>
+                        <p class="font-bold text-gray-800 text-base">@clienteNome</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">NIF</p>
+                        <p class="font-semibold text-gray-800">@clienteNIF</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Email</p>
+                        <p class="text-gray-700">@(string.IsNullOrEmpty(clienteEmail) ? "Não especificado" : clienteEmail)</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Telefone</p>
+                        <p class="text-gray-700">@(string.IsNullOrEmpty(clienteTelefone) ? "Não especificado" : clienteTelefone)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Products Table -->
+            <div class="mb-8">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">ARTIGOS ENCOMENDADOS</h3>
+                <table class="w-full text-left border-collapse border border-gray-200 rounded">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700 text-xs uppercase font-bold border-b border-gray-200">
+                            <th class="py-3 px-4">Código</th>
+                            <th class="py-3 px-4">Descrição do Artigo</th>
+                            <th class="py-3 px-4 text-right">Qtd</th>
+                            <th class="py-3 px-4 text-right">Preço Unit.</th>
+                            <th class="py-3 px-4 text-center">Desc. (%)</th>
+                            <th class="py-3 px-4 text-right">IVA</th>
+                            <th class="py-3 px-4 text-right">Total</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-200">
+                        @foreach (var l in linhas)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-3 px-4 font-mono font-medium text-gray-900">@l.Codigo</td>
+                                <td class="py-3 px-4 text-gray-800">@l.Descricao</td>
+                                <td class="py-3 px-4 text-right font-semibold">@l.Qtd</td>
+                                <td class="py-3 px-4 text-right">€ @l.Preco.ToString("N2")</td>
+                                <td class="py-3 px-4 text-center font-medium text-blue-600">@(string.IsNullOrEmpty(l.DescontoTexto) ? "-" : l.DescontoTexto)</td>
+                                <td class="py-3 px-4 text-right text-gray-500">@l.Iva%</td>
+                                <td class="py-3 px-4 text-right font-bold text-gray-900">€ @l.Subtotal.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-            <!-- Resumo e Totais -->
-            <div class="flex justify-end">
-                <div class="w-1/2 md:w-1/3 space-y-3">
-                    <div class="flex justify-between text-sm text-gray-600">
+            <!-- 5. Totals Section -->
+            <div class="flex justify-end mb-12">
+                <div class="w-72 space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-600">
                         <span>Subtotal (c/ IVA):</span>
                         <span class="font-medium">€ @valorTotal.ToString("N2")</span>
                     </div>
                     @if (descontoGlobal > 0)
                     {
-                        <div class="flex justify-between text-sm text-red-500">
+                        <div class="flex justify-between text-red-600">
                             <span>Desconto Global:</span>
                             <span class="font-medium">- € @descontoGlobal.ToString("N2")</span>
                         </div>
                     }
-                    <div class="flex justify-between text-xl font-black text-[#2B3347] border-t-2 border-gray-800 pt-3 mt-3">
-                        <span>Total Final:</span>
-                        <span>€ @((valorTotal - descontoGlobal).ToString("N2"))</span>
+                    <div class="flex justify-between text-xl font-black text-[#2B3347] border-t-2 border-gray-800 pt-3 mt-2">
+                        <span>TOTAL A PAGAR:</span>
+                        <span class="text-[#3F6CD8]">€ @((valorTotal - descontoGlobal).ToString("N2"))</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer (Printable) -->
-            <div class="mt-20 pt-8 border-t border-gray-200 text-center text-xs text-gray-400 hidden print:block">
-                Documento gerado automaticamente pelo AJLC CRM. Processado por computador.
+            <!-- 6. Dual Signatures Section (Matching FormDetalhesEncomenda) -->
+            <div class="mt-16 pt-6 border-t border-gray-200">
+                <div class="grid grid-cols-2 gap-16 text-center text-xs text-gray-500">
+                    <div>
+                        <div class="border-b-2 border-gray-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-gray-700">Assinatura do Cliente / Carimbo</p>
+                    </div>
+                    <div>
+                        <div class="border-b-2 border-gray-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-gray-700">O Comercial / Responsável de Vendas</p>
+                    </div>
+                </div>
+                <div class="text-center text-[10px] text-gray-400 mt-8">
+                    Documento processado por computador • AJLC Soluctions
+                </div>
             </div>
         </div>
     }
@@ -150,6 +216,7 @@
     private decimal descontoGlobal;
     private string estadoOriginal = "";
     private string estadoSelecionado = "";
+    private string vendedorNome = "";
     
     private string clienteNome = "";
     private string clienteNIF = "";
@@ -173,13 +240,18 @@
             try
             {
                 con.Open();
-                // 1. Dados Cabeçalho
+                // 1. Dados Cabeçalho e Cliente
                 string queryE = @"
                     SELECT 
                         E.Data_Encomenda, E.Valor_Total, E.Estado, E.Desconto_Global,
-                        C.Nome_Cliente, C.NIF, C.Email, C.Telefone
+                        ISNULL(C.Nome_Cliente, 'Cliente Não Identificado') AS Nome_Cliente, 
+                        ISNULL(C.NIF, '-') AS NIF, 
+                        ISNULL(C.Email, '') AS Email, 
+                        ISNULL(C.Telefone, '') AS Telefone,
+                        ISNULL(V.Nome, '') AS VendedorNome
                     FROM Encomenda E
-                    INNER JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    LEFT JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
                     WHERE E.Numero_Encomenda = @id";
                 
                 using (SqlCommand cmd = new SqlCommand(queryE, con))
@@ -189,24 +261,27 @@
                     {
                         if (rd.Read())
                         {
-                            dataEncomenda = Convert.ToDateTime(rd["Data_Encomenda"]);
-                            valorTotal = Convert.ToDecimal(rd["Valor_Total"]);
-                            estadoOriginal = rd["Estado"].ToString()!;
+                            dataEncomenda = rd["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rd["Data_Encomenda"]) : DateTime.Now;
+                            valorTotal = rd["Valor_Total"] != DBNull.Value ? Convert.ToDecimal(rd["Valor_Total"]) : 0m;
+                            estadoOriginal = rd["Estado"]?.ToString() ?? "PENDENTE";
                             estadoSelecionado = estadoOriginal;
-                            descontoGlobal = Convert.ToDecimal(rd["Desconto_Global"]);
+                            descontoGlobal = rd["Desconto_Global"] != DBNull.Value ? Convert.ToDecimal(rd["Desconto_Global"]) : 0m;
                             
-                            clienteNome = rd["Nome_Cliente"].ToString()!;
-                            clienteNIF = rd["NIF"].ToString()!;
-                            clienteEmail = rd["Email"].ToString()!;
-                            clienteTelefone = rd["Telefone"].ToString()!;
+                            clienteNome = rd["Nome_Cliente"]?.ToString() ?? "";
+                            clienteNIF = rd["NIF"]?.ToString() ?? "";
+                            clienteEmail = rd["Email"]?.ToString() ?? "";
+                            clienteTelefone = rd["Telefone"]?.ToString() ?? "";
+                            vendedorNome = rd["VendedorNome"]?.ToString() ?? "";
                         }
                     }
                 }
 
                 // 2. Linhas
                 string queryL = @"
-                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Desconto, Imposto, Desconto_Texto
-                    FROM Linha_Encomenda WHERE NE = @id";
+                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Imposto, Desconto_Texto
+                    FROM Linha_Encomenda 
+                    WHERE NE = @id
+                    ORDER BY Linha_Encomenda ASC";
                 
                 using (SqlCommand cmd = new SqlCommand(queryL, con))
                 {
@@ -217,11 +292,11 @@
                         {
                             linhas.Add(new LinhaView
                             {
-                                Codigo = rd["Codigo_Material"].ToString()!,
-                                Descricao = rd["Descricao"].ToString()!,
-                                                                Qtd = Convert.ToInt32(rd["Quantidade"]),
-                                Preco = Convert.ToDecimal(rd["Preco"]),
-                                Iva = Convert.ToDecimal(rd["Imposto"]),
+                                Codigo = rd["Codigo_Material"]?.ToString() ?? "",
+                                Descricao = rd["Descricao"]?.ToString() ?? "",
+                                Qtd = rd["Quantidade"] != DBNull.Value ? Convert.ToInt32(rd["Quantidade"]) : 0,
+                                Preco = rd["Preco"] != DBNull.Value ? Convert.ToDecimal(rd["Preco"]) : 0m,
+                                Iva = rd["Imposto"] != DBNull.Value ? Convert.ToDecimal(rd["Imposto"]) : 23m,
                                 DescontoTexto = rd["Desconto_Texto"]?.ToString() ?? ""
                             });
                         }
@@ -231,6 +306,11 @@
             catch { }
         }
         carregando = false;
+    }
+
+    private void ModificarEncomenda()
+    {
+        NavManager.NavigateTo($"/novavenda?editar={IdEncomenda}");
     }
 
     private void GuardarEstado()
@@ -263,7 +343,7 @@
         await JS.InvokeVoidAsync("window.print");
     }
 
-            public class LinhaView
+    public class LinhaView
     {
         public string Codigo { get; set; } = "";
         public string Descricao { get; set; } = "";
@@ -289,4 +369,3 @@
         public decimal Subtotal => Qtd * PrecoCalculado * (1 + Iva/100m);
     }
 }
-

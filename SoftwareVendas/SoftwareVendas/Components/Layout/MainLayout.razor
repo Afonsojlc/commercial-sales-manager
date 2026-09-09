@@ -1,0 +1,229 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+@using SoftwareVendas
+@inject NavigationManager NavManager
+
+<div class="flex h-screen w-full font-sans text-sm bg-[#F8FAFC] text-slate-800 overflow-hidden">
+    
+    <!-- 1. Executive Sidebar with Full Labels -->
+    <aside class="w-64 bg-[#0F172A] flex flex-col text-slate-300 border-r border-slate-800 shrink-0 select-none">
+        
+        <!-- Company Branding Area -->
+        <div class="h-16 flex items-center px-5 border-b border-slate-800/80 shrink-0 gap-3">
+            <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <div class="overflow-hidden">
+                <h1 class="text-white font-bold text-base leading-tight truncate">@ConfiguracaoEmpresa.NomeEmpresa</h1>
+                <p class="text-[11px] text-blue-400 font-medium truncate">Gestão Comercial</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Menu -->
+        <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1">
+            <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+                Menu Principal
+            </div>
+
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="dashboard">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Dashboard & Ganhos</span>
+            </NavLink>
+            
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="encomendas">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span>Encomendas</span>
+            </NavLink>
+            
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="novavenda">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Nova Encomenda</span>
+            </NavLink>
+
+            <div class="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+                Cadastros & Apoio
+            </div>
+
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="clientes">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Clientes</span>
+            </NavLink>
+            
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="produtos">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <span>Catálogo de Produtos</span>
+            </NavLink>
+            
+            <NavLink class="flex items-center px-3.5 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition font-medium text-sm group" 
+                     ActiveClass="bg-blue-600 text-white font-semibold shadow-sm" 
+                     href="definicoes">
+                <svg class="w-5 h-5 mr-3 text-slate-400 group-hover:text-blue-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Definições do Sistema</span>
+            </NavLink>
+        </nav>
+        
+        <!-- Bottom: SQL Status & Logout -->
+        <div class="p-4 border-t border-slate-800 bg-[#0B1120] space-y-2">
+            <!-- SQL Server Status -->
+            <div class="flex items-center justify-between text-xs text-slate-400 px-2">
+                @if (Sessao.IsDemo)
+                {
+                    <span class="flex items-center gap-2" title="A funcionar com dados de demonstração em memória (Sandbox)">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse"></span>
+                        <span class="text-amber-400 font-bold">Modo Demonstração</span>
+                    </span>
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">DEMO</span>
+                }
+                else if (DatabaseConfig.ConexaoAtiva)
+                {
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+                        <span class="text-emerald-400 font-medium">SQL Server Online</span>
+                    </span>
+                    <span class="font-mono text-[10px] text-slate-500">Produção</span>
+                }
+                else
+                {
+                    <span class="flex items-center gap-2" title="Sem ligação ao SQL Server">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span class="text-rose-400 font-medium">SQL Offline</span>
+                    </span>
+                    <span class="font-mono text-[10px] text-rose-500/80">Desconectado</span>
+                }
+            </div>
+
+            <NavLink class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition font-medium text-xs gap-2" href="/" Match="NavLinkMatch.All">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Terminar Sessão</span>
+            </NavLink>
+        </div>
+    </aside>
+    
+    <!-- 2. Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        
+        <!-- Top Corporate Header -->
+        <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-sm shrink-0 z-10">
+            <!-- Left: Global Search with keyboard hint -->
+            <div class="flex-1 max-w-md">
+                <div class="relative flex items-center">
+                    <div class="absolute left-3.5 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <input type="text" @bind="termoBuscaGlobal" @onkeyup="ExecutarBuscaGlobal" placeholder="Pesquisa rápida (Nº Encomenda, Cliente, NIF)..." class="w-full h-10 pl-10 pr-16 corp-input text-xs text-slate-800 placeholder-slate-400 focus:outline-none" />
+                    <div class="absolute right-2.5 flex items-center pointer-events-none">
+                        <kbd class="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-300 rounded font-semibold">Enter</kbd>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right: Date & Executive Profile Capsule -->
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center text-xs text-slate-600 gap-2 border-r border-slate-200 pr-4">
+                    <span class="font-bold text-slate-800">@DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy")</span>
+                    <span class="text-slate-300">&bull;</span>
+                    <span class="font-mono text-slate-500 font-semibold">@DateTime.Now.ToString("HH:mm")</span>
+                </div>
+                
+                <!-- Profile Pill -->
+                <div class="flex items-center gap-3">
+                    @if (Sessao.IsDemo)
+                    {
+                        <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-sm ring-2 ring-amber-400/50">
+                            DEMO
+                        </div>
+                        <div class="text-left leading-tight">
+                            <div class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>@Sessao.Nome</span>
+                                <span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[9px] uppercase tracking-wider">DEMO</span>
+                            </div>
+                            <div class="text-xs text-amber-700 font-medium">Acesso de Demonstração (Sandbox)</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                            @(string.IsNullOrEmpty(Sessao.Nome) ? "V" : Sessao.Nome.Substring(0, 1).ToUpper())
+                        </div>
+                        <div class="text-left leading-tight">
+                            <div class="text-sm font-bold text-slate-800">@Sessao.Nome</div>
+                            <div class="text-xs text-blue-600 font-medium">@Sessao.Cargo (@Sessao.PercentagemComissao.ToString("N1")% comissão)</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </header>
+        
+        @if (Sessao.IsDemo)
+        {
+            <!-- Demo Alert Strip -->
+            <div class="bg-amber-50 border-b border-amber-200 px-6 py-2 flex flex-wrap items-center justify-between text-xs text-amber-900 no-print gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-slate-950 uppercase tracking-wide">
+                        Modo Demonstração Ativo
+                    </span>
+                    <span class="text-amber-800">
+                        Sessão em Sandbox local (Afonso Carvalho). Todas as alterações de clientes, produtos e encomendas ficam em memória e <strong>não são gravadas na base de dados real</strong>.
+                    </span>
+                </div>
+                <div class="font-mono text-[11px] text-amber-700">
+                    afonso.carvalho@geral.pt
+                </div>
+            </div>
+        }
+
+        <!-- Main Workspace Area -->
+        <main class="flex-1 overflow-y-auto bg-[#F8FAFC]">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    #region Search State & Navigation
+
+    private string termoBuscaGlobal = "";
+
+    /// <summary>
+    /// Dispatches top navbar search query to the orders management grid.
+    /// </summary>
+    private void ExecutarBuscaGlobal(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(termoBuscaGlobal))
+        {
+            NavManager.NavigateTo($"/encomendas?q={Uri.EscapeDataString(termoBuscaGlobal)}", forceLoad: true);
+        }
+    }
+
+    #endregion
+}

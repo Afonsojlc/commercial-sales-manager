@@ -1,0 +1,433 @@
+@page "/encomendas/{IdEncomenda}"
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<style>
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printArea, #printArea * {
+            visibility: visible;
+        }
+        #printArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 24px;
+            margin: 0;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="p-6 sm:p-8 min-h-full bg-slate-50">
+    <!-- Top Action Bar (hidden in print) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 max-w-5xl mx-auto no-print">
+        <button @onclick="Voltar" class="text-slate-600 hover:text-slate-900 flex items-center font-semibold text-sm transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Voltar às Encomendas
+        </button>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <button @onclick="ModificarEncomenda" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Modificar Encomenda
+            </button>
+
+            <button @onclick="Imprimir" class="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-300 shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Imprimir Nota de Encomenda (A4)
+            </button>
+
+            @if (estadoOriginal != estadoSelecionado)
+            {
+                <button @onclick="GuardarEstado" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Gravar Novo Estado
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="flex justify-center items-center h-64 text-slate-400">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span class="text-sm font-medium">A carregar dados da encomenda...</span>
+        </div>
+    }
+    else
+    {
+        <!-- Documento Oficial / Nota de Encomenda Printable Layout (High Fidelity A4) -->
+        <div id="printArea" class="bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto text-slate-800">
+            
+            <!-- 1. Document Header -->
+            <div class="border-b-2 border-slate-800 pb-4 mb-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-black text-slate-900 tracking-wider uppercase">NOTA DE ENCOMENDA</h1>
+                        <p class="text-xs font-medium text-slate-600 mt-1">@ConfiguracaoEmpresa.Subtitulo</p>
+                    </div>
+                    <div class="text-right">
+                        <h2 class="text-xl font-bold text-blue-700">@ConfiguracaoEmpresa.NomeEmpresa</h2>
+                        <p class="text-xs text-slate-500">NIF: @ConfiguracaoEmpresa.NIF &bull; Tel: @ConfiguracaoEmpresa.Telefone</p>
+                        <p class="text-xs text-slate-500">Comercial: <strong>@(string.IsNullOrEmpty(vendedorNome) ? (string.IsNullOrEmpty(Sessao.Nome) ? "Afonso Carvalho (Diretor Comercial)" : Sessao.Nome) : vendedorNome)</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Meta Info Strip -->
+            <div class="bg-slate-50 rounded-xl p-3.5 mb-5 border border-slate-200 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-slate-500 uppercase font-semibold">Encomenda Nº:</span>
+                    <strong class="text-slate-900 ml-1.5 text-sm font-mono">#@IdEncomenda</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500 uppercase font-semibold">Data:</span>
+                    <strong class="text-slate-900 ml-1.5 font-mono">@dataEncomenda.ToString("dd/MM/yyyy")</strong>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500 uppercase font-semibold">Estado:</span>
+                    <div class="no-print inline-block">
+                        <select @bind="estadoSelecionado" class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="PENDENTE">PENDENTE</option>
+                            <option value="FECHADA">FECHADA</option>
+                            <option value="PAGA">PAGA</option>
+                            <option value="DESPACHADO">DESPACHADO</option>
+                            <option value="A ENTREGAR">A ENTREGAR</option>
+                            <option value="CANCELADA">CANCELADA</option>
+                        </select>
+                    </div>
+                    <strong class="hidden print:inline text-slate-900 font-bold">@estadoOriginal</strong>
+                </div>
+            </div>
+
+            <!-- 3. Client Details Box -->
+            <div class="border border-slate-200 rounded-xl p-4 mb-6">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">DADOS DO CLIENTE</h3>
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <p class="text-slate-500">Cliente</p>
+                        <p class="font-bold text-slate-900 text-sm">@clienteNome</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">NIF</p>
+                        <p class="font-bold text-slate-900 font-mono">@clienteNIF</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">Email</p>
+                        <p class="text-slate-700">@(string.IsNullOrEmpty(clienteEmail) ? "Não especificado" : clienteEmail)</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">Telefone</p>
+                        <p class="text-slate-700 font-mono">@(string.IsNullOrEmpty(clienteTelefone) ? "Não especificado" : clienteTelefone)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Products Table -->
+            <div class="mb-6">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">ARTIGOS ENCOMENDADOS</h3>
+                <table class="w-full text-left border-collapse border border-slate-200 rounded-lg overflow-hidden text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px]">
+                            <th class="py-2.5 px-3">Código</th>
+                            <th class="py-2.5 px-3">Descrição do Artigo</th>
+                            <th class="py-2.5 px-3 text-right">Qtd</th>
+                            <th class="py-2.5 px-3 text-right">Preço Unit.</th>
+                            <th class="py-2.5 px-3 text-center">Desc. (%)</th>
+                            <th class="py-2.5 px-3 text-right">IVA</th>
+                            <th class="py-2.5 px-3 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        @foreach (var l in linhas)
+                        {
+                            <tr class="hover:bg-slate-50">
+                                <td class="py-2.5 px-3 font-mono font-semibold text-slate-900">@l.Codigo</td>
+                                <td class="py-2.5 px-3 text-slate-800 font-medium">@l.Descricao</td>
+                                <td class="py-2.5 px-3 text-right font-bold text-slate-900">@l.Qtd</td>
+                                <td class="py-2.5 px-3 text-right font-mono">€ @l.Preco.ToString("N2")</td>
+                                <td class="py-2.5 px-3 text-center font-semibold text-blue-600">@(string.IsNullOrEmpty(l.DescontoTexto) ? "-" : l.DescontoTexto)</td>
+                                <td class="py-2.5 px-3 text-right text-slate-500">@l.Iva%</td>
+                                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900">€ @l.Subtotal.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 5. Totals Section -->
+            <div class="flex justify-end mb-10">
+                <div class="w-80 space-y-2 text-xs">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Subtotal (c/ IVA):</span>
+                        <span class="font-mono font-medium">€ @((linhas.Count > 0 ? linhas.Sum(l => l.Subtotal) : valorTotal + descontoGlobal).ToString("N2"))</span>
+                    </div>
+                    @if (descontoGlobal > 0)
+                    {
+                        <div class="flex justify-between text-rose-600">
+                            <span>Desconto Global:</span>
+                            <span class="font-mono font-bold">- € @descontoGlobal.ToString("N2")</span>
+                        </div>
+                    }
+                    <div class="flex justify-between text-lg font-black text-slate-900 border-t-2 border-slate-800 pt-3 mt-2">
+                        <span>TOTAL A PAGAR:</span>
+                        <span class="text-blue-700 font-mono text-xl">€ @valorTotal.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Dual Signatures Section (Exact match with reference) -->
+            <div class="mt-14 pt-6 border-t border-slate-200">
+                <div class="grid grid-cols-2 gap-16 text-center text-xs text-slate-500">
+                    <div>
+                        <div class="border-b-2 border-slate-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-slate-700">Assinatura do Cliente / Carimbo</p>
+                    </div>
+                    <div>
+                        <div class="border-b-2 border-slate-400 pb-1 mb-2"></div>
+                        <p class="font-semibold text-slate-700">O Comercial / Responsável de Vendas</p>
+                    </div>
+                </div>
+                <div class="text-center text-[11px] text-slate-400 mt-8">
+                    Documento processado por computador &bull; @ConfiguracaoEmpresa.NomeEmpresa
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    #region Component Parameters & State
+
+    [Parameter] public string IdEncomenda { get; set; } = "";
+    
+    private bool carregando = true;
+
+    private DateTime dataEncomenda;
+    private decimal valorTotal;
+    private decimal descontoGlobal;
+    private string estadoOriginal = "";
+    private string estadoSelecionado = "";
+    private string vendedorNome = "";
+    
+    private string clienteNome = "";
+    private string clienteNIF = "";
+    private string clienteEmail = "";
+    private string clienteTelefone = "";
+
+    private List<LinhaView> linhas = new List<LinhaView>();
+
+    protected override void OnInitialized()
+    {
+        CarregarDados();
+    }
+
+    #endregion
+
+    #region Data Retrieval & Order Loading
+
+    private void CarregarDados()
+    {
+        carregando = true;
+        linhas.Clear();
+
+        if ((!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo) && int.TryParse(IdEncomenda, out int numEnc))
+        {
+            var encDemo = DadosDemonstracao.ObterEncomendaPorId(numEnc);
+            if (encDemo != null)
+            {
+                dataEncomenda = encDemo.Data_Encomenda;
+                valorTotal = encDemo.Valor_Total;
+                estadoOriginal = encDemo.Estado;
+                estadoSelecionado = estadoOriginal;
+                descontoGlobal = encDemo.Desconto_Global;
+
+                clienteNome = encDemo.NomeCliente;
+                clienteNIF = encDemo.NIFCliente;
+                clienteEmail = encDemo.EmailCliente;
+                clienteTelefone = encDemo.TelefoneCliente;
+                vendedorNome = encDemo.NomeVendedor;
+
+                foreach (var l in encDemo.Linhas)
+                {
+                    linhas.Add(new LinhaView
+                    {
+                        Codigo = l.Codigo,
+                        Descricao = l.Descricao,
+                        Qtd = l.Quantidade,
+                        Preco = l.PrecoUnitario,
+                        Iva = l.TaxaIva,
+                        DescontoTexto = l.DescontoTexto
+                    });
+                }
+            }
+            carregando = false;
+            return;
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                // 1. Order header and customer details
+                string queryE = @"
+                    SELECT 
+                        E.Data_Encomenda, E.Valor_Total, E.Estado, E.Desconto_Global,
+                        ISNULL(C.Nome_Cliente, 'Cliente Não Identificado') AS Nome_Cliente, 
+                        ISNULL(C.NIF, '-') AS NIF, 
+                        ISNULL(C.Email, '') AS Email, 
+                        ISNULL(C.Telefone, '') AS Telefone,
+                        ISNULL(V.Nome, '') AS VendedorNome
+                    FROM Encomenda E
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    LEFT JOIN Vendedores V ON E.ID_Vendedor = V.ID_Vendedor
+                    WHERE E.Numero_Encomenda = @id";
+                
+                using (SqlCommand cmd = new SqlCommand(queryE, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        if (rd.Read())
+                        {
+                            dataEncomenda = rd["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rd["Data_Encomenda"]) : DateTime.Now;
+                            valorTotal = rd["Valor_Total"] != DBNull.Value ? Convert.ToDecimal(rd["Valor_Total"]) : 0m;
+                            estadoOriginal = rd["Estado"]?.ToString() ?? "PENDENTE";
+                            estadoSelecionado = estadoOriginal;
+                            descontoGlobal = rd["Desconto_Global"] != DBNull.Value ? Convert.ToDecimal(rd["Desconto_Global"]) : 0m;
+                            
+                            clienteNome = rd["Nome_Cliente"]?.ToString() ?? "";
+                            clienteNIF = rd["NIF"]?.ToString() ?? "";
+                            clienteEmail = rd["Email"]?.ToString() ?? "";
+                            clienteTelefone = rd["Telefone"]?.ToString() ?? "";
+                            vendedorNome = rd["VendedorNome"]?.ToString() ?? "";
+                        }
+                    }
+                }
+
+                // 2. Ordered lines
+                string queryL = @"
+                    SELECT Codigo_Material, Descricao, Quantidade, Preco, Imposto, Desconto_Texto
+                    FROM Linha_Encomenda 
+                    WHERE NE = @id
+                    ORDER BY Linha_Encomenda ASC";
+                
+                using (SqlCommand cmdL = new SqlCommand(queryL, con))
+                {
+                    cmdL.Parameters.AddWithValue("@id", IdEncomenda);
+                    using (SqlDataReader rdL = cmdL.ExecuteReader())
+                    {
+                        while (rdL.Read())
+                        {
+                            linhas.Add(new LinhaView
+                            {
+                                Codigo = rdL["Codigo_Material"]?.ToString() ?? "",
+                                Descricao = rdL["Descricao"]?.ToString() ?? "",
+                                Qtd = rdL["Quantidade"] != DBNull.Value ? Convert.ToInt32(rdL["Quantidade"]) : 0,
+                                Preco = rdL["Preco"] != DBNull.Value ? Convert.ToDecimal(rdL["Preco"]) : 0m,
+                                Iva = rdL["Imposto"] != DBNull.Value ? Convert.ToDecimal(rdL["Imposto"]) : 23m,
+                                DescontoTexto = rdL["Desconto_Texto"]?.ToString() ?? ""
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+        carregando = false;
+    }
+
+    #endregion
+
+    #region Order Actions & Printing
+
+    private void ModificarEncomenda()
+    {
+        NavManager.NavigateTo($"/novavenda/{IdEncomenda}");
+    }
+
+    private void GuardarEstado()
+    {
+        if ((!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo) && int.TryParse(IdEncomenda, out int numEnc))
+        {
+            DadosDemonstracao.AtualizarEstadoEncomenda(numEnc, estadoSelecionado);
+            estadoOriginal = estadoSelecionado;
+            return;
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "UPDATE Encomenda SET Estado = @estado WHERE Numero_Encomenda = @id";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@estado", estadoSelecionado);
+                    cmd.Parameters.AddWithValue("@id", IdEncomenda);
+                    cmd.ExecuteNonQuery();
+                }
+                estadoOriginal = estadoSelecionado;
+            }
+            catch { }
+        }
+    }
+
+    private void Voltar()
+    {
+        NavManager.NavigateTo("/encomendas");
+    }
+
+    private async Task Imprimir()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    #endregion
+
+    #region View Models
+
+    public class LinhaView
+    {
+        public string Codigo { get; set; } = "";
+        public string Descricao { get; set; } = "";
+        public int Qtd { get; set; }
+        public decimal Preco { get; set; }
+        public decimal Iva { get; set; }
+        public string DescontoTexto { get; set; } = "";
+
+        private decimal PrecoCalculado 
+        {
+            get 
+            {
+                if (string.IsNullOrWhiteSpace(DescontoTexto)) return Preco;
+                string textoLimpo = DescontoTexto.Replace("%", "").Replace(" ", "").Replace(",", ".");
+                decimal final = Preco;
+                foreach (var d in textoLimpo.Split('+'))
+                {
+                    if (decimal.TryParse(d, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal p))
+                    {
+                        final -= (final * (p / 100m));
+                    }
+                }
+                return final;
+            }
+        }
+        public decimal Subtotal => Qtd * PrecoCalculado * (1 + Iva/100m);
+    }
+
+    #endregion
+}

@@ -4,14 +4,29 @@ using System;
 namespace SoftwareVendas
 {
     /// <summary>
-    /// Centralized database configuration and connection provider.
+    /// Centralized database configuration and connection provider with automatic local instance detection.
     /// </summary>
     public static class DatabaseConfig
     {
+        #region Connection State & Settings
+
         private static string _connectionString =
-            @"Server=(localdb)\MSSQLLocalDB;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
+            @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=CommercialSalesDB;Trusted_Connection=True;TrustServerCertificate=True;";
 
         private static bool _instanciaDetectada = false;
+        private static bool _conexaoAtiva = false;
+
+        public static bool ConexaoAtiva
+        {
+            get
+            {
+                if (!_instanciaDetectada)
+                {
+                    DetectarMelhorInstancia();
+                }
+                return _conexaoAtiva;
+            }
+        }
 
         public static string ConnectionString
         {
@@ -27,51 +42,65 @@ namespace SoftwareVendas
             {
                 _connectionString = value;
                 _instanciaDetectada = true;
+                _conexaoAtiva = TestarConexao(out _);
             }
         }
 
         private static readonly string[] ServidoresCandidatos = new[]
         {
-            @"(localdb)\MSSQLLocalDB",
             @"DESKTOP-P0S20G1\SQLEXPRESS",
             @"localhost\SQLEXPRESS",
             @".\SQLEXPRESS",
+            @"(localdb)\MSSQLLocalDB",
             @"localhost"
         };
 
+        private static readonly string[] BancosCandidatos = new[]
+        {
+            "CommercialSalesDB",
+            "Software_Vendas_Pai"
+        };
+
+        public static void ForcarRedetecao()
+        {
+            _instanciaDetectada = false;
+            DetectarMelhorInstancia();
+        }
+
+        #endregion
+
+        #region Auto-Discovery & Connectivity Checks
+
         /// <summary>
-        /// Attempts to connect to known SQL Server instances and selects the first active one.
+        /// Attempts to connect to known SQL Server instances and databases, prioritizing CommercialSalesDB.
         /// </summary>
         public static void DetectarMelhorInstancia()
         {
-            foreach (string servidor in ServidoresCandidatos)
+            foreach (string banco in BancosCandidatos)
             {
-                string connStr = $"Server={servidor};Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;Connection Timeout=2;";
-                try
+                foreach (string servidor in ServidoresCandidatos)
                 {
-                    using (SqlConnection con = new SqlConnection(connStr))
+                    string connStr = $"Server={servidor};Database={banco};Trusted_Connection=True;TrustServerCertificate=True;Connection Timeout=2;";
+                    try
                     {
-                        con.Open();
-                        _connectionString = connStr;
-                        _instanciaDetectada = true;
-                        return;
+                        using (SqlConnection con = new SqlConnection(connStr))
+                        {
+                            con.Open();
+                            _connectionString = connStr;
+                            _instanciaDetectada = true;
+                            _conexaoAtiva = true;
+                            return;
+                        }
                     }
-                }
-                catch
-                {
-                    // Continue to next candidate
+                    catch
+                    {
+                        // Continue scanning candidate instances
+                    }
                 }
             }
 
             _instanciaDetectada = true;
-        }
-
-        /// <summary>
-        /// Creates and returns a new SqlConnection instance using the active connection string.
-        /// </summary>
-        public static SqlConnection ObterConexao()
-        {
-            return new SqlConnection(ConnectionString);
+            _conexaoAtiva = false;
         }
 
         /// <summary>
@@ -94,5 +123,19 @@ namespace SoftwareVendas
                 return false;
             }
         }
+
+        #endregion
+
+        #region Connection Factory
+
+        /// <summary>
+        /// Creates and returns a new SqlConnection instance using the active connection string.
+        /// </summary>
+        public static SqlConnection ObterConexao()
+        {
+            return new SqlConnection(ConnectionString);
+        }
+
+        #endregion
     }
 }

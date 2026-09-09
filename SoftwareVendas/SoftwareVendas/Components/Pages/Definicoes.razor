@@ -1,0 +1,999 @@
+@page "/definicoes"
+@using Microsoft.Data.SqlClient
+@using System.Linq
+@using SoftwareVendas
+@inject NavigationManager NavManager
+
+<div class="p-6 sm:p-8 space-y-6 max-w-[1720px] mx-auto w-full min-h-full bg-slate-50">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Definições do Sistema</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Parametrizações
+                </span>
+                @if (Sessao.IsDemo)
+                {
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Modo Demonstração
+                    </span>
+                }
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Configurações da empresa para notas de encomenda, gestão do seu perfil de utilizador e administração da equipa comercial.
+            </p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex items-center gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl">
+            <button @onclick='() => MudarAba("empresa")'
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 @(abaAtiva == "empresa" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <span>Empresa & Conexão</span>
+            </button>
+            <button @onclick='() => MudarAba("perfil")'
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 @(abaAtiva == "perfil" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span>O Meu Perfil</span>
+            </button>
+            @if (Sessao.IsDiretorOuAdmin)
+            {
+                <button @onclick='() => MudarAba("vendedores")'
+                        class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 @(abaAtiva == "vendedores" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Equipa de Vendas</span>
+                    <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-blue-100 text-blue-800 font-black">Direção</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: DADOS DA EMPRESA & CONEXÃO SQL SERVER -->
+    <!-- ========================================================================= -->
+    @if (abaAtiva == "empresa")
+    {
+        @if (!string.IsNullOrEmpty(mensagemEmpresa))
+        {
+            <div class="p-4 rounded-xl text-xs font-semibold border flex items-center gap-2 bg-emerald-50 text-emerald-700 border-emerald-200">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>@mensagemEmpresa</span>
+            </div>
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Bloco 1: Dados da Empresa (Span 2 cols) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            Dados da Empresa (Notas de Encomenda & Impressão)
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Estes dados aparecem no cabeçalho das notas de encomenda oficiais e relatórios PDF.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Nome Comercial da Empresa</label>
+                        <input type="text" @bind="empresaNome" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">NIF / Número de Contribuinte</label>
+                        <input type="text" @bind="empresaNif" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Subtítulo / Ramo Comercial</label>
+                        <input type="text" @bind="empresaSubtitulo" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Morada da Sede / Armazém</label>
+                        <input type="text" @bind="empresaMorada" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Código Postal & Localidade</label>
+                        <input type="text" @bind="empresaCodigoPostal" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Telefone Principal</label>
+                        <input type="text" @bind="empresaTelefone" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Email Geral / Facturação</label>
+                        <input type="email" @bind="empresaEmail" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end">
+                    <button @onclick="GuardarDadosEmpresa" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Guardar Dados da Empresa</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coluna Lateral -->
+            <div class="space-y-6">
+                <!-- Bloco: Sessão Comercial Ativa -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-3 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        Perfil em Sessão
+                    </h2>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center gap-3.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-base shadow-sm">
+                                @(string.IsNullOrEmpty(Sessao.Nome) ? "C" : Sessao.Nome.Substring(0, 1).ToUpper())
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">@Sessao.Nome</p>
+                                <p class="text-xs text-slate-500 font-medium">@Sessao.Cargo &bull; ID: #@Sessao.ID_Vendedor</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <p class="uppercase font-bold text-[10px] text-slate-400">Cargo</p>
+                                <p class="font-bold text-slate-800 mt-0.5">@Sessao.Cargo</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <p class="uppercase font-bold text-[10px] text-slate-400">Comissão</p>
+                                <p class="font-mono font-bold text-emerald-600 text-base mt-0.5">@Sessao.PercentagemComissao.ToString("N2")%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloco: Base de Dados SQL Server -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-3 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        Conexão SQL Server
+                    </h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] uppercase font-bold text-slate-500 mb-1.5">Connection String (ADO.NET)</label>
+                            <textarea @bind="connString" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-800 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"></textarea>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(mensagem))
+                        {
+                            <div class="p-3 rounded-xl text-xs font-semibold border flex items-center gap-2 @(sucesso ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200")">
+                                @if (sucesso)
+                                {
+                                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                }
+                                else
+                                {
+                                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                }
+                                <span>@mensagem</span>
+                            </div>
+                        }
+
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button @onclick="TestarConexao" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                                Testar
+                            </button>
+                            <button @onclick="GuardarConexao" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition">
+                                Guardar Conexão
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: O MEU PERFIL DE UTILIZADOR -->
+    <!-- ========================================================================= -->
+    @if (abaAtiva == "perfil")
+    {
+        <div class="max-w-4xl mx-auto space-y-6">
+            @if (!string.IsNullOrEmpty(mensagemPerfil))
+            {
+                <div class="p-4 rounded-xl text-xs font-semibold border flex items-center gap-2 @(sucessoPerfil ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200")">
+                    @if (sucessoPerfil)
+                    {
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    }
+                    else
+                    {
+                        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    }
+                    <span>@mensagemPerfil</span>
+                </div>
+            }
+
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+                <!-- User summary banner -->
+                <div class="flex items-center gap-4 pb-6 border-b border-slate-200 mb-6">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-2xl shadow-sm">
+                        @(string.IsNullOrEmpty(meuNome) ? "U" : meuNome.Substring(0, 1).ToUpper())
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900">@Sessao.Nome</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                                @Sessao.Cargo
+                            </span>
+                            <span class="text-xs text-slate-500 font-medium">ID Vendedor: #@Sessao.ID_Vendedor</span>
+                            @if (Sessao.IsDemo)
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                    Perfil Demonstração
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Nome Completo</label>
+                        <input type="text" @bind="meuNome" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Email de Acesso</label>
+                        <input type="email" @bind="meuEmail" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Contacto Telefónico</label>
+                        <input type="text" @bind="meuTelemovel" placeholder="ex: 912 345 678" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Código PIN de Acesso (4 Dígitos)</label>
+                        <input type="password" maxlength="4" @bind="meuPin" placeholder="4 dígitos" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                        <p class="text-[10px] text-slate-400 mt-1">Usado no ecrã de entrada rápida por PIN.</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Nova Palavra-passe</label>
+                        <input type="password" @bind="minhaSenha" placeholder="Deixe vazio para não alterar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                        <p class="text-[10px] text-slate-400 mt-1">Opcional. Preencha apenas se pretender mudar a senha.</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">Cargo no Sistema</label>
+                        <input type="text" value="@Sessao.Cargo" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-500 cursor-not-allowed font-medium" />
+                        <p class="text-[10px] text-slate-400 mt-1">Definido pela direção comercial.</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">Taxa de Comissão (%)</label>
+                        <input type="text" value="@(Sessao.PercentagemComissao.ToString("N2") + "%")" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-emerald-600 font-mono font-bold cursor-not-allowed" />
+                        <p class="text-[10px] text-slate-400 mt-1">Definida pela administração da empresa.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-5 border-t border-slate-200 flex justify-end">
+                    <button @onclick="GuardarMeuPerfil" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Guardar Alterações do Meu Perfil</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: GESTÃO DE VENDEDORES (DIRETOR COMERCIAL / ADMIN) -->
+    <!-- ========================================================================= -->
+    @if (abaAtiva == "vendedores" && Sessao.IsDiretorOuAdmin)
+    {
+        @if (!string.IsNullOrEmpty(mensagemGeralVendedores))
+        {
+            <div class="p-4 rounded-xl text-xs font-semibold border flex items-center gap-2 bg-emerald-50 text-emerald-700 border-emerald-200">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>@mensagemGeralVendedores</span>
+            </div>
+        }
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <!-- Header bar with actions -->
+            <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Equipa Comercial & Vendedores
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Gestão de utilizadores, senhas, PINs de acesso e atribuição de percentagens de comissão.</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button @onclick="AbrirNovoVendedor" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Novo Vendedor</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table of Sellers -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                            <th class="py-3 px-4">Vendedor</th>
+                            <th class="py-3 px-4">Contactos</th>
+                            <th class="py-3 px-4 text-center">Código PIN</th>
+                            <th class="py-3 px-4 text-right">Comissão</th>
+                            <th class="py-3 px-4 text-center">Estado</th>
+                            <th class="py-3 px-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (listaVendedores.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-slate-400 font-medium">
+                                    Nenhum vendedor encontrado.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var v in listaVendedores)
+                            {
+                                <tr class="hover:bg-slate-50/70 transition">
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 font-black flex items-center justify-center text-sm border border-slate-200 shrink-0">
+                                                @(string.IsNullOrEmpty(v.Nome) ? "V" : v.Nome.Substring(0, 1).ToUpper())
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-slate-900 text-sm">@v.Nome</span>
+                                                    @if (v.ID_Vendedor == Sessao.ID_Vendedor)
+                                                    {
+                                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                            Você
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <span class="text-slate-500 text-[11px]">@v.Cargo &bull; ID: #@v.ID_Vendedor</span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="py-3 px-4 text-slate-600">
+                                        <div>
+                                            <p class="font-medium text-slate-900">@(string.IsNullOrEmpty(v.Email) ? "—" : v.Email)</p>
+                                            <p class="text-slate-400 text-[11px] font-mono">@(string.IsNullOrEmpty(v.Telemovel) ? "—" : v.Telemovel)</p>
+                                        </div>
+                                    </td>
+
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-mono font-bold text-xs border border-slate-200">
+                                            @v.PIN
+                                        </span>
+                                    </td>
+
+                                    <td class="py-3 px-4 text-right">
+                                        <span class="font-mono font-bold text-emerald-600 text-sm">
+                                            @v.Percentagem_Comissao.ToString("N2")%
+                                        </span>
+                                    </td>
+
+                                    <td class="py-3 px-4 text-center">
+                                        @if (v.Ativo)
+                                        {
+                                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Ativo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200 inline-flex items-center gap-1">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                Inativo
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="py-3 px-4 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <button @onclick="() => AbrirEditarVendedor(v)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold transition flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                <span>Editar</span>
+                                            </button>
+                                            @if (v.ID_Vendedor != Sessao.ID_Vendedor)
+                                            {
+                                                <button @onclick="() => AlternarEstadoVendedor(v)" class="px-3 py-1.5 rounded-lg text-xs font-bold transition @(v.Ativo ? "text-rose-600 hover:bg-rose-50" : "text-emerald-600 hover:bg-emerald-50")">
+                                                    @(v.Ativo ? "Desativar" : "Ativar")
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODAL: Adicionar / Editar Vendedor -->
+        @if (modalVendedorAberto)
+        {
+            <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-150">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-sm">
+                                @(vendedorEdicao.ID_Vendedor > 0 ? $"Editar Vendedor #{vendedorEdicao.ID_Vendedor}" : "Novo Vendedor")
+                            </h3>
+                        </div>
+                        <button @onclick="FecharModalVendedor" class="text-slate-400 hover:text-slate-600 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="p-6 space-y-4 text-xs">
+                        @if (!string.IsNullOrEmpty(mensagemVendedorModal))
+                        {
+                            <div class="p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>@mensagemVendedorModal</span>
+                            </div>
+                        }
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Nome Completo *</label>
+                            <input type="text" @bind="vendedorEdicao.Nome" placeholder="ex: João Silva" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Cargo / Função *</label>
+                                <input type="text" @bind="vendedorEdicao.Cargo" placeholder="ex: Director Comercial / Vendedor" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Taxa de Comissão (%) *</label>
+                                <input type="number" step="0.5" @bind="vendedorEdicao.Percentagem_Comissao" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Código PIN (4 Dígitos) *</label>
+                                <input type="text" maxlength="4" @bind="vendedorEdicao.PIN" placeholder="ex: 1234" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Palavra-passe</label>
+                                <input type="text" @bind="vendedorEdicao.Senha" placeholder="@(vendedorEdicao.ID_Vendedor > 0 ? "Vazio = manter atual" : "Senha inicial")" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Email</label>
+                                <input type="email" @bind="vendedorEdicao.Email" placeholder="ex: vendedor@empresa.pt" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Telemóvel</label>
+                                <input type="text" @bind="vendedorEdicao.Telemovel" placeholder="ex: 910 000 000" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex items-center gap-2">
+                            <input type="checkbox" id="chkAtivo" @bind="vendedorEdicao.Ativo" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
+                            <label for="chkAtivo" class="font-bold text-slate-700 select-none cursor-pointer">
+                                Vendedor Ativo no Sistema
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+                        <button @onclick="FecharModalVendedor" class="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition">
+                            Cancelar
+                        </button>
+                        <button @onclick="GuardarVendedorEdicao" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span>Gravar Vendedor</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    #region Component State & Fields
+    private string abaAtiva = "empresa";
+
+    // SQL Connection settings
+    private string connString = "";
+    private string mensagem = "";
+    private bool sucesso = false;
+
+    // Company profile settings
+    private string empresaNome = "";
+    private string empresaSubtitulo = "";
+    private string empresaNif = "";
+    private string empresaMorada = "";
+    private string empresaCodigoPostal = "";
+    private string empresaTelefone = "";
+    private string empresaEmail = "";
+    private string mensagemEmpresa = "";
+
+    // User Profile settings
+    private string meuNome = "";
+    private string meuEmail = "";
+    private string meuTelemovel = "";
+    private string meuPin = "";
+    private string minhaSenha = "";
+    private string mensagemPerfil = "";
+    private bool sucessoPerfil = false;
+
+    // Sellers Management (Managerial)
+    private List<DadosDemonstracao.VendedorDemo> listaVendedores = new List<DadosDemonstracao.VendedorDemo>();
+    private DadosDemonstracao.VendedorDemo vendedorEdicao = new DadosDemonstracao.VendedorDemo();
+    private bool modalVendedorAberto = false;
+    private string mensagemVendedorModal = "";
+    private string mensagemGeralVendedores = "";
+    #endregion
+
+    #region Lifecycle Hooks
+    protected override void OnInitialized()
+    {
+        connString = DatabaseConfig.ConnectionString;
+
+        // Initialize company settings
+        empresaNome = ConfiguracaoEmpresa.NomeEmpresa;
+        empresaSubtitulo = ConfiguracaoEmpresa.Subtitulo;
+        empresaNif = ConfiguracaoEmpresa.NIF;
+        empresaMorada = ConfiguracaoEmpresa.Morada;
+        empresaCodigoPostal = ConfiguracaoEmpresa.CodigoPostal;
+        empresaTelefone = ConfiguracaoEmpresa.Telefone;
+        empresaEmail = ConfiguracaoEmpresa.Email;
+
+        // Initialize user profile
+        CarregarMeuPerfil();
+
+        // Load sellers if managerial
+        if (Sessao.IsDiretorOuAdmin)
+        {
+            CarregarVendedores();
+        }
+    }
+    #endregion
+
+    #region Tab Navigation
+    private void MudarAba(string aba)
+    {
+        abaAtiva = aba;
+        mensagemEmpresa = "";
+        mensagemPerfil = "";
+        mensagemGeralVendedores = "";
+
+        if (aba == "vendedores" && Sessao.IsDiretorOuAdmin)
+        {
+            CarregarVendedores();
+        }
+    }
+    #endregion
+
+    #region Company Profile Operations
+    private void GuardarDadosEmpresa()
+    {
+        ConfiguracaoEmpresa.NomeEmpresa = empresaNome.Trim();
+        ConfiguracaoEmpresa.Subtitulo = empresaSubtitulo.Trim();
+        ConfiguracaoEmpresa.NIF = empresaNif.Trim();
+        ConfiguracaoEmpresa.Morada = empresaMorada.Trim();
+        ConfiguracaoEmpresa.CodigoPostal = empresaCodigoPostal.Trim();
+        ConfiguracaoEmpresa.Telefone = empresaTelefone.Trim();
+        ConfiguracaoEmpresa.Email = empresaEmail.Trim();
+
+        ConfiguracaoEmpresa.Guardar();
+        mensagemEmpresa = "Dados da empresa gravados e atualizados em todas as notas de encomenda!";
+    }
+    #endregion
+
+    #region Database Connection Management
+    private void TestarConexao()
+    {
+        string stringOriginal = DatabaseConfig.ConnectionString;
+        DatabaseConfig.ConnectionString = connString.Trim();
+
+        if (DatabaseConfig.TestarConexao(out string erro))
+        {
+            sucesso = true;
+            mensagem = "Conexão estabelecida com sucesso!";
+        }
+        else
+        {
+            sucesso = false;
+            mensagem = "Falha: " + erro;
+            DatabaseConfig.ConnectionString = stringOriginal;
+        }
+    }
+
+    private void GuardarConexao()
+    {
+        if (string.IsNullOrWhiteSpace(connString))
+        {
+            sucesso = false;
+            mensagem = "A Connection String não pode estar vazia.";
+            return;
+        }
+
+        DatabaseConfig.ConnectionString = connString.Trim();
+        sucesso = true;
+        mensagem = "Configurações guardadas com sucesso!";
+    }
+    #endregion
+
+    #region User Profile Operations
+    private void CarregarMeuPerfil()
+    {
+        meuNome = Sessao.Nome;
+        meuEmail = Sessao.Email;
+        meuTelemovel = Sessao.Telemovel;
+        meuPin = Sessao.PIN;
+        minhaSenha = "";
+
+        if (string.IsNullOrEmpty(meuPin) && !Sessao.IsDemo && Sessao.ID_Vendedor > 0 && DatabaseConfig.ConexaoAtiva)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+                {
+                    con.Open();
+                    using (SqlCommand cmd = new SqlCommand("SELECT PIN, Email, Telemovel FROM Vendedores WHERE ID_Vendedor = @id", con))
+                    {
+                        cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                meuPin = r["PIN"]?.ToString() ?? "";
+                                if (string.IsNullOrEmpty(meuEmail)) meuEmail = r["Email"]?.ToString() ?? "";
+                                if (string.IsNullOrEmpty(meuTelemovel)) meuTelemovel = r["Telemovel"]?.ToString() ?? "";
+                                Sessao.PIN = meuPin;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+
+    private void GuardarMeuPerfil()
+    {
+        mensagemPerfil = "";
+        if (string.IsNullOrWhiteSpace(meuNome))
+        {
+            sucessoPerfil = false;
+            mensagemPerfil = "O nome é obrigatório.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(meuPin) || meuPin.Trim().Length < 4)
+        {
+            sucessoPerfil = false;
+            mensagemPerfil = "O PIN deve conter 4 dígitos.";
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            Sessao.Nome = meuNome.Trim();
+            Sessao.Email = meuEmail.Trim();
+            Sessao.Telemovel = meuTelemovel.Trim();
+            Sessao.PIN = meuPin.Trim();
+
+            var demoVendedor = DadosDemonstracao.ObterVendedores().FirstOrDefault(v => v.ID_Vendedor == Sessao.ID_Vendedor);
+            if (demoVendedor != null)
+            {
+                demoVendedor.Nome = Sessao.Nome;
+                demoVendedor.Email = Sessao.Email;
+                demoVendedor.Telemovel = Sessao.Telemovel;
+                demoVendedor.PIN = Sessao.PIN;
+                if (!string.IsNullOrWhiteSpace(minhaSenha))
+                    demoVendedor.Senha = minhaSenha.Trim();
+                DadosDemonstracao.SalvarVendedor(demoVendedor);
+            }
+
+            sucessoPerfil = true;
+            mensagemPerfil = "Perfil atualizado com sucesso no ambiente de demonstração!";
+            CarregarVendedores();
+            return;
+        }
+
+        try
+        {
+            using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+            {
+                con.Open();
+                string sql = @"UPDATE Vendedores 
+                               SET Nome = @Nome, Email = @Email, Telemovel = @Telemovel, PIN = @PIN" +
+                               (!string.IsNullOrWhiteSpace(minhaSenha) ? ", Senha = @Senha " : " ") +
+                               "WHERE ID_Vendedor = @ID";
+                using (SqlCommand cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@Nome", meuNome.Trim());
+                    cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(meuEmail) ? (object)DBNull.Value : meuEmail.Trim());
+                    cmd.Parameters.AddWithValue("@Telemovel", string.IsNullOrWhiteSpace(meuTelemovel) ? (object)DBNull.Value : meuTelemovel.Trim());
+                    cmd.Parameters.AddWithValue("@PIN", meuPin.Trim());
+                    cmd.Parameters.AddWithValue("@ID", Sessao.ID_Vendedor);
+                    if (!string.IsNullOrWhiteSpace(minhaSenha))
+                    {
+                        cmd.Parameters.AddWithValue("@Senha", minhaSenha.Trim());
+                    }
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            Sessao.Nome = meuNome.Trim();
+            Sessao.Email = meuEmail.Trim();
+            Sessao.Telemovel = meuTelemovel.Trim();
+            Sessao.PIN = meuPin.Trim();
+
+            sucessoPerfil = true;
+            mensagemPerfil = "O seu perfil foi atualizado com sucesso na base de dados!";
+            CarregarVendedores();
+        }
+        catch (Exception ex)
+        {
+            sucessoPerfil = false;
+            mensagemPerfil = "Erro ao atualizar perfil: " + ex.Message;
+        }
+    }
+    #endregion
+
+    #region Sellers Management Operations
+    private void CarregarVendedores()
+    {
+        listaVendedores.Clear();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            listaVendedores = DadosDemonstracao.ObterVendedores();
+            return;
+        }
+
+        try
+        {
+            using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+            {
+                con.Open();
+                string sql = "SELECT ID_Vendedor, Nome, Cargo, PIN, Email, Senha, Telemovel, Percentagem_Comissao, Ativo FROM Vendedores ORDER BY Ativo DESC, Nome ASC";
+                using (SqlCommand cmd = new SqlCommand(sql, con))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        listaVendedores.Add(new DadosDemonstracao.VendedorDemo
+                        {
+                            ID_Vendedor = Convert.ToInt32(reader["ID_Vendedor"]),
+                            Nome = reader["Nome"]?.ToString() ?? "",
+                            Cargo = reader["Cargo"]?.ToString() ?? "Vendedor",
+                            PIN = reader["PIN"]?.ToString() ?? "",
+                            Email = reader["Email"]?.ToString() ?? "",
+                            Senha = reader["Senha"]?.ToString() ?? "",
+                            Telemovel = reader["Telemovel"]?.ToString() ?? "",
+                            Percentagem_Comissao = reader["Percentagem_Comissao"] != DBNull.Value ? Convert.ToDecimal(reader["Percentagem_Comissao"]) : 5.0m,
+                            Ativo = reader["Ativo"] != DBNull.Value && Convert.ToBoolean(reader["Ativo"])
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            mensagemGeralVendedores = "Erro ao carregar lista de vendedores: " + ex.Message;
+        }
+    }
+
+    private void AbrirNovoVendedor()
+    {
+        vendedorEdicao = new DadosDemonstracao.VendedorDemo
+        {
+            ID_Vendedor = 0,
+            Nome = "",
+            Cargo = "Vendedor",
+            PIN = "",
+            Email = "",
+            Senha = "",
+            Telemovel = "",
+            Percentagem_Comissao = 5.00m,
+            Ativo = true
+        };
+        mensagemVendedorModal = "";
+        modalVendedorAberto = true;
+    }
+
+    private void AbrirEditarVendedor(DadosDemonstracao.VendedorDemo v)
+    {
+        vendedorEdicao = new DadosDemonstracao.VendedorDemo
+        {
+            ID_Vendedor = v.ID_Vendedor,
+            Nome = v.Nome,
+            Cargo = v.Cargo,
+            PIN = v.PIN,
+            Email = v.Email,
+            Senha = v.Senha,
+            Telemovel = v.Telemovel,
+            Percentagem_Comissao = v.Percentagem_Comissao,
+            Ativo = v.Ativo
+        };
+        mensagemVendedorModal = "";
+        modalVendedorAberto = true;
+    }
+
+    private void FecharModalVendedor()
+    {
+        modalVendedorAberto = false;
+        vendedorEdicao = new DadosDemonstracao.VendedorDemo();
+    }
+
+    private void GuardarVendedorEdicao()
+    {
+        mensagemVendedorModal = "";
+
+        if (string.IsNullOrWhiteSpace(vendedorEdicao.Nome))
+        {
+            mensagemVendedorModal = "O nome completo é obrigatório.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(vendedorEdicao.PIN) || vendedorEdicao.PIN.Trim().Length < 4)
+        {
+            mensagemVendedorModal = "O PIN deve conter exatamente 4 dígitos.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(vendedorEdicao.Cargo))
+        {
+            vendedorEdicao.Cargo = "Vendedor";
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            DadosDemonstracao.SalvarVendedor(vendedorEdicao);
+
+            if (vendedorEdicao.ID_Vendedor == Sessao.ID_Vendedor)
+            {
+                Sessao.Nome = vendedorEdicao.Nome;
+                Sessao.Cargo = vendedorEdicao.Cargo;
+                Sessao.Email = vendedorEdicao.Email;
+                Sessao.Telemovel = vendedorEdicao.Telemovel;
+                Sessao.PIN = vendedorEdicao.PIN;
+                Sessao.PercentagemComissao = vendedorEdicao.Percentagem_Comissao;
+            }
+
+            modalVendedorAberto = false;
+            mensagemGeralVendedores = "Vendedor guardado com sucesso no modo demonstração!";
+            CarregarVendedores();
+            return;
+        }
+
+        try
+        {
+            using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+            {
+                con.Open();
+                if (vendedorEdicao.ID_Vendedor > 0)
+                {
+                    string sql = @"UPDATE Vendedores
+                                   SET Nome = @Nome, Cargo = @Cargo, PIN = @PIN, Email = @Email, 
+                                       Telemovel = @Telemovel, Percentagem_Comissao = @Comissao, Ativo = @Ativo" +
+                                       (!string.IsNullOrWhiteSpace(vendedorEdicao.Senha) ? ", Senha = @Senha " : " ") +
+                                   "WHERE ID_Vendedor = @ID";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@Nome", vendedorEdicao.Nome.Trim());
+                        cmd.Parameters.AddWithValue("@Cargo", vendedorEdicao.Cargo.Trim());
+                        cmd.Parameters.AddWithValue("@PIN", vendedorEdicao.PIN.Trim());
+                        cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(vendedorEdicao.Email) ? (object)DBNull.Value : vendedorEdicao.Email.Trim());
+                        cmd.Parameters.AddWithValue("@Telemovel", string.IsNullOrWhiteSpace(vendedorEdicao.Telemovel) ? (object)DBNull.Value : vendedorEdicao.Telemovel.Trim());
+                        cmd.Parameters.AddWithValue("@Comissao", vendedorEdicao.Percentagem_Comissao);
+                        cmd.Parameters.AddWithValue("@Ativo", vendedorEdicao.Ativo ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@ID", vendedorEdicao.ID_Vendedor);
+                        if (!string.IsNullOrWhiteSpace(vendedorEdicao.Senha))
+                        {
+                            cmd.Parameters.AddWithValue("@Senha", vendedorEdicao.Senha.Trim());
+                        }
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    if (vendedorEdicao.ID_Vendedor == Sessao.ID_Vendedor)
+                    {
+                        Sessao.Nome = vendedorEdicao.Nome.Trim();
+                        Sessao.Cargo = vendedorEdicao.Cargo.Trim();
+                        Sessao.Email = vendedorEdicao.Email?.Trim() ?? "";
+                        Sessao.Telemovel = vendedorEdicao.Telemovel?.Trim() ?? "";
+                        Sessao.PIN = vendedorEdicao.PIN.Trim();
+                        Sessao.PercentagemComissao = vendedorEdicao.Percentagem_Comissao;
+                    }
+
+                    mensagemGeralVendedores = $"Vendedor '{vendedorEdicao.Nome}' atualizado com sucesso!";
+                }
+                else
+                {
+                    string sql = @"INSERT INTO Vendedores (Nome, Cargo, PIN, Email, Senha, Telemovel, Percentagem_Comissao, Ativo)
+                                   VALUES (@Nome, @Cargo, @PIN, @Email, @Senha, @Telemovel, @Comissao, @Ativo)";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@Nome", vendedorEdicao.Nome.Trim());
+                        cmd.Parameters.AddWithValue("@Cargo", vendedorEdicao.Cargo.Trim());
+                        cmd.Parameters.AddWithValue("@PIN", vendedorEdicao.PIN.Trim());
+                        cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(vendedorEdicao.Email) ? (object)DBNull.Value : vendedorEdicao.Email.Trim());
+                        cmd.Parameters.AddWithValue("@Senha", string.IsNullOrWhiteSpace(vendedorEdicao.Senha) ? "1234" : vendedorEdicao.Senha.Trim());
+                        cmd.Parameters.AddWithValue("@Telemovel", string.IsNullOrWhiteSpace(vendedorEdicao.Telemovel) ? (object)DBNull.Value : vendedorEdicao.Telemovel.Trim());
+                        cmd.Parameters.AddWithValue("@Comissao", vendedorEdicao.Percentagem_Comissao);
+                        cmd.Parameters.AddWithValue("@Ativo", vendedorEdicao.Ativo ? 1 : 0);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    mensagemGeralVendedores = $"Novo vendedor '{vendedorEdicao.Nome}' adicionado à equipa!";
+                }
+            }
+
+            modalVendedorAberto = false;
+            CarregarVendedores();
+        }
+        catch (Exception ex)
+        {
+            mensagemVendedorModal = "Erro ao gravar vendedor: " + ex.Message;
+        }
+    }
+
+    private void AlternarEstadoVendedor(DadosDemonstracao.VendedorDemo v)
+    {
+        if (v.ID_Vendedor == Sessao.ID_Vendedor)
+        {
+            mensagemGeralVendedores = "Não é permitido desativar o seu próprio utilizador em sessão ativa!";
+            return;
+        }
+
+        bool novoEstado = !v.Ativo;
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            v.Ativo = novoEstado;
+            DadosDemonstracao.SalvarVendedor(v);
+            CarregarVendedores();
+            mensagemGeralVendedores = $"Estado de {v.Nome} alterado para {(novoEstado ? "Ativo" : "Inativo")}.";
+            return;
+        }
+
+        try
+        {
+            using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+            {
+                con.Open();
+                using (SqlCommand cmd = new SqlCommand("UPDATE Vendedores SET Ativo = @Ativo WHERE ID_Vendedor = @ID", con))
+                {
+                    cmd.Parameters.AddWithValue("@Ativo", novoEstado ? 1 : 0);
+                    cmd.Parameters.AddWithValue("@ID", v.ID_Vendedor);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            v.Ativo = novoEstado;
+            CarregarVendedores();
+            mensagemGeralVendedores = $"Estado de {v.Nome} alterado para {(novoEstado ? "Ativo" : "Inativo")}.";
+        }
+        catch (Exception ex)
+        {
+            mensagemGeralVendedores = "Erro ao alterar estado: " + ex.Message;
+        }
+    }
+    #endregion
+}

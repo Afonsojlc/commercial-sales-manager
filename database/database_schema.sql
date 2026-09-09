@@ -1,31 +1,30 @@
-﻿----------------------------------------------------------------
--- Verifcar se a erros e se a base de dados existe
 ----------------------------------------------------------------
-use master;
-go
+-- Commercial Sales Manager - Database Schema Initialization
+----------------------------------------------------------------
+USE master;
+GO
 
--- Verifica se a base de dados já existe
-if exists (select * from sys.databases where name = 'Software_Vendas_Pai')
-begin
-    alter database Software_Vendas_Pai set single_user with rollback immediate;
-    drop database Software_Vendas_Pai;
-end
-go
-
-----------------------------------------------------------------
--- Dar Inicio a Base de Dados 
-----------------------------------------------------------------
--- Criar Base de Dados com o nome do Grupo
-create database Software_Vendas_Pai;
-go
--- Comando para usarmos/alterarmos a base de dados
-use Software_Vendas_Pai;
-go
+-- Drop database if it already exists (fresh installation setup)
+IF EXISTS (SELECT * FROM sys.databases WHERE name = 'CommercialSalesDB')
+BEGIN
+    ALTER DATABASE CommercialSalesDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE CommercialSalesDB;
+END
+GO
 
 ----------------------------------------------------------------
---		 ... AQUI COMEÇAM A CRIAÇÃO DAS TABELAS ...
+-- Create Database
+----------------------------------------------------------------
+CREATE DATABASE CommercialSalesDB;
+GO
+
+USE CommercialSalesDB;
+GO
+
+----------------------------------------------------------------
+-- Database Tables Creation
 ----------------------------------------------------------------	
---	Fase 1: Entidades, Entidades Fracas e Generalização
+-- Phase 1: Core Entities and Tables
 ----------------------------------------------------------------
 create table Encomenda(
     Numero_Encomenda int identity(1,1),
@@ -80,56 +79,51 @@ create table Vendedores (
     ID_Vendedor int identity(1,1),
     Cargo varchar(50) default 'Vendedor',
     Nome varchar(100) NOT NULL,
-    PIN varchar(4) NOT NULL, -- Código de acesso
-    Email varchar(150) NULL, -- Novo: Pode ficar vazio (NULL) se não tiverem
+    PIN varchar(4) NOT NULL, -- Access PIN code
+    Email varchar(150) NULL, -- Optional email address
     Senha varchar(50) NULL,
-    Telemovel varchar(20) NULL, -- Novo
+    Telemovel varchar(20) NULL, -- Contact mobile number
     Percentagem_Comissao decimal(5,2) default 5.00,
-    Ativo bit default 1, -- Novo: 1 = Trabalha cá, 0 = Já saiu (não apagar histórico)
+    Ativo bit default 1, -- Active status: 1 = Active staff, 0 = Inactive (preserves historical sales)
     constraint pk_Vendedores primary key(ID_Vendedor)
 );
 
 ----------------------------------------------------------------	
---	Fase 2: M:N e associa��es c/mais do que 2 entidades
+-- Phase 2: Foreign Keys and Relational Constraints
 ----------------------------------------------------------------
 
-----------------------------------------------------------------	
---	Fase 3: 1:M e 1:1 (Alteração das tabelas existentes)
-----------------------------------------------------------------
-
--- Encomenda feita por Cliente: Relação Faz
--- O modelo indica que Encomenda tem 'cliente' obrigatório (NOT NULL)
+-- Order placed by Customer: 1-to-N relationship (Customer is mandatory)
 alter table Encomenda add 
 	ID_Cliente varchar(15) not null,
 	constraint fk_Encomenda_Cliente foreign key(ID_Cliente) references Clientes(ID_Cliente);
 
--- Linha de Encomenda possui Material: Relação Possui
--- O modelo indica que para cada linha de encomenda eiste um produto encomendado
+-- Order Line contains Material/Product: 1-to-N relationship
 alter table Linha_Encomenda add
     Codigo_Material varchar(15),
     constraint fk_Linha_Encomenda_Material foreign key(Codigo_Material) references Material(Codigo);
 
--- Cada Material tem um tipo de produto
--- O modelo indica que cada material possui um tipo de produto: Relação Tem
+-- Each Material belongs to a Product Type / Category: 1-to-N relationship
 alter table Material add
     ID_Tipo varchar(10),
     constraint fk_Material_Produto foreign key(ID_Tipo) references Tipo_Produto(Id_Produto);
 
--- Cada vendedor faz uma encomenda
--- O modelo indica que cada vendedor pode fazer um ou mais encomendas: Relação Faz
+-- Each Order is created by a Seller / Sales Representative: 1-to-N relationship
 alter table Encomenda add 
     ID_Vendedor int,
     constraint FK_Encomenda_Vendedor foreign key(ID_Vendedor) references Vendedores(ID_Vendedor);
 
+----------------------------------------------------------------	
+-- Phase 3: Commercial Extensions and Tax Calculations
+----------------------------------------------------------------
 
--- Adiciona campo para o desconto global (ex: 2.5%)
+-- Global order discount field (e.g. 2.50%)
 alter table Encomenda 
 add Desconto_Global decimal(5, 2) default 0;
 
--- Adicionar coluna para guardar o texto "50+10"
+-- Expression string for cascade discounts (e.g. "50+10")
 alter table Linha_Encomenda 
 add Desconto_Texto VARCHAR(20);
 
--- Adiciona a taxa de IVA (padrão 23%)
+-- Product-specific VAT rate (default 23.00%)
 alter table Material 
 add Taxa_IVA decimal(5, 2) default 23.00;

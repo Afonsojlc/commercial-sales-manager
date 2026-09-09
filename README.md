@@ -71,14 +71,21 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 
 ## 📸 Visual Showcase
 
-*(Screenshots can be placed under `docs/screenshots/` to preview key application modules)*
+### 1. Executive Sales Dashboard & Commission Ledger
+Real-time sales performance metrics, period revenue consolidation, live commission tracking, and chronological transaction history.
+![Executive Sales Dashboard](docs/screenshots/dashboard.png)
 
-| Module | Description | Preview |
-| :--- | :--- | :---: |
-| **Executive Dashboard** | Real-time sales metrics, period revenue, earned commissions, and chronological order history. | `docs/screenshots/dashboard.png` |
-| **Order Entry & Discounts** | Fast client lookup, predictive product autocomplete, and multi-tier compound discount formulas (`50+10`). | `docs/screenshots/nova-venda.png` |
-| **Corporate A4 Order Note** | Standardized A4 order sheet with company header, client tax dossier, item table, and signature block. | `docs/screenshots/detalhes-encomenda-a4.png` |
-| **Sales Team & Roles** | Multi-tab settings panel for enterprise profile, personal credentials, and sales team administration. | `docs/screenshots/definicoes-equipa.png` |
+### 2. Rapid Order Entry & Multi-Tier Cascading Discounts
+Fast client lookup, predictive material catalog autocomplete, and real-time computation of compounding B2B discounts (e.g. `50+10`).
+![Order Entry Form](docs/screenshots/nova-venda.png)
+
+### 3. Corporate A4 Order Note (Print & PDF Dispatch)
+Standardized print-ready European A4 order note with corporate branding, client dossier, itemized table, and formal signature block.
+![A4 Order Note Print Preview](docs/screenshots/detalhes-encomenda-a4.png)
+
+### 4. Sales Team Management & Access Control (RBAC)
+Dedicated administrative panel for managing commercial representatives, PIN credentials, activation status, and contractual commission rates.
+![Sales Team Management](docs/screenshots/definicoes-equipa.png)
 
 ---
 

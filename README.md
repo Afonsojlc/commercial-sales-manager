@@ -9,24 +9,29 @@
 [![IDE Visual Studio 2022](https://img.shields.io/badge/IDE-Visual_Studio_2022-C8A2C8?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> Enterprise Desktop **Sales Force Automation (SFA)** and B2B Order Management System engineered to streamline the daily operational workflow of Commercial Directors in technical distribution and electrical equipment industries.
+> Enterprise Desktop **Sales Force Automation (SFA)** and B2B Order Management System engineered to eliminate paper order forms and streamline the daily operational workflow of Commercial Directors and field sales representatives in technical distribution and electrical equipment industries.
 
 > [!NOTE]
-> **User Interface Localization:** While this technical documentation is in English, the application's user interface is localized in **European Portuguese (pt-PT)** to align directly with B2B commercial practices and regulatory terminology in Portugal.
+> **User Interface Localization:** While this technical documentation is in English, the application's user interface is localized in **European Portuguese (pt-PT)** to align directly with B2B commercial practices, tax rules, and regulatory terminology in Portugal.
 
 ---
 
-## 📖 Overview & Business Context
+## 📖 Overview & Real-World Business Problem
 
-In traditional B2B commercial distribution, a significant portion of sales transactions and contractual pricing agreements are still drafted manually: paper order pads (*carbon copy forms*), manual calculation of cascading tiered discounts, and delayed transcription into central ERP/billing systems.
+In technical B2B distribution and electrical equipment wholesale, many sales directors and field representatives still record customer purchase orders manually using physical **carbon copy paper pads**. Once written, orders are traditionally transmitted back to company headquarters by **fax** or by **photographing the paper slip with a smartphone and sending it over email**.
 
-**Commercial Sales Manager** digitizes and automates this end-to-end sales lifecycle:
-* **Instant Customer Identification:** Predictive lookup by Tax Identification Number (NIF), Company Name, Phone, or City.
-* **Technical Catalog & Real-Time Stock:** Live inventory verification with direct stock adjustment capabilities.
-* **Tiered Cascading Discount Engine:** Native support for B2B chained discount formulas (e.g., `50+10`, `40+5+2`), widely used by electrical material manufacturers.
-* **Corporate A4 Order Forms:** Automated generation of formal order notes ready for physical printing or digital PDF archival.
-* **Commission & Performance Tracking:** Executive dashboard delivering consolidated financial KPIs per period and instant CSV/Excel export.
-* **Intelligent Hybrid Operation:** Native high-performance connectivity with Microsoft SQL Server and seamless automatic fallback to an offline demonstration mode when off-network.
+This analog approach introduces severe operational bottlenecks:
+* **Transcription Delays & Illegibility:** Order lines and handwritten material references are frequently misread or delayed at the warehouse.
+* **Complex Tiered Discount Errors:** Calculating compound cascading manufacturer discounts (e.g. `50+10`, `40+5+2.5`) with a pocket calculator is prone to costly pricing discrepancies.
+* **Manual Commission Bookkeeping:** Commercial directors spend hours consolidating handwritten notes to verify monthly sales volumes and earned commissions.
+* **Zero Real-Time Stock Visibility:** Field agents cannot verify existing warehouse inventory during client negotiations.
+
+**Commercial Sales Manager** was developed from the ground up as a **real-world production solution** to solve this operational bottleneck:
+* **Digital Order Entry in Seconds:** Fast customer lookup by NIF, Company Name, Phone, or City.
+* **Automated Cascading Discount Engine:** Exact mathematical computation of multi-tier supplier discounts.
+* **Standardized Corporate A4 PDF Documents:** Automatic generation of formal order sheets with corporate headers, itemized breakdowns, client data, and signature confirmation ready for direct email dispatch to headquarters.
+* **Real-Time Commission & Performance Tracking:** Instant calculation of sales volume, order counts, and earned commissions per representative.
+* **Zero-Downtime Hybrid Operation:** Direct connectivity with the company's central Microsoft SQL Server database, plus a resilient offline demonstration sandbox when operating off-network.
 
 ---
 
@@ -46,9 +51,9 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 │  └── DetalhesEncomenda.razor                                │
 ├─────────────────────────────────────────────────────────────┤
 │                    C# Business Logic Layer                  │
-│  ├── Sessao.cs (User Authentication & Commission Terms)     │
+│  ├── Sessao.cs (User Authentication, Roles & Commission)    │
 │  ├── ConfiguracaoEmpresa.cs (JSON Company Profile Store)    │
-│  └── DatabaseConfig.cs (SQL Discovery & Connectivity)       │
+│  └── DatabaseConfig.cs (SQL Discovery & Auto-Fallback)      │
 ├──────────────────────────────┬──────────────────────────────┤
 │    Online Mode (Production)  │   Offline Mode (Demo Sandbox)│
 │    Microsoft.Data.SqlClient  │   DadosDemonstracao.cs       │
@@ -64,6 +69,19 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 
 ---
 
+## 📸 Visual Showcase
+
+*(Screenshots can be placed under `docs/screenshots/` to preview key application modules)*
+
+| Module | Description | Preview |
+| :--- | :--- | :---: |
+| **Executive Dashboard** | Real-time sales metrics, period revenue, earned commissions, and chronological order history. | `docs/screenshots/dashboard.png` |
+| **Order Entry & Discounts** | Fast client lookup, predictive product autocomplete, and multi-tier compound discount formulas (`50+10`). | `docs/screenshots/nova-venda.png` |
+| **Corporate A4 Order Note** | Standardized A4 order sheet with company header, client tax dossier, item table, and signature block. | `docs/screenshots/detalhes-encomenda-a4.png` |
+| **Sales Team & Roles** | Multi-tab settings panel for enterprise profile, personal credentials, and sales team administration. | `docs/screenshots/definicoes-equipa.png` |
+
+---
+
 ## ✨ Key Features
 
 ### ⚡ Ergonomic Dual Authentication
@@ -76,6 +94,7 @@ The application adopts a modern **Hybrid Desktop Architecture (.NET 8 + Blazor W
 * **Predictive Product Search:** Real-time keyword filtering across item codes and commercial descriptions.
 * **Rapid Stock Adjustments:** Contextual modal allowing immediate stock replenishment or deduction directly from the catalog or sales screens.
 * **Item Registration:** Add new items with category/family assignments, base retail prices (PVP), and customizable VAT rates.
+* **Role-Based Protection:** Stock updates and catalog alterations restricted to authorized managerial accounts (`Sessao.IsDiretorOuAdmin`).
 
 ### 🧮 Compounding Cascading Discount Engine
 In electrical distribution and technical B2B trade, supplier discounts are commonly expressed in cascading tiers rather than single flat rates:
@@ -100,7 +119,7 @@ $$\text{Effective Unit Price} = \text{PVP} \times (1 - d_1) \times (1 - d_2) \ti
   * Itemized table with material codes, descriptions, quantities, base prices, cascading discounts, and line totals.
   * Tax breakdown summary (Net Subtotal, Discounts, Total VAT, Total Payable).
   * Formal stamp and signature confirmation blocks.
-* Direct **Print to Physical Printer** and one-click export to **Microsoft Print to PDF**.
+* Direct **Print to Physical Printer** and one-click export to **Microsoft Print to PDF** for instant emailing to headquarters.
 
 ### 📊 Performance Dashboard & Executive Reporting
 * **Real-Time Sales Metrics:**
@@ -297,6 +316,41 @@ dotnet run --project SoftwareVendas/SoftwareVendas/SoftwareVendas.csproj
 
 ---
 
+## 🗺️ Deployment & Engineering Roadmap
+
+As the system moves from operational validation into broader commercial deployment across the sales team, the following infrastructure enhancements are planned:
+
+### 1. 🐳 Containerized Database Deployment (Docker & Docker Compose)
+* **Objective:** Enable one-command initialization of the SQL Server environment for branch offices, development environments, and cloud staging.
+* **Implementation Plan:**
+  * Provide a `docker-compose.yml` leveraging the official `mcr.microsoft.com/mssql/server:2022-latest` image.
+  * Embed an initialization entrypoint script that executes `database_schema.sql` and `database_seed.sql` on container startup.
+  * Eliminates manual SQL Server Express installations, allowing any machine to boot the backend via:
+    ```bash
+    docker compose up -d
+    ```
+
+### 2. ⚙️ Automated CI/CD Pipeline (Jenkins & GitHub Actions)
+* **Objective:** Ensure continuous quality validation, automated regression builds, and seamless packaging upon code push.
+* **Implementation Plan:**
+  * **Build & Validation:** Automate `dotnet restore` and `dotnet build` with strict error verification.
+  * **Test Suite:** Execute automated unit tests for compounding discount calculations and VAT rounding rules.
+  * **Automated Publishing:** Run `dotnet publish -c Release -r win-x64 --self-contained true` to produce clean standalone binaries automatically.
+
+### 3. 🚀 Automated Binary Distribution & Release Packaging
+* **Objective:** Provide a frictionless delivery mechanism for commercial agents and the sales director without requiring Git or development tooling.
+* **Implementation Plan:**
+  * Direct publishing of standalone `.exe` release archives (`CommercialSalesManager-vX.Y.Z-win-x64.zip`) through **GitHub Releases** and a dedicated release distribution repository.
+  * Inclusion of auto-update checks or automated MSI/InnoSetup desktop installers.
+
+### 4. 📧 Direct 1-Click Headquarters Email Dispatch
+* **Objective:** Completely replace faxes and smartphone photos with automated electronic order transmission.
+* **Implementation Plan:**
+  * Integration of an integrated SMTP/MAPI mailing action directly inside [`DetalhesEncomenda.razor`](file:///c:/Projetos/commercial-sales-manager/SoftwareVendas/SoftwareVendas/Components/Pages/DetalhesEncomenda.razor).
+  * With a single click on *"Enviar para a Empresa"*, the generated A4 PDF order sheet is automatically attached and dispatched directly to the central logistics and billing department.
+
+---
+
 ## 📁 Repository Structure
 
 ```
@@ -337,8 +391,8 @@ commercial-sales-manager/
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Author & Architecture
 
 **Afonso Carvalho**  
+* Software Developer & Systems Architect  
 * GitHub: [@Afonsojlc](https://github.com/Afonsojlc)  
-* Student in Information Systems Programming Technologies (*TPSI*) — IPMAIA

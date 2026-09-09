@@ -1,4 +1,4 @@
-﻿## Build results
+## Build results
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -23,3 +23,6 @@ bld/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+## Archives
+*.zip

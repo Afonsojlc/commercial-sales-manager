@@ -1,0 +1,14 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <div class="p-12 text-center text-slate-400 font-mono">
+                <h2 class="text-xl font-bold text-white mb-2">404 // Recurso Não Encontrado</h2>
+                <p class="text-xs">A rota ou vista solicitada não se encontra registada no sistema AJLC Soluctions.</p>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

@@ -1,0 +1,546 @@
+@page "/clientes"
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject NavigationManager NavManager
+
+<div class="p-6 sm:p-8 space-y-6 max-w-[1720px] mx-auto w-full min-h-full bg-slate-50">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Gestão de Clientes</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Contas Comerciais
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Fichas de clientes e histórico de compras. Dê <strong>duplo clique</strong> num cliente para iniciar logo uma nova encomenda.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            @if (Sessao.IsDiretorOuAdmin)
+            {
+                <button @onclick="AbrirModalNovoCliente" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Novo Cliente</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensagemAviso))
+    {
+        <div class="p-4 rounded-xl text-xs font-medium border flex items-center gap-2 @(mensagemAviso.Contains("sucesso") ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>@mensagemAviso</span>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
+        <select @bind="filtro" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 w-44">
+            <option value="Nome">Filtrar por Nome</option>
+            <option value="NIF">Filtrar por NIF</option>
+            <option value="Email">Filtrar por Email</option>
+            <option value="Localidade">Filtrar por Cidade</option>
+            <option value="Morada">Filtrar por Morada</option>
+        </select>
+        
+        <input @bind="termo" @bind:event="oninput" @onkeyup="Pesquisar" type="text" placeholder="Pesquisar por nome, NIF, cidade..." class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" />
+        
+        <button @onclick="Pesquisar" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span>Pesquisar</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Lista de Clientes -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Listagem de Contas</h2>
+                    <span class="text-xs text-slate-400 font-normal">&bull; Duplo clique cria nova encomenda</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                    @(dtClientes?.Rows.Count ?? 0) cliente(s)
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-[11px] uppercase font-bold text-slate-600 border-b border-slate-200">
+                            <th class="py-3 px-3.5">ID</th>
+                            <th class="py-3 px-3.5">Nome da Empresa</th>
+                            <th class="py-3 px-3.5">NIF</th>
+                            <th class="py-3 px-3.5">Email</th>
+                            <th class="py-3 px-3.5">Telefone</th>
+                            <th class="py-3 px-3.5">Localidade</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        @if (dtClientes != null && dtClientes.Rows.Count > 0)
+                        {
+                            @foreach (DataRow row in dtClientes.Rows)
+                            {
+                                string id = row["ID_Cliente"].ToString()!;
+                                bool isSelected = (id == idClienteSelecionado);
+                                <tr @onclick="() => SelecionarCliente(id)" @ondblclick="() => IniciarVendaParaCliente(id)" class="cursor-pointer transition-colors select-none @(isSelected ? "bg-blue-50/90 font-medium" : "hover:bg-slate-50")" title="Clique para histórico. Duplo clique para iniciar encomenda.">
+                                    <td class="py-3.5 px-3.5 font-mono font-bold text-slate-500">@row["ID_Cliente"]</td>
+                                    <td class="py-3.5 px-3.5 font-bold text-slate-900">@row["Nome_Cliente"]</td>
+                                    <td class="py-3.5 px-3.5 font-mono text-slate-700 font-semibold">@row["NIF"]</td>
+                                    <td class="py-3.5 px-3.5 text-slate-600">@row["Email"]</td>
+                                    <td class="py-3.5 px-3.5 font-mono text-slate-600">@row["Telefone"]</td>
+                                    <td class="py-3.5 px-3.5 text-slate-600">@row["Cidade"]</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-10 text-slate-400 font-mono">Nenhum cliente encontrado.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Histórico do Cliente -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Histórico de Compras</h2>
+                    @if (!string.IsNullOrEmpty(idClienteSelecionado))
+                    {
+                        <span class="text-[11px] font-mono text-blue-700 font-semibold">
+                            Cliente #@idClienteSelecionado
+                        </span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(idClienteSelecionado))
+                {
+                    <button @onclick="() => IniciarVendaParaCliente(idClienteSelecionado)" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1" title="Criar Nova Encomenda para este Cliente">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Encomendar</span>
+                    </button>
+                }
+            </div>
+            <div class="p-4 overflow-y-auto space-y-2.5 max-h-[600px]">
+                @if (string.IsNullOrEmpty(idClienteSelecionado))
+                {
+                    <div class="text-center py-16 text-slate-400 text-xs font-medium">
+                        <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                        Selecione um cliente para ver o histórico.
+                    </div>
+                }
+                else if (dtHistorico != null && dtHistorico.Rows.Count > 0)
+                {
+                    @foreach (DataRow row in dtHistorico.Rows)
+                    {
+                        var ne = row["Nº Venda"].ToString();
+                        <div @ondblclick="() => AbrirEncomenda(ne!)" class="bg-slate-50 p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition flex justify-between items-center text-xs cursor-pointer select-none" title="Dê duplo clique para abrir a encomenda #@ne">
+                            <div>
+                                <p class="font-mono font-bold text-slate-900">Encomenda #@row["Nº Venda"]</p>
+                                <p class="text-[11px] font-mono text-slate-500 mt-0.5">@Convert.ToDateTime(row["Data"]).ToString("dd/MM/yyyy")</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-mono font-bold text-slate-900 text-sm">€ @Convert.ToDecimal(row["Total (€)"]).ToString("N2")</p>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                                    @row["Estado"]
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-slate-400 text-center py-16 text-xs font-medium">Sem encomendas registadas para este cliente.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Cliente -->
+    @if (mostrarModalNovoCliente)
+    {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-7 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
+                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">Registar Novo Cliente</h2>
+                    <button @onclick="FecharModalNovoCliente" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(erroModal))
+                {
+                    <div class="p-3 mb-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold">
+                        @erroModal
+                    </div>
+                }
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">ID Cliente *</label>
+                        <input type="text" @bind="novoIdCliente" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">NIF *</label>
+                        <input type="text" @bind="novoNIF" placeholder="Ex: 501234567" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-600 mb-1">Nome do Cliente / Razão Social *</label>
+                        <input type="text" @bind="novoNome" placeholder="Ex: ElectroLuz Lda" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-medium" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Email Comercial *</label>
+                        <input type="email" @bind="novoEmail" placeholder="contacto@empresa.pt" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Telefone / Telemóvel *</label>
+                        <input type="text" @bind="novoTelefone" placeholder="Ex: 210123456" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-600 mb-1">Morada Completa *</label>
+                        <input type="text" @bind="novaMorada" placeholder="Rua, Número, Andar..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Código Postal</label>
+                        <input type="text" @bind="novoCodigoPostal" placeholder="Ex: 4000-001" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Cidade / Localidade</label>
+                        <input type="text" @bind="novaCidade" placeholder="Ex: Porto" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800" />
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end gap-3">
+                    <button @onclick="FecharModalNovoCliente" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                        Cancelar
+                    </button>
+                    <button @onclick="GravarNovoCliente" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm transition">
+                        Guardar Cliente
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    #region Filter & Component State
+
+    private string filtro = "Nome";
+    private string termo = "";
+    private DataTable? dtClientes;
+    private DataTable? dtHistorico;
+    private string idClienteSelecionado = "";
+    private string mensagemAviso = "";
+
+    // New Customer modal form buffer
+    private bool mostrarModalNovoCliente = false;
+    private string novoIdCliente = "";
+    private string novoNome = "";
+    private string novoNIF = "";
+    private string novoEmail = "";
+    private string novoTelefone = "";
+    private string novaMorada = "";
+    private string novoCodigoPostal = "";
+    private string novaCidade = "";
+    private string erroModal = "";
+
+    protected override void OnInitialized()
+    {
+        Pesquisar();
+    }
+
+    #endregion
+
+    #region Data Retrieval & Customer Search
+
+    private void Pesquisar()
+    {
+        idClienteSelecionado = "";
+        dtHistorico = null;
+        dtClientes = new DataTable();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            dtClientes.Columns.Add("ID_Cliente", typeof(string));
+            dtClientes.Columns.Add("Nome_Cliente", typeof(string));
+            dtClientes.Columns.Add("NIF", typeof(string));
+            dtClientes.Columns.Add("Email", typeof(string));
+            dtClientes.Columns.Add("Telefone", typeof(string));
+            dtClientes.Columns.Add("Cidade", typeof(string));
+
+            var lista = DadosDemonstracao.ObterClientes(termo);
+            foreach (var c in lista)
+            {
+                dtClientes.Rows.Add(c.ID_Cliente, c.Nome_Cliente, c.NIF, c.Email, c.Telefone, c.Cidade);
+            }
+            return;
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "SELECT ID_Cliente, Nome_Cliente, NIF, Email, Telefone, Cidade FROM Clientes";
+
+                if (!string.IsNullOrWhiteSpace(termo))
+                {
+                    string coluna = "Nome_Cliente";
+                    if (filtro == "NIF") coluna = "NIF";
+                    else if (filtro == "Email") coluna = "Email";
+                    else if (filtro == "Localidade") coluna = "Cidade";
+                    else if (filtro == "Morada") coluna = "Morada_Completa";
+
+                    query += $" WHERE {coluna} LIKE @t";
+                }
+
+                query += " ORDER BY Nome_Cliente ASC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    if (!string.IsNullOrWhiteSpace(termo))
+                    {
+                        cmd.Parameters.AddWithValue("@t", "%" + termo + "%");
+                    }
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    dtClientes = new DataTable();
+                    da.Fill(dtClientes);
+                }
+            }
+            catch (Exception ex)
+            {
+                mensagemAviso = "Erro ao pesquisar clientes: " + ex.Message;
+            }
+        }
+    }
+
+    private void SelecionarCliente(string id)
+    {
+        idClienteSelecionado = id;
+        CarregarHistorico();
+    }
+
+    private void CarregarHistorico()
+    {
+        dtHistorico = new DataTable();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            dtHistorico.Columns.Add("Nº Venda", typeof(int));
+            dtHistorico.Columns.Add("Data", typeof(DateTime));
+            dtHistorico.Columns.Add("Total (€)", typeof(decimal));
+            dtHistorico.Columns.Add("Estado", typeof(string));
+            dtHistorico.Columns.Add("Desconto (%)", typeof(decimal));
+
+            var encs = DadosDemonstracao.ObterEncomendas().Where(e => e.ID_Cliente == idClienteSelecionado);
+            foreach (var e in encs)
+            {
+                dtHistorico.Rows.Add(e.Numero_Encomenda, e.Data_Encomenda, e.Valor_Total, e.Estado, e.Desconto_Global);
+            }
+            return;
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = @"SELECT Numero_Encomenda as 'Nº Venda', Data_Encomenda as 'Data', 
+                                Valor_Total as 'Total (€)', Estado, Desconto_Global as 'Desconto (%)'
+                                FROM Encomenda WHERE ID_Cliente = @id ORDER BY Data_Encomenda DESC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", idClienteSelecionado);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    dtHistorico = new DataTable();
+                    da.Fill(dtHistorico);
+                }
+            }
+            catch (Exception ex)
+            {
+                mensagemAviso = "Erro ao carregar histórico: " + ex.Message;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Customer Creation & Modal Management
+
+    private void AbrirModalNovoCliente()
+    {
+        erroModal = "";
+        novoNome = "";
+        novoNIF = "";
+        novoEmail = "";
+        novoTelefone = "";
+        novaMorada = "";
+        novoCodigoPostal = "";
+        novaCidade = "";
+        
+        // Calcular Próximo ID Sequencial (ex: CLI-004)
+        novoIdCliente = ObterProximoIdCliente();
+        mostrarModalNovoCliente = true;
+    }
+
+    private string ObterProximoIdCliente()
+    {
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            int maxDemo = 0;
+            foreach (var c in DadosDemonstracao.ObterClientes())
+            {
+                string numPart = c.ID_Cliente.Replace("CLI-", "").Trim();
+                if (int.TryParse(numPart, out int num) && num > maxDemo) maxDemo = num;
+            }
+            return $"CLI-{(maxDemo + 1):D3}";
+        }
+
+        int maxNumero = 0;
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "SELECT ID_Cliente FROM Clientes WHERE ID_Cliente LIKE 'CLI-%'";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                using (SqlDataReader rd = cmd.ExecuteReader())
+                {
+                    while (rd.Read())
+                    {
+                        string idStr = rd["ID_Cliente"].ToString() ?? "";
+                        string numPart = idStr.Replace("CLI-", "").Trim();
+                        if (int.TryParse(numPart, out int num) && num > maxNumero)
+                        {
+                            maxNumero = num;
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+        return $"CLI-{(maxNumero + 1):D3}";
+    }
+
+    private void FecharModalNovoCliente()
+    {
+        mostrarModalNovoCliente = false;
+    }
+
+    private void GravarNovoCliente()
+    {
+        erroModal = "";
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            erroModal = "Apenas administradores e diretores comerciais têm permissão para registar novos clientes.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(novoIdCliente) || 
+            string.IsNullOrWhiteSpace(novoNome) || 
+            string.IsNullOrWhiteSpace(novoNIF) || 
+            string.IsNullOrWhiteSpace(novaMorada) ||
+            string.IsNullOrWhiteSpace(novoEmail) ||
+            string.IsNullOrWhiteSpace(novoTelefone))
+        {
+            erroModal = "Por favor preencha todos os campos obrigatórios assinalados com *.";
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            DadosDemonstracao.AdicionarCliente(new DadosDemonstracao.ClienteDemo
+            {
+                ID_Cliente = novoIdCliente.Trim(),
+                Nome_Cliente = novoNome.Trim(),
+                NIF = novoNIF.Trim(),
+                Morada_Completa = novaMorada.Trim(),
+                Codigo_Postal = novoCodigoPostal.Trim(),
+                Cidade = novaCidade.Trim(),
+                Email = novoEmail.Trim(),
+                Telefone = novoTelefone.Trim()
+            });
+            mostrarModalNovoCliente = false;
+            Pesquisar();
+            return;
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                // Verificar se ID ou NIF já existem
+                string queryCheck = "SELECT COUNT(*) FROM Clientes WHERE ID_Cliente = @id OR NIF = @nif";
+                using (SqlCommand cmdCheck = new SqlCommand(queryCheck, con))
+                {
+                    cmdCheck.Parameters.AddWithValue("@id", novoIdCliente.Trim());
+                    cmdCheck.Parameters.AddWithValue("@nif", novoNIF.Trim());
+                    int existe = Convert.ToInt32(cmdCheck.ExecuteScalar());
+                    if (existe > 0)
+                    {
+                        erroModal = "Já existe um cliente registado com este ID ou NIF.";
+                        return;
+                    }
+                }
+
+                string queryInsert = @"
+                    INSERT INTO Clientes 
+                    (ID_Cliente, Nome_Cliente, NIF, Morada_Completa, Codigo_Postal, Cidade, Email, Telefone)
+                    VALUES 
+                    (@id, @nome, @nif, @morada, @cp, @cidade, @email, @tel)";
+
+                using (SqlCommand cmd = new SqlCommand(queryInsert, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", novoIdCliente.Trim());
+                    cmd.Parameters.AddWithValue("@nome", novoNome.Trim());
+                    cmd.Parameters.AddWithValue("@nif", novoNIF.Trim());
+                    cmd.Parameters.AddWithValue("@morada", novaMorada.Trim());
+                    cmd.Parameters.AddWithValue("@cp", string.IsNullOrWhiteSpace(novoCodigoPostal) ? DBNull.Value : novoCodigoPostal.Trim());
+                    cmd.Parameters.AddWithValue("@cidade", string.IsNullOrWhiteSpace(novaCidade) ? DBNull.Value : novaCidade.Trim());
+                    cmd.Parameters.AddWithValue("@email", novoEmail.Trim());
+                    cmd.Parameters.AddWithValue("@tel", novoTelefone.Trim());
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                mostrarModalNovoCliente = false;
+                mensagemAviso = $"Cliente '{novoNome}' ({novoIdCliente}) registado com sucesso!";
+                Pesquisar();
+                SelecionarCliente(novoIdCliente.Trim());
+            }
+            catch (Exception ex)
+            {
+                erroModal = "Erro ao gravar cliente: " + ex.Message;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Navigation & Quick Actions
+
+    private void IniciarVendaParaCliente(string id)
+    {
+        if (!string.IsNullOrEmpty(id))
+        {
+            NavManager.NavigateTo($"/novavenda?cliente={id}");
+        }
+    }
+
+    private void AbrirEncomenda(string ne)
+    {
+        if (!string.IsNullOrEmpty(ne))
+        {
+            NavManager.NavigateTo($"/encomendas/{ne}");
+        }
+    }
+
+    #endregion
+}

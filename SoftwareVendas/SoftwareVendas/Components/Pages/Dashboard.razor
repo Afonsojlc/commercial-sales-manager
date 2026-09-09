@@ -1,0 +1,911 @@
+@page "/dashboard"
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+@using System.Data
+@using System.Text
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<style>
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printableReport, #printableReport * {
+            visibility: visible;
+        }
+        #printableReport {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 24px;
+            margin: 0;
+            background: white !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="p-6 sm:p-8 space-y-6 max-w-[1720px] mx-auto w-full min-h-full bg-slate-50">
+    
+    <!-- 1. Executive Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 no-print">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Dashboard de Vendas</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Painel Executivo
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Comercial: <strong class="text-slate-800">@Sessao.Nome (@Sessao.Cargo)</strong> &bull; Taxa de Comissão: <strong class="text-blue-700 font-mono font-bold">@Sessao.PercentagemComissao.ToString("N1")%</strong>
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button @onclick="ExportarExcelDashboard" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 shadow-sm transition flex items-center gap-2" title="Exportar vendas do período para Excel (.csv)">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Exportar Excel</span>
+            </button>
+
+            <button @onclick="AbrirModalRelatorio" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Emitir Relatório Executivo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. Dashboard Period Filter Bar -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4 no-print">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 mr-1">Período:</span>
+            
+            <div class="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+                <button @onclick='() => SetFiltroPeriodo("mes")' class="px-3 py-1.5 rounded-lg transition font-semibold @(filtroPeriodoDashboard == "mes" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    Este Mês
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("hoje")' class="px-3 py-1.5 rounded-lg transition font-semibold @(filtroPeriodoDashboard == "hoje" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    Hoje
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("ano")' class="px-3 py-1.5 rounded-lg transition font-semibold @(filtroPeriodoDashboard == "ano" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    Este Ano
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("tudo")' class="px-3 py-1.5 rounded-lg transition font-semibold @(filtroPeriodoDashboard == "tudo" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    Todo o Histórico
+                </button>
+                <button @onclick='() => SetFiltroPeriodo("calendario")' class="px-3 py-1.5 rounded-lg transition font-semibold @(filtroPeriodoDashboard == "calendario" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900")">
+                    Calendário
+                </button>
+            </div>
+        </div>
+
+        @if (filtroPeriodoDashboard == "calendario")
+        {
+            <div class="flex items-center space-x-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-500">De:</span>
+                    <input type="date" @bind="dashboardDataInicio" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-mono" />
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-500">Até:</span>
+                    <input type="date" @bind="dashboardDataFim" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-mono" />
+                </div>
+                <button @onclick="CarregarDashboard" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-bold transition">
+                    Filtrar
+                </button>
+            </div>
+        }
+
+        <div class="text-xs font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+            Período ativo: <strong class="text-blue-700 font-bold">@periodoDescricaoDashboard</strong>
+        </div>
+    </div>
+
+    <!-- 3. Clean Enterprise KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 no-print">
+        
+        <!-- Metric 1: Faturado no Período -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Faturado no Período</span>
+                    <span class="p-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    </span>
+                </div>
+                <div class="mb-1">
+                    <h3 class="text-2xl lg:text-3xl font-black font-mono text-slate-900 tracking-tight">€ @totalVendasMes.ToString("N2")</h3>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Vendas comerciais confirmadas
+                </p>
+            </div>
+        </div>
+        
+        <!-- Metric 2: Comissão a Receber -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-emerald-300 transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Comissão a Receber</span>
+                    <span class="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9h6"/></svg>
+                    </span>
+                </div>
+                <div class="mb-1">
+                    <h3 class="text-2xl lg:text-3xl font-black font-mono text-emerald-600 tracking-tight">
+                        € @totalComissao.ToString("N2")
+                    </h3>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mt-2">
+                    Taxa calculada: <strong class="text-emerald-700 font-mono">@Sessao.PercentagemComissao.ToString("N1")%</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Metric 3: Total de Clientes -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total de Clientes</span>
+                    <span class="p-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </span>
+                </div>
+                <div class="mb-1">
+                    <h3 class="text-2xl lg:text-3xl font-black font-mono text-slate-900 tracking-tight">@totalClientes</h3>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mt-2">Clientes ativos na base SQL Server</p>
+            </div>
+        </div>
+
+        <!-- Metric 4: Encomendas no Período -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-amber-300 transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Encomendas no Período</span>
+                    <span class="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </span>
+                </div>
+                <div class="mb-1">
+                    <h3 class="text-2xl lg:text-3xl font-black font-mono text-slate-900 tracking-tight">@totalEncomendasMes</h3>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 mt-2">Volume total de notas emitidas</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Clean Data Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 border-b border-slate-200">
+            <div>
+                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Histórico de Vendas & Comissões</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Dê <strong>duplo clique</strong> numa linha para ver a nota de encomenda completa.</p>
+            </div>
+            <span class="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 self-start sm:self-auto">
+                @(vendasRecentes.Count) registo(s)
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-[11px] uppercase font-bold text-slate-600 border-b border-slate-200">
+                        <th class="py-3 px-4">Nº Encomenda</th>
+                        <th class="py-3 px-4">Data</th>
+                        <th class="py-3 px-4">Cliente</th>
+                        <th class="py-3 px-4 text-center">Estado</th>
+                        <th class="py-3 px-4 text-right">Valor Total</th>
+                        <th class="py-3 px-4 text-right">Comissão (@Sessao.PercentagemComissao.ToString("N0")%)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    @if (vendasRecentes.Count > 0)
+                    {
+                        @foreach (var v in vendasRecentes)
+                        {
+                            <tr @ondblclick="() => AbrirEncomenda(v.NE)" class="hover:bg-blue-50/60 transition-colors cursor-pointer group select-none" title="Dê duplo clique para abrir a nota #@v.NE">
+                                <td class="py-3.5 px-4 font-mono font-bold text-slate-900 group-hover:text-blue-700">
+                                    #@v.NE
+                                </td>
+                                <td class="py-3.5 px-4 font-mono text-slate-600">
+                                    @v.Data.ToString("dd/MM/yyyy")
+                                </td>
+                                <td class="py-3.5 px-4 font-semibold text-slate-900">
+                                    @v.Cliente
+                                </td>
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (v.Estado == "FECHADA")
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            FECHADA
+                                        </span>
+                                    }
+                                    else if (v.Estado == "CANCELADA")
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            CANCELADA
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                            @v.Estado
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-sm">
+                                    € @v.ValorTotal.ToString("N2")
+                                </td>
+                                <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 text-sm">
+                                    + € @v.Comissao.ToString("N2")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-slate-400 text-xs font-mono">
+                                Sem registo de vendas para o período selecionado.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 5. Modal Relatório Executivo -->
+    @if (mostrarModalRelatorio)
+    {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-4xl w-full p-6 sm:p-8 max-h-[95vh] overflow-y-auto shadow-2xl border border-slate-200">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-6 no-print">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 tracking-tight">Gerar Relatório de Desempenho</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Selecione o período para pré-visualizar, imprimir ou exportar o relatório executivo.</p>
+                    </div>
+                    <button @onclick="FecharModalRelatorio" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition text-xl leading-none">&times;</button>
+                </div>
+
+                <!-- Filtros do Relatório (no-print) -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
+                    <div class="flex items-center space-x-3">
+                        <label class="block text-xs font-bold text-slate-600">Período:</label>
+                        <select @bind="periodoSelecionado" @bind:after="OnMudarPeriodoRelatorio" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none">
+                            <option value="mes">Este Mês</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="ano">Este Ano</option>
+                            <option value="tudo">Todo o Histórico</option>
+                            <option value="calendario">Escolher no Calendário (Datas)</option>
+                        </select>
+                    </div>
+
+                    @if (periodoSelecionado == "calendario")
+                    {
+                        <div class="flex items-center space-x-3 bg-white p-2 rounded-lg border border-slate-200">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold text-slate-500">De:</span>
+                                <input type="date" @bind="relatorioDataInicio" class="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-mono" />
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold text-slate-500">Até:</span>
+                                <input type="date" @bind="relatorioDataFim" class="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-mono" />
+                            </div>
+                            <button @onclick="GerarRelatorio" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1 rounded text-xs font-bold transition">
+                                Filtrar Relatório
+                            </button>
+                        </div>
+                    }
+
+                    <div class="flex items-center space-x-2">
+                        <button @onclick="ExportarExcelRelatorio" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs shadow-sm flex items-center gap-1.5 transition">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Exportar Excel</span>
+                        </button>
+                        <button @onclick="ImprimirRelatorio" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center gap-2 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            <span>Imprimir Relatório (A4)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Documento Formal do Relatório (Printable Area) -->
+                <div id="printableReport" class="p-6 sm:p-8 border rounded-xl border-slate-200 bg-white text-slate-900">
+                    <!-- Cabeçalho Oficial -->
+                    <div class="border-b-2 border-slate-800 pb-4 mb-5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h1 class="text-2xl font-black text-slate-900 tracking-wide uppercase">RELATÓRIO FINANCEIRO & COMISSÕES</h1>
+                                <p class="text-xs font-medium text-slate-500 mt-0.5">@ConfiguracaoEmpresa.Subtitulo</p>
+                            </div>
+                            <div class="text-right">
+                                <h2 class="text-lg font-bold text-blue-700">@ConfiguracaoEmpresa.NomeEmpresa</h2>
+                                <p class="text-xs text-slate-500">Data de Emissão: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meta Informações -->
+                    <div class="grid grid-cols-3 gap-4 p-3 bg-slate-50 rounded-lg text-xs mb-5 border border-slate-200">
+                        <div>
+                            <span class="text-slate-500">Comercial:</span>
+                            <strong class="text-slate-900 ml-1">@Sessao.Nome (@Sessao.Cargo)</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Taxa de Comissão:</span>
+                            <strong class="text-blue-700 ml-1">@Sessao.PercentagemComissao.ToString("N1")%</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Período:</span>
+                            <strong class="text-slate-900 ml-1">@periodoDescricaoRelatorio</strong>
+                        </div>
+                    </div>
+
+                    <!-- Cards Resumo no Relatório -->
+                    <div class="grid grid-cols-4 gap-4 mb-6 text-center">
+                        <div class="p-3 border rounded-lg bg-slate-50">
+                            <p class="text-[10px] uppercase font-bold text-slate-500">Total Faturado</p>
+                            <p class="text-lg font-black text-slate-900 mt-1 font-mono">€ @relatorioTotalFaturado.ToString("N2")</p>
+                        </div>
+                        <div class="p-3 border rounded-lg bg-emerald-50 border-emerald-200">
+                            <p class="text-[10px] uppercase font-bold text-emerald-700">Comissões Acumuladas</p>
+                            <p class="text-lg font-black text-emerald-700 mt-1 font-mono">€ @relatorioTotalComissao.ToString("N2")</p>
+                        </div>
+                        <div class="p-3 border rounded-lg bg-slate-50">
+                            <p class="text-[10px] uppercase font-bold text-slate-500">Nº Encomendas</p>
+                            <p class="text-lg font-black text-slate-900 mt-1 font-mono">@relatorioTotalQtd</p>
+                        </div>
+                        <div class="p-3 border rounded-lg bg-slate-50">
+                            <p class="text-[10px] uppercase font-bold text-slate-500">Ticket Médio</p>
+                            <p class="text-lg font-black text-blue-700 mt-1 font-mono">€ @(relatorioTotalQtd > 0 ? (relatorioTotalFaturado / relatorioTotalQtd).ToString("N2") : "0.00")</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Detalhe -->
+                    <table class="w-full text-left border-collapse border border-slate-200 text-xs mb-6">
+                        <thead class="bg-slate-100 font-bold text-slate-700">
+                            <tr>
+                                <th class="p-2.5 border-b border-slate-200">Nº</th>
+                                <th class="p-2.5 border-b border-slate-200">Data</th>
+                                <th class="p-2.5 border-b border-slate-200">Cliente</th>
+                                <th class="p-2.5 border-b border-slate-200">Estado</th>
+                                <th class="p-2.5 border-b border-slate-200 text-right">Valor Total</th>
+                                <th class="p-2.5 border-b border-slate-200 text-right">Comissão</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @if (relatorioLinhas.Count > 0)
+                            {
+                                @foreach (var r in relatorioLinhas)
+                                {
+                                    <tr>
+                                        <td class="p-2.5 font-mono font-bold">#@r.NE</td>
+                                        <td class="p-2.5 font-mono">@r.Data.ToString("dd/MM/yyyy")</td>
+                                        <td class="p-2.5 font-semibold text-slate-800">@r.Cliente</td>
+                                        <td class="p-2.5">@r.Estado</td>
+                                        <td class="p-2.5 text-right font-mono font-bold text-slate-900">€ @r.ValorTotal.ToString("N2")</td>
+                                        <td class="p-2.5 text-right font-mono font-bold text-emerald-700">€ @r.Comissao.ToString("N2")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="p-4 text-center text-slate-400">Nenhuma transação registada para este período.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <!-- Rodapé Oficial do Relatório -->
+                    <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between text-xs text-slate-400">
+                        <div>Documento emitido por computador &bull; @ConfiguracaoEmpresa.NomeEmpresa</div>
+                        <div>Página 1 de 1</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end no-print">
+                    <button @onclick="FecharModalRelatorio" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    #region Data Models
+    public class VendaGanhosModel
+    {
+        public int NE { get; set; }
+        public DateTime Data { get; set; }
+        public string Cliente { get; set; } = "";
+        public string Estado { get; set; } = "";
+        public decimal ValorTotal { get; set; }
+        public decimal Comissao { get; set; }
+    }
+    #endregion
+
+    #region Component State & Period Filters
+    private string filtroPeriodoDashboard = "mes";
+    private string periodoDescricaoDashboard = "Este Mês";
+    private DateTime dashboardDataInicio = DateTime.Today.AddDays(-30);
+    private DateTime dashboardDataFim = DateTime.Today;
+
+    private decimal totalVendasMes = 0;
+    private decimal totalComissao = 0;
+    private int totalClientes = 0;
+    private int totalEncomendasMes = 0;
+
+    private List<VendaGanhosModel> vendasRecentes = new List<VendaGanhosModel>();
+
+    private bool mostrarModalRelatorio = false;
+    private string periodoSelecionado = "mes";
+    private string periodoDescricaoRelatorio = "Este Mês";
+    private DateTime relatorioDataInicio = DateTime.Today.AddDays(-30);
+    private DateTime relatorioDataFim = DateTime.Today;
+    private decimal relatorioTotalFaturado = 0;
+    private decimal relatorioTotalComissao = 0;
+    private int relatorioTotalQtd = 0;
+    private List<VendaGanhosModel> relatorioLinhas = new List<VendaGanhosModel>();
+    #endregion
+
+    #region Lifecycle Hooks
+    protected override void OnInitialized()
+    {
+        OnMudarPeriodoDashboard();
+    }
+    #endregion
+
+    #region Dashboard Metrics & Sales Loading
+    private void SetFiltroPeriodo(string periodo)
+    {
+        filtroPeriodoDashboard = periodo;
+        OnMudarPeriodoDashboard();
+    }
+
+    private void OnMudarPeriodoDashboard()
+    {
+        DateTime hoje = DateTime.Today;
+        if (filtroPeriodoDashboard == "hoje")
+        {
+            periodoDescricaoDashboard = "Hoje (" + hoje.ToString("dd/MM/yyyy") + ")";
+        }
+        else if (filtroPeriodoDashboard == "mes")
+        {
+            periodoDescricaoDashboard = "Este Mês (" + hoje.ToString("MMMM yyyy") + ")";
+        }
+        else if (filtroPeriodoDashboard == "ano")
+        {
+            periodoDescricaoDashboard = "Este Ano (" + hoje.Year + ")";
+        }
+        else if (filtroPeriodoDashboard == "calendario")
+        {
+            periodoDescricaoDashboard = $"{dashboardDataInicio:dd/MM/yyyy} até {dashboardDataFim:dd/MM/yyyy}";
+        }
+        else
+        {
+            periodoDescricaoDashboard = "Todo o Histórico";
+        }
+        CarregarDashboard();
+    }
+
+    /// <summary>
+    /// Loads sales totals, commission calculations, and recent sales for the selected period.
+    /// </summary>
+    private void CarregarDashboard()
+    {
+        totalVendasMes = 0;
+        totalComissao = 0;
+        totalEncomendasMes = 0;
+        vendasRecentes.Clear();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            var encs = DadosDemonstracao.ObterEncomendas();
+            if (filtroPeriodoDashboard == "hoje")
+                encs = encs.Where(e => e.Data_Encomenda.Date == DateTime.Today).ToList();
+            else if (filtroPeriodoDashboard == "mes")
+                encs = encs.Where(e => e.Data_Encomenda.Month == DateTime.Today.Month && e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (filtroPeriodoDashboard == "ano")
+                encs = encs.Where(e => e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (filtroPeriodoDashboard == "calendario")
+                encs = encs.Where(e => e.Data_Encomenda.Date >= dashboardDataInicio.Date && e.Data_Encomenda.Date <= dashboardDataFim.Date).ToList();
+
+            var encsAtivas = encs.Where(e => e.Estado != "CANCELADA").ToList();
+            totalVendasMes = encsAtivas.Sum(e => e.Valor_Total);
+            totalEncomendasMes = encsAtivas.Count;
+            totalComissao = totalVendasMes * (Sessao.PercentagemComissao / 100m);
+            totalClientes = DadosDemonstracao.ObterClientes().Count;
+
+            decimal taxa = Sessao.PercentagemComissao / 100m;
+            foreach (var e in encs)
+            {
+                vendasRecentes.Add(new VendaGanhosModel
+                {
+                    NE = e.Numero_Encomenda,
+                    Data = e.Data_Encomenda,
+                    Cliente = e.NomeCliente,
+                    Estado = e.Estado,
+                    ValorTotal = e.Valor_Total,
+                    Comissao = e.Estado == "CANCELADA" ? 0m : e.Valor_Total * taxa
+                });
+            }
+            StateHasChanged();
+            return;
+        }
+
+        string filtroData = "";
+        if (filtroPeriodoDashboard == "hoje")
+        {
+            filtroData = "AND CAST(E.Data_Encomenda AS DATE) = CAST(GETDATE() AS DATE)";
+        }
+        else if (filtroPeriodoDashboard == "mes")
+        {
+            filtroData = "AND MONTH(E.Data_Encomenda) = MONTH(GETDATE()) AND YEAR(E.Data_Encomenda) = YEAR(GETDATE())";
+        }
+        else if (filtroPeriodoDashboard == "ano")
+        {
+            filtroData = "AND YEAR(E.Data_Encomenda) = YEAR(GETDATE())";
+        }
+        else if (filtroPeriodoDashboard == "calendario")
+        {
+            filtroData = "AND CAST(E.Data_Encomenda AS DATE) BETWEEN @dI AND @dF";
+            periodoDescricaoDashboard = $"{dashboardDataInicio:dd/MM/yyyy} até {dashboardDataFim:dd/MM/yyyy}";
+        }
+        else
+        {
+            filtroData = ""; // Todo o histórico (sem restrição de data)
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                
+                int isDiretor = Sessao.IsDiretorOuAdmin ? 1 : 0;
+
+                // 1. Period sales and commissions (excluding canceled orders)
+                string queryVendas = $@"
+                    SELECT SUM(E.Valor_Total) as Total_Vendas, COUNT(E.Numero_Encomenda) as Num_Vendas
+                    FROM Encomenda E
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) 
+                      AND ISNULL(E.Estado, '') <> 'CANCELADA' {filtroData}";
+
+                using (SqlCommand cmd = new SqlCommand(queryVendas, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmd.Parameters.AddWithValue("@isDiretor", isDiretor);
+                    if (filtroPeriodoDashboard == "calendario")
+                    {
+                        cmd.Parameters.AddWithValue("@dI", dashboardDataInicio.Date);
+                        cmd.Parameters.AddWithValue("@dF", dashboardDataFim.Date);
+                    }
+
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        if (rd.Read())
+                        {
+                            totalVendasMes = rd["Total_Vendas"] != DBNull.Value ? Convert.ToDecimal(rd["Total_Vendas"]) : 0;
+                            totalEncomendasMes = rd["Num_Vendas"] != DBNull.Value ? Convert.ToInt32(rd["Num_Vendas"]) : 0;
+                            totalComissao = totalVendasMes * (Sessao.PercentagemComissao / 100m);
+                        }
+                    }
+                }
+
+                // 2. Active client count
+                string queryClientes = "SELECT COUNT(*) FROM Clientes";
+                using (SqlCommand cmd = new SqlCommand(queryClientes, con))
+                {
+                    object? result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        totalClientes = Convert.ToInt32(result);
+                    }
+                }
+
+                // 3. Recent orders list
+                string queryGrid = $@"
+                    SELECT TOP 50 
+                        E.Numero_Encomenda,
+                        E.Data_Encomenda,
+                        ISNULL(C.Nome_Cliente, 'Cliente Não Identificado') AS Nome_Cliente,
+                        ISNULL(E.Estado, 'Pendente') AS Estado,
+                        ISNULL(E.Valor_Total, 0) AS Valor_Total
+                    FROM Encomenda E
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) {filtroData}
+                    ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
+
+                decimal taxaComissao = Sessao.PercentagemComissao / 100m;
+                using (SqlCommand cmdG = new SqlCommand(queryGrid, con))
+                {
+                    cmdG.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmdG.Parameters.AddWithValue("@isDiretor", isDiretor);
+                    if (filtroPeriodoDashboard == "calendario")
+                    {
+                        cmdG.Parameters.AddWithValue("@dI", dashboardDataInicio.Date);
+                        cmdG.Parameters.AddWithValue("@dF", dashboardDataFim.Date);
+                    }
+
+                    using (SqlDataReader rdG = cmdG.ExecuteReader())
+                    {
+                        while (rdG.Read())
+                        {
+                            decimal val = Convert.ToDecimal(rdG["Valor_Total"]);
+                            string estado = rdG["Estado"]?.ToString() ?? "Pendente";
+                            decimal com = estado == "CANCELADA" ? 0m : val * taxaComissao;
+
+                            vendasRecentes.Add(new VendaGanhosModel
+                            {
+                                NE = Convert.ToInt32(rdG["Numero_Encomenda"]),
+                                Data = rdG["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rdG["Data_Encomenda"]) : DateTime.MinValue,
+                                Cliente = rdG["Nome_Cliente"]?.ToString() ?? "N/A",
+                                Estado = estado,
+                                ValorTotal = val,
+                                Comissao = com
+                            });
+                        }
+                    }
+                }
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Erro ao carregar Dashboard: " + ex.Message);
+            }
+        }
+    }
+    #endregion
+
+    #region Executive Report Generation
+    private void AbrirModalRelatorio()
+    {
+        mostrarModalRelatorio = true;
+        OnMudarPeriodoRelatorio();
+    }
+
+    private void FecharModalRelatorio()
+    {
+        mostrarModalRelatorio = false;
+    }
+
+    private void OnMudarPeriodoRelatorio()
+    {
+        DateTime hoje = DateTime.Today;
+        if (periodoSelecionado == "hoje")
+        {
+            periodoDescricaoRelatorio = "Hoje (" + hoje.ToString("dd/MM/yyyy") + ")";
+        }
+        else if (periodoSelecionado == "mes")
+        {
+            periodoDescricaoRelatorio = "Este Mês (" + hoje.ToString("MMMM yyyy") + ")";
+        }
+        else if (periodoSelecionado == "ano")
+        {
+            periodoDescricaoRelatorio = "Este Ano (" + hoje.Year + ")";
+        }
+        else if (periodoSelecionado == "calendario")
+        {
+            periodoDescricaoRelatorio = $"{relatorioDataInicio:dd/MM/yyyy} até {relatorioDataFim:dd/MM/yyyy}";
+        }
+        else
+        {
+            periodoDescricaoRelatorio = "Todo o Histórico";
+        }
+        GerarRelatorio();
+    }
+
+    /// <summary>
+    /// Aggregates order lines and performance metrics for the executive printable report.
+    /// </summary>
+    private void GerarRelatorio()
+    {
+        relatorioLinhas.Clear();
+        relatorioTotalFaturado = 0;
+        relatorioTotalComissao = 0;
+        relatorioTotalQtd = 0;
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            var encs = DadosDemonstracao.ObterEncomendas();
+            if (periodoSelecionado == "hoje")
+                encs = encs.Where(e => e.Data_Encomenda.Date == DateTime.Today).ToList();
+            else if (periodoSelecionado == "mes")
+                encs = encs.Where(e => e.Data_Encomenda.Month == DateTime.Today.Month && e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (periodoSelecionado == "ano")
+                encs = encs.Where(e => e.Data_Encomenda.Year == DateTime.Today.Year).ToList();
+            else if (periodoSelecionado == "calendario")
+                encs = encs.Where(e => e.Data_Encomenda.Date >= relatorioDataInicio.Date && e.Data_Encomenda.Date <= relatorioDataFim.Date).ToList();
+
+            decimal taxa = Sessao.PercentagemComissao / 100m;
+            foreach (var e in encs)
+            {
+                decimal com = e.Estado == "CANCELADA" ? 0m : e.Valor_Total * taxa;
+                if (e.Estado != "CANCELADA")
+                {
+                    relatorioTotalFaturado += e.Valor_Total;
+                    relatorioTotalComissao += com;
+                    relatorioTotalQtd++;
+                }
+
+                relatorioLinhas.Add(new VendaGanhosModel
+                {
+                    NE = e.Numero_Encomenda,
+                    Data = e.Data_Encomenda,
+                    Cliente = e.NomeCliente,
+                    Estado = e.Estado,
+                    ValorTotal = e.Valor_Total,
+                    Comissao = com
+                });
+            }
+            StateHasChanged();
+            return;
+        }
+
+        string filtroData = "";
+
+        if (periodoSelecionado == "hoje")
+        {
+            filtroData = "AND CAST(E.Data_Encomenda AS DATE) = CAST(GETDATE() AS DATE)";
+        }
+        else if (periodoSelecionado == "mes")
+        {
+            filtroData = "AND MONTH(E.Data_Encomenda) = MONTH(GETDATE()) AND YEAR(E.Data_Encomenda) = YEAR(GETDATE())";
+        }
+        else if (periodoSelecionado == "ano")
+        {
+            filtroData = "AND YEAR(E.Data_Encomenda) = YEAR(GETDATE())";
+        }
+        else if (periodoSelecionado == "calendario")
+        {
+            filtroData = "AND CAST(E.Data_Encomenda AS DATE) BETWEEN @rdI AND @rdF";
+            periodoDescricaoRelatorio = $"{relatorioDataInicio:dd/MM/yyyy} até {relatorioDataFim:dd/MM/yyyy}";
+        }
+        else
+        {
+            filtroData = "";
+        }
+
+        using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                int isDiretor = Sessao.IsDiretorOuAdmin ? 1 : 0;
+                string query = $@"
+                    SELECT 
+                        E.Numero_Encomenda,
+                        E.Data_Encomenda,
+                        ISNULL(C.Nome_Cliente, 'Cliente Não Identificado') AS Nome_Cliente,
+                        ISNULL(E.Estado, 'Pendente') AS Estado,
+                        ISNULL(E.Valor_Total, 0) AS Valor_Total
+                    FROM Encomenda E
+                    LEFT JOIN Clientes C ON E.ID_Cliente = C.ID_Cliente
+                    WHERE (E.ID_Vendedor = @id OR @isDiretor = 1 OR E.ID_Vendedor IS NULL) {filtroData}
+                    ORDER BY E.Data_Encomenda DESC, E.Numero_Encomenda DESC";
+
+                decimal taxaComissao = Sessao.PercentagemComissao / 100m;
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", Sessao.ID_Vendedor);
+                    cmd.Parameters.AddWithValue("@isDiretor", isDiretor);
+                    if (periodoSelecionado == "calendario")
+                    {
+                        cmd.Parameters.AddWithValue("@rdI", relatorioDataInicio.Date);
+                        cmd.Parameters.AddWithValue("@rdF", relatorioDataFim.Date);
+                    }
+
+                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    {
+                        while (rd.Read())
+                        {
+                            decimal val = Convert.ToDecimal(rd["Valor_Total"]);
+                            string estado = rd["Estado"]?.ToString() ?? "Pendente";
+                            decimal com = estado == "CANCELADA" ? 0m : val * taxaComissao;
+
+                            if (estado != "CANCELADA")
+                            {
+                                relatorioTotalFaturado += val;
+                                relatorioTotalComissao += com;
+                                relatorioTotalQtd++;
+                            }
+
+                            relatorioLinhas.Add(new VendaGanhosModel
+                            {
+                                NE = Convert.ToInt32(rd["Numero_Encomenda"]),
+                                Data = rd["Data_Encomenda"] != DBNull.Value ? Convert.ToDateTime(rd["Data_Encomenda"]) : DateTime.MinValue,
+                                Cliente = rd["Nome_Cliente"]?.ToString() ?? "N/A",
+                                Estado = estado,
+                                ValorTotal = val,
+                                Comissao = com
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+    #endregion
+
+    #region Navigation & Order Actions
+    private void AbrirEncomenda(int ne)
+    {
+        NavManager.NavigateTo($"/encomendas/{ne}");
+    }
+    #endregion
+
+    #region Export & Printing Operations
+    private async Task ExportarExcelDashboard()
+    {
+        if (vendasRecentes.Count == 0) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Nº Encomenda;Data;Cliente;Estado;Total Venda (€);Comissão (€)");
+
+        foreach (var v in vendasRecentes)
+        {
+            sb.AppendLine($"{v.NE};{v.Data:dd/MM/yyyy};{EscapeCsv(v.Cliente)};{EscapeCsv(v.Estado)};{v.ValorTotal:F2};{v.Comissao:F2}");
+        }
+
+        string filename = $"Vendas_Dashboard_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+        await JS.InvokeVoidAsync("downloadFileFromText", filename, sb.ToString());
+    }
+
+    private async Task ExportarExcelRelatorio()
+    {
+        if (relatorioLinhas.Count == 0) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Relatório Financeiro & Comissões - {periodoDescricaoRelatorio}");
+        sb.AppendLine($"Comercial: {Sessao.Nome};Taxa de Comissão: {Sessao.PercentagemComissao:N1}%;Data de Emissão: {DateTime.Now:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Total Faturado (€):;{relatorioTotalFaturado:F2};Comissões (€):;{relatorioTotalComissao:F2};Total Encomendas:;{relatorioTotalQtd}");
+        sb.AppendLine();
+        sb.AppendLine("Nº Encomenda;Data;Cliente;Estado;Total Venda (€);Comissão (€)");
+
+        foreach (var r in relatorioLinhas)
+        {
+            sb.AppendLine($"{r.NE};{r.Data:dd/MM/yyyy};{EscapeCsv(r.Cliente)};{EscapeCsv(r.Estado)};{r.ValorTotal:F2};{r.Comissao:F2}");
+        }
+
+        string filename = $"Relatorio_Comissoes_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+        await JS.InvokeVoidAsync("downloadFileFromText", filename, sb.ToString());
+    }
+
+    private string EscapeCsv(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        if (text.Contains(";") || text.Contains("\"") || text.Contains("\n") || text.Contains("\r"))
+        {
+            string escaped = text.Replace("\"", "\"\"");
+            return "\"" + escaped + "\"";
+        }
+        return text;
+    }
+
+    private async Task ImprimirRelatorio()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+    #endregion
+}

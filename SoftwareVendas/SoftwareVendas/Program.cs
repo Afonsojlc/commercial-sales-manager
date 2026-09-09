@@ -1,17 +1,22 @@
+using System;
+using System.Globalization;
+using System.Windows.Forms;
+
 namespace SoftwareVendas
 {
-    internal static class Program
+    static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            var culturaPt = new CultureInfo("pt-PT");
+            CultureInfo.DefaultThreadCurrentCulture = culturaPt;
+            CultureInfo.DefaultThreadCurrentUICulture = culturaPt;
+
             ApplicationConfiguration.Initialize();
-            Application.Run(new FormLogin());
+            // Start the application directly with the Blazor Host (FormMenu)
+            // The router inside App.razor will show the Login page first.
+            Application.Run(new FormMenu());
         }
     }
 }

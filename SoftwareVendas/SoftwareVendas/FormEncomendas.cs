@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
 using System.Drawing;
@@ -8,9 +8,7 @@ namespace SoftwareVendas
 {
     public partial class FormEncomendas : Form
     {
-        private readonly string connectionString = @"Server=DESKTOP-P0S20G1\SQLEXPRESS;Database=Software_Vendas_Pai;Trusted_Connection=True;TrustServerCertificate=True;";
-
-        // Label do Totalizador programática
+        // Programmatic totalizer label
         private Label lblTotalizador = new Label();
 
         public FormEncomendas()
@@ -51,7 +49,7 @@ namespace SoftwareVendas
             CarregarEncomendasRecentes();
         }
 
-        #region 1. Configuração da Interface
+        #region 1. Interface Configuration and Styling
 
         private void ConfigurarInterface()
         {
@@ -166,7 +164,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region 2. Filtros, Pesquisa e AutoComplete
+        #region 2. Filters, Search and Autocomplete
 
         private void CarregarFiltros()
         {
@@ -186,7 +184,7 @@ namespace SoftwareVendas
             string filtro = cmbFiltro.SelectedItem?.ToString() ?? "Nome do Cliente";
             AutoCompleteStringCollection lista = new AutoCompleteStringCollection();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -282,7 +280,7 @@ namespace SoftwareVendas
 
         private void RealizarPesquisa(string termo, string filtro)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DatabaseConfig.ObterConexao())
             {
                 try
                 {
@@ -388,7 +386,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region 3. Abertura de Detalhes
+        #region 3. Order Details Dialog
 
         private void dgvEncomendas_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {
@@ -408,7 +406,7 @@ namespace SoftwareVendas
 
         #endregion
 
-        #region 4. Operações Adicionais (Nova e Eliminar)
+        #region 4. Additional Operations (Create and Delete)
 
         private void btnNovaEncomenda_Click(object? sender, EventArgs e)
         {
@@ -439,15 +437,15 @@ namespace SoftwareVendas
 
             if (resposta == DialogResult.Yes)
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = DatabaseConfig.ObterConexao())
                 {
                     con.Open();
-                    // Usamos uma Transação SQL profissional
+                    // Wrap stock reversal and deletion inside an atomic SQL transaction
                     SqlTransaction transacao = con.BeginTransaction();
 
                     try
                     {
-                        // 1. Otimização Crítica: Devolver os produtos ao Stock antes de os apagar
+                        // 1. Critical inventory integrity: restore product stock prior to deleting the order
                         string queryReverterStock = @"
                             UPDATE Material SET Stock = Stock + L.Quantidade
                             FROM Material M INNER JOIN Linha_Encomenda L ON M.Codigo = L.Codigo_Material

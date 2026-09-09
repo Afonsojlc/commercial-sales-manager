@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AJLC Soluctions - Gestão Comercial</title>
+    <base href="/" />
+    
+    <!-- Modern Enterprise Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN & Theme Configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            900: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                            600: '#475569',
+                            500: '#64748B',
+                            200: '#E2E8F0',
+                            100: '#F1F5F9',
+                            50: '#F8FAFC',
+                        },
+                        corporate: {
+                            900: '#1E3A8A',
+                            800: '#1D4ED8',
+                            700: '#2563EB',
+                            600: '#3B82F6',
+                            500: '#60A5FA',
+                            100: '#DBEAFE',
+                            50: '#EFF6FF',
+                        }
+                    },
+                    boxShadow: {
+                        'corporate-card': '0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08)',
+                        'corporate-hover': '0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1)',
+                        'corporate-modal': '0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="css/app.css" rel="stylesheet" />
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 font-sans m-0 p-0 overflow-hidden antialiased">
+    <div id="app">
+        <div class="h-screen w-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-slate-700 gap-4">
+            <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-corporate-card flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+            <p class="text-slate-600 font-semibold text-xs tracking-wider uppercase">AJLC Soluctions &bull; A carregar o sistema...</p>
+        </div>
+    </div>
+
+    <!-- Excel / CSV file export helper -->
+    <script>
+        window.downloadFileFromText = function (filename, text) {
+            const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+    </script>
+
+    <script src="_framework/blazor.webview.js"></script>
+</body>
+</html>

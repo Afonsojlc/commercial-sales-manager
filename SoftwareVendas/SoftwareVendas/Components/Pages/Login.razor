@@ -1,0 +1,262 @@
+@page "/"
+@layout Layout.EmptyLayout
+@inject NavigationManager NavManager
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+
+<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4 select-none">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden border border-slate-200">
+        
+        <!-- Brand Header -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white font-black text-base shadow-md mb-3 tracking-wider">
+                AJLC
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900">@ConfiguracaoEmpresa.NomeEmpresa</h1>
+            <p class="text-xs text-slate-500 mt-1 font-medium">@ConfiguracaoEmpresa.Subtitulo</p>
+            
+            <!-- Connection Status Badge -->
+            <div class="mt-3 flex justify-center">
+                @if (DatabaseConfig.ConexaoAtiva)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        SQL Server Conectado (Modo Produção)
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm animate-pulse">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        Modo Demonstração (Sem Ligação à BD)
+                    </span>
+                }
+            </div>
+        </div>
+
+        @if (!DatabaseConfig.ConexaoAtiva)
+        {
+            <!-- Offline Demo Alert Box -->
+            <div class="mb-5 p-3.5 bg-amber-50/80 rounded-2xl border border-amber-200 text-amber-900 text-xs space-y-1.5">
+                <div class="font-bold flex items-center gap-1.5 text-amber-800">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Ambiente de Demonstração (Sandbox)
+                </div>
+                <p class="text-[11px] text-amber-700 leading-relaxed">
+                    A base de dados SQL Server não está acessível. O sistema opera em memória com dados mock (nada será gravado em base de dados).
+                </p>
+                <div class="pt-1 text-[11px] text-amber-900 font-mono bg-white/70 p-2 rounded-lg border border-amber-200/60">
+                    <strong>Demo:</strong> Afonso Carvalho &bull; PIN: <strong>1234</strong><br/>
+                    <strong>Email:</strong> afonso.carvalho@geral.pt
+                </div>
+            </div>
+        }
+
+        <div class="space-y-4">
+            <!-- Email Login Section -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">E-mail Comercial</label>
+                <input @bind="email" type="email" class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="@(DatabaseConfig.ConexaoAtiva ? "comercial@empresa.pt" : "afonso.carvalho@geral.pt")" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Senha de Acesso</label>
+                <input @bind="senha" type="password" class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="••••••••" />
+            </div>
+            
+            <button @onclick="LoginEmail" class="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2">
+                <span>Entrar no Sistema</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+
+            <!-- Divider -->
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-slate-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs">
+                    <span class="px-3 bg-white text-slate-400 font-bold uppercase text-[10px]">OU ACESSO RÁPIDO COM PIN</span>
+                </div>
+            </div>
+
+            <!-- PIN Login Section -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 text-center">PIN Rápido (4 Dígitos)</label>
+                <input @bind="pin" type="password" maxlength="4" class="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-300 text-center tracking-[0.6em] text-2xl font-mono text-blue-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="••••" />
+            </div>
+            
+            <button @onclick="LoginPin" class="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Validar PIN de Vendedor</span>
+            </button>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs text-center font-semibold">
+                    @errorMessage
+                </div>
+            }
+
+            @if (!DatabaseConfig.ConexaoAtiva)
+            {
+                <div class="pt-2">
+                    <button @onclick="EntrarDiretoDemo" class="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                        <span>Entrar Imediatamente como DEMO (Afonso Carvalho)</span>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="pt-1 text-center">
+                    <button @onclick="EntrarDiretoDemo" class="text-[11px] font-semibold text-slate-500 hover:text-amber-700 hover:underline transition">
+                        Iniciar Demonstração em Sandbox Offline (Afonso Carvalho)
+                    </button>
+                </div>
+            }
+
+            <div class="text-center pt-3 border-t border-slate-100">
+                <span class="text-[11px] text-slate-400 font-medium">@ConfiguracaoEmpresa.NomeEmpresa &bull; Sistema de Gestão Comercial</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    #region Component State & Input Fields
+    private string email = "";
+    private string senha = "";
+    private string pin = "";
+    private string errorMessage = "";
+    #endregion
+
+    #region Lifecycle Hooks
+    protected override void OnInitialized()
+    {
+        Sessao.Limpar();
+    }
+    #endregion
+
+    #region Authentication Workflows
+    /// <summary>
+    /// Authenticates seller using Email and Password.
+    /// </summary>
+    private void LoginEmail()
+    {
+        errorMessage = "";
+        string eTrim = email.Trim();
+        string sTrim = senha.Trim();
+
+        // 1. If SQL Server is available, check real Vendedores table
+        if (DatabaseConfig.ConexaoAtiva)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+                {
+                    con.Open();
+                    using (SqlCommand cmd = new SqlCommand("SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo, Email, Telemovel, PIN FROM Vendedores WHERE Email = @e AND Senha = @s AND Ativo = 1", con))
+                    {
+                        cmd.Parameters.AddWithValue("@e", eTrim);
+                        cmd.Parameters.AddWithValue("@s", sTrim);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                Sessao.ID_Vendedor = Convert.ToInt32(reader["ID_Vendedor"]);
+                                Sessao.Nome = reader["Nome"]?.ToString() ?? "Utilizador";
+                                Sessao.PercentagemComissao = Convert.ToDecimal(reader["Percentagem_Comissao"]);
+                                Sessao.Cargo = reader["Cargo"]?.ToString() ?? "Vendedor";
+                                Sessao.Email = reader["Email"]?.ToString() ?? "";
+                                Sessao.Telemovel = reader["Telemovel"]?.ToString() ?? "";
+                                Sessao.PIN = reader["PIN"]?.ToString() ?? "";
+                                Sessao.IsDemo = false;
+                                NavManager.NavigateTo("/dashboard");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fallthrough to demo verification if DB had connection blip
+            }
+        }
+
+        // 2. Demo credentials check (Afonso Carvalho: afonso.carvalho@geral.pt / pin 1234 or demo)
+        if (eTrim.Equals("afonso.carvalho@geral.pt", StringComparison.OrdinalIgnoreCase) ||
+            eTrim.Equals("admin@comercial.pt", StringComparison.OrdinalIgnoreCase))
+        {
+            EntrarDiretoDemo();
+            return;
+        }
+
+        errorMessage = "Credenciais incorretas.";
+    }
+
+    /// <summary>
+    /// Authenticates seller using Quick PIN entry.
+    /// </summary>
+    private void LoginPin()
+    {
+        errorMessage = "";
+        string pTrim = pin.Trim();
+
+        // 1. If SQL Server is available, validate against real Vendedores table
+        if (DatabaseConfig.ConexaoAtiva)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(DatabaseConfig.ConnectionString))
+                {
+                    con.Open();
+                    using (SqlCommand cmd = new SqlCommand("SELECT ID_Vendedor, Nome, Percentagem_Comissao, Cargo, Email, Telemovel FROM Vendedores WHERE PIN = @p AND Ativo = 1", con))
+                    {
+                        cmd.Parameters.AddWithValue("@p", pTrim);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                Sessao.ID_Vendedor = Convert.ToInt32(reader["ID_Vendedor"]);
+                                Sessao.Nome = reader["Nome"]?.ToString() ?? "Utilizador";
+                                Sessao.PercentagemComissao = Convert.ToDecimal(reader["Percentagem_Comissao"]);
+                                Sessao.Cargo = reader["Cargo"]?.ToString() ?? "Vendedor";
+                                Sessao.Email = reader["Email"]?.ToString() ?? "";
+                                Sessao.Telemovel = reader["Telemovel"]?.ToString() ?? "";
+                                Sessao.PIN = pTrim;
+                                Sessao.IsDemo = false;
+                                NavManager.NavigateTo("/dashboard");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fallthrough to demo verification
+            }
+        }
+
+        // 2. Demo PIN check (Afonso Carvalho: PIN 1234 or 0000)
+        if (pTrim == "1234" || pTrim == "0000")
+        {
+            EntrarDiretoDemo();
+            return;
+        }
+
+        errorMessage = "PIN incorreto.";
+    }
+    #endregion
+
+    #region Offline & Demonstration Fallbacks
+    /// <summary>
+    /// Activates demonstration sandbox mode as Afonso Carvalho (DEMO).
+    /// </summary>
+    private void EntrarDiretoDemo()
+    {
+        Sessao.IniciarModoDemonstracao();
+        NavManager.NavigateTo("/dashboard");
+    }
+    #endregion
+}

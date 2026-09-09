@@ -1,0 +1,525 @@
+@page "/produtos"
+@using Microsoft.Data.SqlClient
+@using SoftwareVendas
+
+<div class="p-6 sm:p-8 space-y-6 max-w-[1720px] mx-auto w-full min-h-full bg-slate-50">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Catálogo de Artigos</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Stock & Tabela PVP
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Consulta de inventário e existências em armazém. Dê <strong>duplo clique</strong> num artigo para ajustar o stock rapidamente.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            @if (Sessao.IsDiretorOuAdmin)
+            {
+                <button @onclick="AbrirModalNovoProduto" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Novo Artigo</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex items-center gap-3">
+        <svg class="w-4 h-4 text-slate-400 ml-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input @bind="termo" @bind:event="oninput" @onkeyup="Pesquisar" type="text" placeholder="Pesquisar artigo por código ou descrição comercial..." class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" />
+        <span class="text-xs font-mono font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+            @(produtos?.Count ?? 0) artigo(s)
+        </span>
+    </div>
+
+    <!-- Grid of Products -->
+    <div class="flex-1 overflow-auto">
+        @if (produtos != null && produtos.Count > 0)
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-6">
+                @foreach (var p in produtos)
+                {
+                    <div @ondblclick="() => { if (Sessao.IsDiretorOuAdmin) ConfirmarUpdate(p.Codigo, p.Descricao); }" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer select-none group" title="@(Sessao.IsDiretorOuAdmin ? "Dê duplo clique para ajustar o stock" : "Visualização de artigo")">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                                    @p.Codigo
+                                </span>
+                                @if (p.Stock > 0)
+                                {
+                                    <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-full flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        @p.Stock em Stock
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold rounded-full flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                        Esgotado
+                                    </span>
+                                }
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-900 mb-2 leading-snug group-hover:text-blue-700 transition-colors line-clamp-2">
+                                @p.Descricao
+                            </h3>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-end justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PVP s/ IVA</p>
+                                <p class="text-xl font-black font-mono text-slate-900 tracking-tight">€ @p.Preco.ToString("N2")</p>
+                            </div>
+                            
+                            <!-- Actions (Restricted to Director / Admin) -->
+                            @if (Sessao.IsDiretorOuAdmin)
+                            {
+                                <div class="flex items-center gap-1.5">
+                                    <button @onclick="() => ConfirmarUpdate(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 transition" title="Ajustar Quantidade">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    </button>
+                                    <button @onclick="() => ConfirmarApagar(p.Codigo, p.Descricao)" @onclick:stopPropagation="true" class="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition" title="Eliminar Artigo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Modal Confirmar Eliminação -->
+    @if (mostrarModalDelete)
+    {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Confirmar Eliminação</h3>
+                <p class="text-xs text-slate-600 mb-6">Tem a certeza que deseja eliminar o artigo <strong class="text-slate-900">@produtoApagarNome</strong>? Esta ação é irreversível.</p>
+                <div class="flex justify-end gap-3">
+                    <button @onclick="CancelarApagar" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancelar</button>
+                    <button @onclick="ExecutarApagar" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition">Eliminar Artigo</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Modal Atualizar Stock -->
+    @if (mostrarModalUpdate)
+    {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Ajustar Existências de Stock</h3>
+                <p class="text-xs text-slate-500 mb-4 font-mono">@produtoUpdateNome</p>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Ajuste de Quantidade (Pode ser positivo ou negativo)</label>
+                    <input type="number" @bind="produtoUpdateQtd" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button @onclick="CancelarUpdate" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancelar</button>
+                    <button @onclick="ExecutarUpdate" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition">Gravar Stock</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Modal Novo Produto -->
+    @if (mostrarModalNovo)
+    {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-7 max-w-xl w-full shadow-2xl">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
+                    <h3 class="text-lg font-bold text-slate-900 tracking-tight">Registar Novo Artigo</h3>
+                    <button @onclick="CancelarNovoProduto" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Código de Referência *</label>
+                        <input type="text" @bind="novoProdCodigo" placeholder="Ex: MAT-010" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Categoria / Família *</label>
+                        <select @bind="novoProdTipo" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none">
+                            @if (tiposProduto != null && tiposProduto.Count > 0)
+                            {
+                                @foreach (var t in tiposProduto)
+                                {
+                                    <option value="@t.Id_Produto">@t.Designacao (@t.Id_Produto)</option>
+                                }
+                            }
+                            else
+                            {
+                                <option value="CAB">Cablagem e Condutores (CAB)</option>
+                                <option value="APAR">Aparelhagem e Tomadas (APAR)</option>
+                                <option value="ILUM">Iluminação LED e Técnica (ILUM)</option>
+                                <option value="PROT">Proteção e Quadros Elétricos (PROT)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-600 mb-1">Descrição Comercial *</label>
+                        <input type="text" @bind="novoProdDescricao" placeholder="Descrição detalhada do artigo..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-medium" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">PVP Unitário (s/ IVA)</label>
+                        <input type="number" @bind="novoProdPreco" step="0.01" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Stock Inicial</label>
+                        <input type="number" @bind="novoProdStock" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-slate-800" />
+                    </div>
+                </div>
+
+                @if(!string.IsNullOrEmpty(novoProdErro)) { <p class="text-rose-600 mb-4 text-xs font-semibold">@novoProdErro</p> }
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button @onclick="CancelarNovoProduto" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancelar</button>
+                    <button @onclick="GuardarNovoProduto" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition">Guardar Artigo</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    #region Component State & Modal Controls
+    private string termo = "";
+    private List<ProdutoDTO>? produtos;
+
+    private bool mostrarModalDelete = false;
+    private string produtoApagarCodigo = "";
+    private string produtoApagarNome = "";
+
+    private bool mostrarModalUpdate = false;
+    private string produtoUpdateCodigo = "";
+    private string produtoUpdateNome = "";
+    private int produtoUpdateQtd = 0;
+
+    private bool mostrarModalNovo = false;
+    private string novoProdCodigo = "";
+    private string novoProdDescricao = "";
+    private decimal novoProdPreco = 0;
+    private int novoProdStock = 0;
+    private string novoProdTipo = "CAB";
+    private string novoProdErro = "";
+    private List<TipoProdutoDTO> tiposProduto = new List<TipoProdutoDTO>();
+    #endregion
+
+    #region Lifecycle Hooks
+    protected override void OnInitialized()
+    {
+        CarregarTiposProduto();
+        CarregarProdutos();
+    }
+    #endregion
+
+    #region Product & Category Loading
+    /// <summary>
+    /// Filters product catalog based on search query.
+    /// </summary>
+    private void Pesquisar()
+    {
+        CarregarProdutos();
+    }
+
+    /// <summary>
+    /// Loads product families/categories from SQL Server or fallback in-memory dataset.
+    /// </summary>
+    private void CarregarTiposProduto()
+    {
+        tiposProduto.Clear();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "CAB", Designacao = "Cabos & Condutores" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "DIS", Designacao = "Aparelhagem de Calha & Disjuntores" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "DIF", Designacao = "Diferenciais & Proteções" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "TUB", Designacao = "Tubos & Calhas Técnicas" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "ILU", Designacao = "Iluminação & LEDs" });
+            tiposProduto.Add(new TipoProdutoDTO { Id_Produto = "APA", Designacao = "Aparelhagem de Embutir" });
+            if (string.IsNullOrWhiteSpace(novoProdTipo)) novoProdTipo = "CAB";
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "SELECT Id_Produto, Designacao FROM Tipo_Produto ORDER BY Designacao ASC";
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(query, con))
+                using (Microsoft.Data.SqlClient.SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        tiposProduto.Add(new TipoProdutoDTO
+                        {
+                            Id_Produto = reader["Id_Produto"]?.ToString() ?? "",
+                            Designacao = reader["Designacao"]?.ToString() ?? ""
+                        });
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (tiposProduto.Count > 0 && (string.IsNullOrWhiteSpace(novoProdTipo) || !tiposProduto.Any(t => t.Id_Produto == novoProdTipo)))
+        {
+            novoProdTipo = tiposProduto[0].Id_Produto;
+        }
+    }
+
+    /// <summary>
+    /// Queries the material table or in-memory catalog matching search criteria.
+    /// </summary>
+    private void CarregarProdutos()
+    {
+        produtos = new List<ProdutoDTO>();
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            var arts = DadosDemonstracao.ObterArtigos(termo);
+            foreach (var a in arts)
+            {
+                produtos.Add(new ProdutoDTO
+                {
+                    Codigo = a.Codigo,
+                    Descricao = a.Descricao,
+                    Preco = a.PVP_Unidade,
+                    Stock = a.Stock
+                });
+            }
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection conn = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                conn.Open();
+                string query = "SELECT TOP 50 Codigo, Descricao, PVP_Unidade, Stock FROM Material WHERE Codigo LIKE @Search OR Descricao LIKE @Search";
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Search", "%" + termo + "%");
+                    using (Microsoft.Data.SqlClient.SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            produtos.Add(new ProdutoDTO
+                            {
+                                Codigo = reader["Codigo"].ToString()!,
+                                Descricao = reader["Descricao"].ToString()!,
+                                Preco = Convert.ToDecimal(reader["PVP_Unidade"]),
+                                Stock = Convert.ToInt32(reader["Stock"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+    #endregion
+
+    #region Product Creation
+    private void AbrirModalNovoProduto()
+    {
+        novoProdCodigo = "";
+        novoProdDescricao = "";
+        novoProdPreco = 0;
+        novoProdStock = 0;
+        novoProdErro = "";
+
+        if (tiposProduto.Count == 0)
+        {
+            CarregarTiposProduto();
+        }
+        if (tiposProduto.Count > 0 && !tiposProduto.Any(t => t.Id_Produto == novoProdTipo))
+        {
+            novoProdTipo = tiposProduto[0].Id_Produto;
+        }
+
+        mostrarModalNovo = true;
+    }
+
+    private void CancelarNovoProduto() => mostrarModalNovo = false;
+
+    private void GuardarNovoProduto()
+    {
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            novoProdErro = "Apenas administradores e diretores comerciais têm permissão para criar artigos.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(novoProdCodigo) || string.IsNullOrWhiteSpace(novoProdDescricao))
+        {
+            novoProdErro = "Preencha os campos obrigatórios.";
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            DadosDemonstracao.AdicionarArtigo(new DadosDemonstracao.ArtigoDemo
+            {
+                Codigo = novoProdCodigo.Trim(),
+                Descricao = novoProdDescricao.Trim(),
+                PVP_Unidade = novoProdPreco,
+                Stock = novoProdStock,
+                ID_Tipo = novoProdTipo
+            });
+            mostrarModalNovo = false;
+            CarregarProdutos();
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string q = @"
+                    INSERT INTO Material (Codigo, Descricao, PVP_Unidade, Stock, Taxa_IVA, ID_Tipo, Unidade_Venda) 
+                    VALUES (@c, @d, @p, @s, 23, @t, 'UN')";
+
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(q, con))
+                {
+                    cmd.Parameters.AddWithValue("@c", novoProdCodigo.Trim());
+                    cmd.Parameters.AddWithValue("@d", novoProdDescricao.Trim());
+                    cmd.Parameters.AddWithValue("@p", novoProdPreco);
+                    cmd.Parameters.AddWithValue("@s", novoProdStock);
+                    cmd.Parameters.AddWithValue("@t", novoProdTipo);
+                    cmd.ExecuteNonQuery();
+                }
+                mostrarModalNovo = false;
+                CarregarProdutos();
+            }
+            catch (Exception ex)
+            {
+                novoProdErro = "Erro: " + ex.Message;
+            }
+        }
+    }
+    #endregion
+
+    #region Inventory Adjustments
+    private void ConfirmarUpdate(string codigo, string nome)
+    {
+        if (!Sessao.IsDiretorOuAdmin) return;
+        produtoUpdateCodigo = codigo;
+        produtoUpdateNome = nome;
+        produtoUpdateQtd = 0;
+        mostrarModalUpdate = true;
+    }
+
+    private void CancelarUpdate()
+    {
+        mostrarModalUpdate = false;
+    }
+
+    private void ExecutarUpdate()
+    {
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            mostrarModalUpdate = false;
+            return;
+        }
+
+        if (produtoUpdateQtd == 0)
+        {
+            mostrarModalUpdate = false;
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            DadosDemonstracao.AtualizarStockArtigo(produtoUpdateCodigo, produtoUpdateQtd);
+            mostrarModalUpdate = false;
+            CarregarProdutos();
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "UPDATE Material SET Stock = Stock + @qtd WHERE Codigo = @cod";
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@qtd", produtoUpdateQtd);
+                    cmd.Parameters.AddWithValue("@cod", produtoUpdateCodigo);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch { }
+        }
+        mostrarModalUpdate = false;
+        CarregarProdutos();
+    }
+    #endregion
+
+    #region Product Deletion
+    private void ConfirmarApagar(string codigo, string nome)
+    {
+        if (!Sessao.IsDiretorOuAdmin) return;
+        produtoApagarCodigo = codigo;
+        produtoApagarNome = nome;
+        mostrarModalDelete = true;
+    }
+
+    private void CancelarApagar()
+    {
+        mostrarModalDelete = false;
+    }
+
+    private void ExecutarApagar()
+    {
+        if (!Sessao.IsDiretorOuAdmin)
+        {
+            mostrarModalDelete = false;
+            return;
+        }
+
+        if (!DatabaseConfig.ConexaoAtiva || Sessao.IsDemo)
+        {
+            DadosDemonstracao.ApagarArtigo(produtoApagarCodigo);
+            mostrarModalDelete = false;
+            CarregarProdutos();
+            return;
+        }
+
+        using (Microsoft.Data.SqlClient.SqlConnection con = new Microsoft.Data.SqlClient.SqlConnection(DatabaseConfig.ConnectionString))
+        {
+            try
+            {
+                con.Open();
+                string query = "DELETE FROM Material WHERE Codigo = @cod AND NOT EXISTS (SELECT 1 FROM Linha_Encomenda WHERE Codigo_Material = @cod)";
+                using (Microsoft.Data.SqlClient.SqlCommand cmd = new Microsoft.Data.SqlClient.SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@cod", produtoApagarCodigo);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch { }
+        }
+        mostrarModalDelete = false;
+        CarregarProdutos();
+    }
+    #endregion
+
+    #region Data Transfer Objects
+    public class TipoProdutoDTO
+    {
+        public string Id_Produto { get; set; } = "";
+        public string Designacao { get; set; } = "";
+    }
+    #endregion
+}

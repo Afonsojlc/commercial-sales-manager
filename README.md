@@ -103,37 +103,44 @@ erDiagram
     ENCOMENDA ||--|{ LINHA_ENCOMENDA : "contains"
     TIPO_PRODUTO ||--|{ MATERIAL : "categorizes"
     MATERIAL ||--o{ LINHA_ENCOMENDA : "composed of"
-
     VENDEDORES {
-        int ID_Vendedor PK
+        int ID_Vendedor PK "IDENTITY"
         varchar Cargo
         varchar Nome
         varchar PIN
         varchar Email
         varchar Senha
+        varchar Telemovel
         decimal Percentagem_Comissao
         bit Ativo
     }
-
     CLIENTES {
         varchar ID_Cliente PK
         varchar Nome_Cliente
         varchar NIF
+        varchar Morada_Completa
+        varchar Codigo_Postal
         varchar Cidade
+        varchar Email
         varchar Telefone
     }
-
+    TIPO_PRODUTO {
+        varchar Id_Produto PK
+        varchar Designacao
+        varchar Estado
+    }
     MATERIAL {
         varchar Codigo PK
         varchar Descricao
+        varchar Unidade_Venda
+        int Embalagem
         money PVP_Unidade
         int Stock
         varchar ID_Tipo FK
         decimal Taxa_IVA
     }
-
     ENCOMENDA {
-        int Numero_Encomenda PK
+        int Numero_Encomenda PK "IDENTITY"
         date Data_Encomenda
         money Valor_Total
         varchar Estado
@@ -141,7 +148,6 @@ erDiagram
         int ID_Vendedor FK
         decimal Desconto_Global
     }
-
     LINHA_ENCOMENDA {
         int NE PK,FK
         int Linha_Encomenda PK

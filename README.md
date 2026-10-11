@@ -7,7 +7,7 @@
 [![Database SQL Server](https://img.shields.io/badge/Database-Microsoft_SQL_Server-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server/)
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A hybrid desktop application (**C# .NET 8**, **Windows Forms**, and **Blazor WebView**) designed to digitize field order taking for commercial representatives in B2B distribution and technical wholesale.
+> A hybrid desktop application (**C# .NET 8**, **Windows Forms**, and **Blazor WebView**) designed to digitize field order taking for commercial representatives in B2B distribution and technical wholesale.
 
 > [!NOTE]
 > **Localization:** The UI is localized in **European Portuguese (pt-PT)** to align with Portuguese B2B commercial practices, tax rules (IVA), and invoicing conventions.
